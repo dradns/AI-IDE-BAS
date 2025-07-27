@@ -1,6 +1,8 @@
 import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as path from "path"
+import * as os from "os"
+import TelemetryReporter from "vscode-extension-telemetry"
 
 // Load environment variables from .env file
 try {
@@ -50,6 +52,7 @@ import { initializeI18n } from "./i18n"
 
 let outputChannel: vscode.OutputChannel
 let extensionContext: vscode.ExtensionContext
+let azureTelemetryReporter: TelemetryReporter | undefined
 
 // This method is called when your extension is activated.
 // Your extension is activated the very first time the command is executed.
@@ -58,6 +61,41 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
+
+	// Initialize Azure telemetry if aiKey is available
+	try {
+		const { id, packageJSON } = context.extension
+		if (packageJSON.aiKey) {
+			azureTelemetryReporter = new TelemetryReporter(id, packageJSON.version, packageJSON.aiKey)
+			context.subscriptions.push(azureTelemetryReporter)
+
+			// Send install telemetry if not already sent
+			if (!context.globalState.get("azureInstallTelemetrySent")) {
+				azureTelemetryReporter.sendTelemetryEvent("install", {
+					vscodeVersion: vscode.version,
+					platform: process.platform,
+					arch: process.arch,
+					release: os.release(),
+					uiKind: String(vscode.env.uiKind),
+				})
+				context.globalState.update("azureInstallTelemetrySent", true)
+			}
+
+			// Send daily active telemetry
+			const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+			const lastActive = context.globalState.get<string>("azureLastActiveDate")
+			if (lastActive !== today) {
+				azureTelemetryReporter.sendTelemetryEvent("dailyActive", {
+					machineId: vscode.env.machineId,
+					vscodeVersion: vscode.version,
+					platform: process.platform,
+				})
+				context.globalState.update("azureLastActiveDate", today)
+			}
+		}
+	} catch (error) {
+		console.warn("Failed to initialize Azure telemetry:", error)
+	}
 
 	// Migrate old settings to new
 	await migrateSettings(context, outputChannel)
@@ -212,9 +250,6 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated.
-export async function deactivate() {
-	outputChannel.appendLine(`${Package.name} extension deactivated`)
-	await McpServerManager.cleanup(extensionContext)
-	TelemetryService.instance.shutdown()
-	TerminalRegistry.cleanup()
+export function deactivate() {
+	// Azure telemetry reporter will be disposed automatically through subscriptions
 }

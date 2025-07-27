@@ -1,9 +1,25 @@
 {
-	"name": "roo-code",
+	"name": "ai-ide-bas",
 	"packageManager": "pnpm@10.8.1",
 	"engines": {
 		"node": "20.19.2"
 	},
+	"extensionPack": [
+		"jebbs.plantuml",
+		"shd101wyy.markdown-preview-enhanced",
+		"redhat.vscode-yaml",
+		"42Crunch.vscode-openapi",
+		"cweijan.dbclient-jdbc",
+		"mhutchie.git-graph",
+		"Arabic-language.vscode-ar",
+		"asyncapi.asyncapi-preview",
+		"EchoAPI.echoapi-for-vscode",
+		"GitHub.codespaces",
+		"GitHub.remotehub",
+		"bierner.markdown-mermaid",
+		"ms-vscode.live-server",
+		"MS-CEINTL.vscode-language-pack-ru"
+	],
 	"scripts": {
 		"preinstall": "node scripts/bootstrap.mjs",
 		"prepare": "husky",
