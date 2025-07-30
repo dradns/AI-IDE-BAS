@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ChevronDown } from "lucide-react"
-import { FaBluesky, FaDiscord, FaGithub, FaLinkedin, FaReddit, FaTiktok, FaXTwitter, FaYoutube } from "react-icons/fa6"
+import { FaBluesky, FaGithub, FaLinkedin, FaTiktok, FaXTwitter, FaYoutube, FaVk, FaInstagram } from "react-icons/fa6"
 
 import { EXTERNAL_LINKS, INTERNAL_LINKS } from "@/lib/constants"
 import { useLogoSrc } from "@/lib/hooks/use-logo-src"
@@ -49,20 +49,20 @@ export function Footer() {
 								<span className="sr-only">GitHub</span>
 							</a>
 							<a
-								href={EXTERNAL_LINKS.DISCORD}
+								href={EXTERNAL_LINKS.VK}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-muted-foreground transition-colors hover:text-foreground">
-								<FaDiscord className="h-6 w-6" />
-								<span className="sr-only">Discord</span>
+								<FaVk className="h-6 w-6" />
+								<span className="sr-only">VK</span>
 							</a>
 							<a
-								href={EXTERNAL_LINKS.REDDIT}
+								href={EXTERNAL_LINKS.INSTAGRAM}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-muted-foreground transition-colors hover:text-foreground">
-								<FaReddit className="h-6 w-6" />
-								<span className="sr-only">Reddit</span>
+								<FaInstagram className="h-6 w-6" />
+								<span className="sr-only">Instagram</span>
 							</a>
 							<a
 								href={EXTERNAL_LINKS.X}
@@ -194,20 +194,20 @@ export function Footer() {
 									</li>
 									<li>
 										<a
-											href={EXTERNAL_LINKS.DISCORD}
+											href={EXTERNAL_LINKS.VK}
 											target="_blank"
 											rel="noopener noreferrer"
 											className="text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground">
-											Discord
+											VK
 										</a>
 									</li>
 									<li>
 										<a
-											href={EXTERNAL_LINKS.REDDIT}
+											href={EXTERNAL_LINKS.INSTAGRAM}
 											target="_blank"
 											rel="noopener noreferrer"
 											className="text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground">
-											Reddit
+											Instagram
 										</a>
 									</li>
 								</ul>

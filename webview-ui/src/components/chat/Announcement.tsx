@@ -85,7 +85,7 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 					</ul>
 					<Trans
 						i18nKey="chat:announcement.detailsDiscussLinks"
-						components={{ discordLink: <DiscordLink />, redditLink: <RedditLink /> }}
+						components={{ vkLink: <VkLink />, instagramLink: <InstagramLink /> }}
 					/>
 				</div>
 			</DialogContent>
@@ -93,31 +93,35 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 	)
 }
 
-const DiscordLink = () => (
+const VkLink = () => (
 	<VSCodeLink
-		href="https://discord.gg/roocode"
+		href="https://m.vk.com/ai_ide_bas"
 		onClick={(e) => {
 			e.preventDefault()
 			window.postMessage(
-				{ type: "action", action: "openExternal", data: { url: "https://discord.gg/roocode" } },
+				{ type: "action", action: "openExternal", data: { url: "https://m.vk.com/ai_ide_bas" } },
 				"*",
 			)
 		}}>
-		Discord
+		VK
 	</VSCodeLink>
 )
 
-const RedditLink = () => (
+const InstagramLink = () => (
 	<VSCodeLink
-		href="https://reddit.com/r/RooCode"
+		href="https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA=="
 		onClick={(e) => {
 			e.preventDefault()
 			window.postMessage(
-				{ type: "action", action: "openExternal", data: { url: "https://reddit.com/r/RooCode" } },
+				{
+					type: "action",
+					action: "openExternal",
+					data: { url: "https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" },
+				},
 				"*",
 			)
 		}}>
-		Reddit
+		Instagram
 	</VSCodeLink>
 )
 

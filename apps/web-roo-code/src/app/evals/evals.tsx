@@ -69,8 +69,8 @@ export function Evals({
 				</div>
 				<div>
 					Want to see the results for a model we haven&apos;t tested yet? Ping us in{" "}
-					<a href="https://discord.gg/roocode" className="underline">
-						Discord
+					<a href="https://m.vk.com/ai_ide_bas" className="underline">
+						VK
 					</a>
 					.
 				</div>

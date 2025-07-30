@@ -57,11 +57,11 @@ const faqs: FAQItem[] = [
 	},
 	{
 		question: "Can I contribute to Roo Code?",
-		answer: "Yes, please do! Roo Code is open-source on GitHub. Submit issues, suggest features, or open a pull request. There's also an active community on Discord and Reddit if you want to share feedback or help others.",
+		answer: "Yes, please do! Roo Code is open-source on GitHub. Submit issues, suggest features, or open a pull request. There's also an active community on VK and Instagram if you want to share feedback or help others.",
 	},
 	{
 		question: "Where can I learn more or get help?",
-		answer: "Check out: Official Documentation for setup and advanced guides. Discord & Reddit channels for community support. YouTube tutorials and blog posts from fellow developers showcasing real-world usage.",
+		answer: "Check out: Official Documentation for setup and advanced guides. VK & Instagram channels for community support. YouTube tutorials and blog posts from fellow developers showcasing real-world usage.",
 	},
 ]
 
