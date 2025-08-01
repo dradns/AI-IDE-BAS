@@ -1,13 +1,14 @@
 import * as vscode from "vscode"
 
-import type {
-	GroupOptions,
-	GroupEntry,
-	ModeConfig,
-	CustomModePrompts,
-	ExperimentId,
-	ToolGroup,
-	PromptComponent,
+import {
+	type GroupOptions,
+	type GroupEntry,
+	type ModeConfig,
+	type CustomModePrompts,
+	type ExperimentId,
+	type ToolGroup,
+	type PromptComponent,
+	DEFAULT_MODES,
 } from "@roo-code/types"
 
 import { addCustomInstructions } from "../core/prompts/sections/custom-instructions"

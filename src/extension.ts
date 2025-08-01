@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as path from "path"
 import * as os from "os"
-import TelemetryReporter from "vscode-extension-telemetry"
+import TelemetryReporter from "@vscode/extension-telemetry"
 
 // Load environment variables from .env file
 try {

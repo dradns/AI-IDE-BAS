@@ -168,6 +168,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		showRooIgnoredFiles,
 		remoteBrowserEnabled,
 		maxReadFileLine,
+		maxImageFileSize,
+		maxTotalImageSize,
 		terminalCompressProgressBar,
 		maxConcurrentFileReads,
 		condensingApiConfigId,
@@ -177,6 +179,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		alwaysAllowFollowupQuestions,
 		alwaysAllowUpdateTodoList,
 		followupAutoApproveTimeoutMs,
+		includeDiagnosticMessages,
+		maxDiagnosticMessages,
 	} = cachedState
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
@@ -319,7 +323,11 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "maxWorkspaceFiles", value: maxWorkspaceFiles ?? 200 })
 			vscode.postMessage({ type: "showRooIgnoredFiles", bool: showRooIgnoredFiles })
 			vscode.postMessage({ type: "maxReadFileLine", value: maxReadFileLine ?? -1 })
+			vscode.postMessage({ type: "maxImageFileSize", value: maxImageFileSize ?? 5 })
+			vscode.postMessage({ type: "maxTotalImageSize", value: maxTotalImageSize ?? 20 })
 			vscode.postMessage({ type: "maxConcurrentFileReads", value: cachedState.maxConcurrentFileReads ?? 5 })
+			vscode.postMessage({ type: "includeDiagnosticMessages", bool: includeDiagnosticMessages })
+			vscode.postMessage({ type: "maxDiagnosticMessages", value: maxDiagnosticMessages ?? 50 })
 			vscode.postMessage({ type: "currentApiConfigName", text: currentApiConfigName })
 			vscode.postMessage({ type: "updateExperimental", values: experiments })
 			vscode.postMessage({ type: "alwaysAllowModeSwitch", bool: alwaysAllowModeSwitch })
@@ -606,7 +614,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							alwaysAllowWrite={alwaysAllowWrite}
 							alwaysAllowWriteOutsideWorkspace={alwaysAllowWriteOutsideWorkspace}
 							alwaysAllowWriteProtected={alwaysAllowWriteProtected}
-							writeDelayMs={writeDelayMs}
 							alwaysAllowBrowser={alwaysAllowBrowser}
 							alwaysApproveResubmit={alwaysApproveResubmit}
 							requestDelaySeconds={requestDelaySeconds}
@@ -664,8 +671,13 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							maxWorkspaceFiles={maxWorkspaceFiles ?? 200}
 							showRooIgnoredFiles={showRooIgnoredFiles}
 							maxReadFileLine={maxReadFileLine}
+							maxImageFileSize={maxImageFileSize}
+							maxTotalImageSize={maxTotalImageSize}
 							maxConcurrentFileReads={maxConcurrentFileReads}
 							profileThresholds={profileThresholds}
+							includeDiagnosticMessages={includeDiagnosticMessages}
+							maxDiagnosticMessages={maxDiagnosticMessages}
+							writeDelayMs={writeDelayMs}
 							setCachedStateField={setCachedStateField}
 						/>
 					)}

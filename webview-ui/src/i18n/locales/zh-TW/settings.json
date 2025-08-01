@@ -253,9 +253,25 @@
 		"getChutesApiKey": "取得 Chutes API 金鑰",
 		"deepSeekApiKey": "DeepSeek API 金鑰",
 		"getDeepSeekApiKey": "取得 DeepSeek API 金鑰",
+		"moonshotApiKey": "Moonshot API 金鑰",
+		"getMoonshotApiKey": "取得 Moonshot API 金鑰",
+		"moonshotBaseUrl": "Moonshot 服務站點",
 		"geminiApiKey": "Gemini API 金鑰",
 		"getGroqApiKey": "取得 Groq API 金鑰",
 		"groqApiKey": "Groq API 金鑰",
+		"getHuggingFaceApiKey": "取得 Hugging Face API 金鑰",
+		"huggingFaceApiKey": "Hugging Face API 金鑰",
+		"huggingFaceModelId": "模型 ID",
+		"huggingFaceLoading": "載入中...",
+		"huggingFaceModelsCount": "({{count}} 個模型)",
+		"huggingFaceSelectModel": "選擇模型...",
+		"huggingFaceSearchModels": "搜尋模型...",
+		"huggingFaceNoModelsFound": "找不到模型",
+		"huggingFaceProvider": "提供者",
+		"huggingFaceProviderAuto": "自動",
+		"huggingFaceSelectProvider": "選擇提供者...",
+		"huggingFaceSearchProviders": "搜尋提供者...",
+		"huggingFaceNoProvidersFound": "找不到提供者",
 		"getGeminiApiKey": "取得 Gemini API 金鑰",
 		"openAiApiKey": "OpenAI API 金鑰",
 		"apiKey": "API 金鑰",
@@ -271,6 +287,7 @@
 		"litellmBaseUrl": "LiteLLM 基礎 URL",
 		"awsCredentials": "AWS 認證",
 		"awsProfile": "AWS Profile",
+		"awsApiKey": "Amazon Bedrock API 金鑰",
 		"awsProfileName": "AWS Profile 名稱",
 		"awsAccessKey": "AWS Access Key",
 		"awsSecretKey": "AWS Secret Key",
@@ -287,6 +304,17 @@
 		"cacheUsageNote": "注意：如果您沒有看到快取使用情況，請嘗試選擇其他模型，然後重新選擇您想要的模型。",
 		"vscodeLmModel": "語言模型",
 		"vscodeLmWarning": "注意：此整合功能仍處於實驗階段，各供應商的支援程度可能不同。如果出現模型不支援的錯誤，通常是供應商方面的問題。",
+
+		"geminiParameters": {
+			"urlContext": {
+				"title": "啟用 URL 上下文",
+				"description": "讓 Gemini 讀取連結的頁面以提取、比較和綜合其內容，從而提供明智的答覆。"
+			},
+			"groundingSearch": {
+				"title": "啟用 Google 搜尋基礎",
+				"description": "將 Gemini 連接到即時網路數據，以獲得包含可驗證引用的準確、最新的答案。"
+			}
+		},
 		"googleCloudSetup": {
 			"title": "要使用 Google Cloud Vertex AI，您需要：",
 			"step1": "1. 建立 Google Cloud 帳戶，啟用 Vertex AI API 並啟用所需的 Claude 模型。",
@@ -485,6 +513,23 @@
 			"label": "並行檔案讀取限制",
 			"description": "read_file 工具可以同時處理的最大檔案數。較高的值可能會加快讀取多個小檔案的速度，但會增加記憶體使用量。"
 		},
+		"diagnostics": {
+			"includeMessages": {
+				"label": "自動在上下文中包含診斷",
+				"description": "啟用後，來自已編輯檔案的診斷訊息（錯誤）將自動包含在上下文中。您隨時可以使用 @problems 手動包含所有工作區診斷。"
+			},
+			"maxMessages": {
+				"label": "最大診斷訊息數",
+				"description": "每個檔案包含的最大診斷訊息數。此限制適用於自動包含（當核取方塊啟用時）和手動 @problems 提及。較高的值提供更多上下文，但會增加權杖使用量。",
+				"resetTooltip": "重設為預設值 (50)",
+				"unlimited": "無限制診斷訊息",
+				"unlimitedLabel": "無限制"
+			},
+			"delayAfterWrite": {
+				"label": "寫入後延遲以允許診斷程式偵測潛在問題",
+				"description": "在繼續之前寫入檔案後等待的時間，允許診斷工具處理變更並偵測問題。"
+			}
+		},
 		"condensingThreshold": {
 			"label": "壓縮觸發閾值",
 			"selectProfile": "設定檔案閾值",
@@ -493,6 +538,16 @@
 			"profileDescription": "僅此檔案的自訂閾值（覆蓋全域預設）",
 			"inheritDescription": "此檔案繼承全域預設閾值（{{threshold}}%）",
 			"usesGlobal": "（使用全域 {{threshold}}%）"
+		},
+		"maxImageFileSize": {
+			"label": "最大圖像檔案大小",
+			"mb": "MB",
+			"description": "read file工具可以處理的圖像檔案的最大大小（以MB為單位）。"
+		},
+		"maxTotalImageSize": {
+			"label": "圖片總大小上限",
+			"mb": "MB",
+			"description": "單次 read_file 操作中處理的所有圖片的最大累計大小限制（MB）。讀取多張圖片時，每張圖片的大小會累加到總大小中。如果包含另一張圖片會超過此限制，則會跳過該圖片。"
 		}
 	},
 	"terminal": {
@@ -577,6 +632,10 @@
 				"label": "比對精確度",
 				"description": "此滑桿控制套用差異時程式碼區段的比對精確度。較低的數值允許更彈性的比對，但也會增加錯誤取代的風險。使用低於 100% 的數值時請特別謹慎。"
 			}
+		},
+		"todoList": {
+			"label": "啟用待辦事項清單工具",
+			"description": "啟用後，Roo 可以建立和管理待辦事項清單來追蹤任務進度。這有助於將複雜任務組織成可管理的步驟。"
 		}
 	},
 	"experimental": {
@@ -611,6 +670,10 @@
 		"MULTI_FILE_APPLY_DIFF": {
 			"name": "啟用並行檔案編輯",
 			"description": "啟用後 Roo 可在單個請求中編輯多個檔案。停用後 Roo 必須逐個編輯檔案。停用此功能有助於使用能力較弱的模型或需要更精確控制檔案修改時。"
+		},
+		"PREVENT_FOCUS_DISRUPTION": {
+			"name": "背景編輯",
+			"description": "啟用後可防止編輯器焦點中斷。檔案編輯會在背景進行，不會開啟 diff 檢視或搶奪焦點。您可以在 Roo 進行變更時繼續不受干擾地工作。檔案可能會在不獲得焦點的情況下開啟以捕獲診斷，或保持完全關閉。"
 		}
 	},
 	"promptCaching": {
@@ -718,5 +781,8 @@
 		"useCustomArn": "使用自訂 ARN..."
 	},
 	"includeMaxOutputTokens": "包含最大輸出 Token 數",
-	"includeMaxOutputTokensDescription": "在 API 請求中傳送最大輸出 Token 參數。某些提供商可能不支援此功能。"
+	"includeMaxOutputTokensDescription": "在 API 請求中傳送最大輸出 Token 參數。某些提供商可能不支援此功能。",
+	"limitMaxTokensDescription": "限制回應中的最大 Token 數量",
+	"maxOutputTokensLabel": "最大輸出 Token 數",
+	"maxTokensGenerateDescription": "回應中產生的最大 Token 數"
 }
