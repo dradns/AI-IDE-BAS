@@ -23,5 +23,9 @@
 		"allow": "Разрешить",
 		"deny": "Запретить"
 	},
-	"importSettings": "Импорт настроек"
+	"importSettings": "Импорт настроек",
+	"buttons": {
+		"aiIdeBasVideo": "AI IDE BAS - ИИ Агент для аналитиков",
+		"setupInstructions": "Инструкция по настройке"
+	}
 }

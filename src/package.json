@@ -3,7 +3,7 @@
 	"displayName": "AI IDE BAS",
 	"description": "IDE for analysts and architects",
 	"publisher": "8eton",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"icon": "assets/icons/bas-logo.png",
 	"aiKey": "InstrumentationKey=e8a16c83-dab4-48d4-bf92-408c9e579a85",
 	"galleryBanner": {

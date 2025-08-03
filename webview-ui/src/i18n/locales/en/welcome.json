@@ -23,5 +23,9 @@
 		"allow": "Allow",
 		"deny": "Deny"
 	},
-	"importSettings": "Import Settings"
+	"importSettings": "Import Settings",
+	"buttons": {
+		"aiIdeBasVideo": "AI IDE BAS - AI Agent for Analysts",
+		"setupInstructions": "Setup Instructions"
+	}
 }

@@ -55,7 +55,7 @@ async function main() {
 							["../.env", ".env", { optional: true }],
 							["node_modules/vscode-material-icons/generated", "assets/vscode-material-icons"],
 							["../webview-ui/audio", "webview-ui/audio"],
-							["../src/prompts", "prompts"],
+							["../roo-code/src/prompts", "prompts"],
 						],
 						srcDir,
 						buildDir,
@@ -79,7 +79,7 @@ async function main() {
 			name: "copyPrompts",
 			setup(build) {
 				build.onEnd(() => {
-					copyPaths([["../src/prompts", "prompts"]], srcDir, distDir)
+					copyPaths([["../roo-code/src/prompts", "prompts"]], srcDir, distDir)
 				})
 			},
 		},
