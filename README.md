@@ -22,6 +22,7 @@
 
 <a href="https://m.vk.com/ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Join%20VK-4C75A3?style=for-the-badge&logo=vk&logoColor=white" alt="Join VK"></a>
 <a href="https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" target="_blank"><img src="https://img.shields.io/badge/Join%20Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Join Instagram"></a>
+<a href="https://t.me/+IGUP0XsxRSBmY2Ri" target="_blank"><img src="https://img.shields.io/badge/Join%20Telegram-1C75A4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram"></a>
 
 </div>
 
@@ -88,11 +89,11 @@
 
 ---
 
-## Документация и сообщество
+## Cообщество
 
-- Полная документация: https://docs.aiidebas.com
 - VK: https://m.vk.com/ai_ide_bas
 - Instagram: https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==
+- Telegram: https://t.me/+IGUP0XsxRSBmY2Ri
 - GitHub Issues / Feature Requests
 
 ---
