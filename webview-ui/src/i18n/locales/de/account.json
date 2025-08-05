@@ -3,12 +3,12 @@
 	"profilePicture": "Profilbild",
 	"logOut": "Abmelden",
 	"testApiAuthentication": "API-Authentifizierung testen",
-	"signIn": "Mit Roo Code Cloud verbinden",
+	"signIn": "Mit AI IDE BAS Cloud verbinden",
 	"connect": "Verbinden",
-	"cloudBenefitsTitle": "Mit Roo Code Cloud verbinden",
+	"cloudBenefitsTitle": "Mit AI IDE BAS Cloud verbinden",
 	"cloudBenefitsSubtitle": "Synchronisiere deine Prompts und Telemetrie, um folgendes zu aktivieren:",
 	"cloudBenefitHistory": "Online-Aufgabenverlauf",
 	"cloudBenefitSharing": "Freigabe- und Kollaborationsfunktionen",
 	"cloudBenefitMetrics": "Aufgaben-, Token- und kostenbasierte Nutzungsmetriken",
-	"visitCloudWebsite": "Roo Code Cloud besuchen"
+	"visitCloudWebsite": "AI IDE BAS Cloud besuchen"
 }

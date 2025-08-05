@@ -9,11 +9,6 @@ export function RooCloudCTA() {
 			<div className="text-left">
 				<p>
 					<strong>{t("rooCloudCTA.title")}</strong>
-					<br />
-					<span>{t("rooCloudCTA.description")}</span>
-				</p>
-				<p>
-					<a href="https://roocode.com/cloud-waitlist">{t("rooCloudCTA.joinWaitlist")}</a>
 				</p>
 			</div>
 		</div>

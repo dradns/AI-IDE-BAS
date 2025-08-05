@@ -91,8 +91,6 @@ vi.mock("@src/components/welcome/RooCloudCTA", () => ({
 		return (
 			<div data-testid="roo-cloud-cta">
 				<div>rooCloudCTA.title</div>
-				<div>rooCloudCTA.description</div>
-				<div>rooCloudCTA.joinWaitlist</div>
 			</div>
 		)
 	},

@@ -18,7 +18,7 @@
 		"sharePublicly": "Поделиться публично",
 		"sharePubliclyDescription": "Любой, у кого есть ссылка, может получить доступ",
 		"connectToCloud": "Подключиться к облаку",
-		"connectToCloudDescription": "Войди в Roo Code Cloud, чтобы делиться задачами",
+		"connectToCloudDescription": "Войди в AI IDE BAS Cloud, чтобы делиться задачами",
 		"sharingDisabledByOrganization": "Обмен отключен организацией",
 		"shareSuccessOrganization": "Ссылка организации скопирована в буфер обмена",
 		"shareSuccessPublic": "Публичная ссылка скопирована в буфер обмена"
@@ -342,9 +342,7 @@
 		"ariaLabel": "Версия {{version}} - Нажмите, чтобы просмотреть примечания к выпуску"
 	},
 	"rooCloudCTA": {
-		"title": "Roo Code Cloud скоро появится!",
-		"description": "Запускайте удаленные агенты в облаке, получайте доступ к своим задачам из любого места, сотрудничайте с другими и многое другое.",
-		"joinWaitlist": "Присоединитесь к списку ожидания для получения раннего доступа."
+		"title": "AI IDE BAS Cloud скоро появится!"
 	},
 	"editMessage": {
 		"placeholder": "Редактировать сообщение..."

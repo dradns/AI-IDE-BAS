@@ -18,7 +18,7 @@
 		"sharePublicly": "公開分享",
 		"sharePubliclyDescription": "任何擁有連結的人都可存取",
 		"connectToCloud": "連接到雲端",
-		"connectToCloudDescription": "登入 Roo Code Cloud 以分享工作",
+		"connectToCloudDescription": "登入 AI IDE BAS Cloud 以分享工作",
 		"sharingDisabledByOrganization": "組織已停用分享功能",
 		"shareSuccessOrganization": "組織連結已複製到剪貼簿",
 		"shareSuccessPublic": "公開連結已複製到剪貼簿"
@@ -342,9 +342,7 @@
 		"ariaLabel": "版本 {{version}} - 點擊查看發布說明"
 	},
 	"rooCloudCTA": {
-		"title": "Roo Code Cloud 即將推出！",
-		"description": "在雲端執行遠端代理，隨時隨地存取您的工作，與他人協作等更多功能。",
-		"joinWaitlist": "加入等候名單以獲得早期存取權限。"
+		"title": "AI IDE BAS Cloud 即將推出！"
 	},
 	"editMessage": {
 		"placeholder": "編輯訊息..."

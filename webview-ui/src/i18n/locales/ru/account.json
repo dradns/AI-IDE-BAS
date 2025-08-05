@@ -3,12 +3,12 @@
 	"profilePicture": "Фото профиля",
 	"logOut": "Выход",
 	"testApiAuthentication": "Проверить аутентификацию API",
-	"signIn": "Подключиться к Roo Code Cloud",
+	"signIn": "Подключиться к AI IDE BAS Cloud",
 	"connect": "Подключиться",
-	"cloudBenefitsTitle": "Подключиться к Roo Code Cloud",
+	"cloudBenefitsTitle": "Подключиться к AI IDE BAS Cloud",
 	"cloudBenefitsSubtitle": "Синхронизируй свои промпты и телеметрию, чтобы включить:",
 	"cloudBenefitHistory": "Онлайн-история задач",
 	"cloudBenefitSharing": "Функции обмена и совместной работы",
 	"cloudBenefitMetrics": "Метрики использования на основе задач, токенов и затрат",
-	"visitCloudWebsite": "Посетить Roo Code Cloud"
+	"visitCloudWebsite": "Посетить AI IDE BAS Cloud"
 }
