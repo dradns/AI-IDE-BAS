@@ -704,7 +704,8 @@ export const webviewMessageHandler = async (
 			break
 		case "openExternal":
 			if (message.url) {
-				vscode.env.openExternal(vscode.Uri.parse(message.url))
+				// Используем openMention для обработки внешних ссылок с доверенными доменами
+				await openMention(message.url)
 			}
 			break
 		case "checkpointDiff":

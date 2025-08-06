@@ -195,36 +195,46 @@ const MarkdownBlock = memo(({ markdown }: MarkdownBlockProps) => {
 			},
 			a: ({ href, children, ...props }: any) => {
 				const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-					// Only process file:// protocol or local file paths
+					// Check if it's a local file path
 					const isLocalPath = href?.startsWith("file://") || href?.startsWith("/") || !href?.includes("://")
 
-					if (!isLocalPath) {
-						return
+					// Check if it's an external URL
+					const isExternalUrl = href?.startsWith("http://") || href?.startsWith("https://")
+
+					if (isLocalPath) {
+						e.preventDefault()
+
+						// Handle absolute vs project-relative paths
+						let filePath = href.replace("file://", "")
+
+						// Extract line number if present
+						const match = filePath.match(/(.*):(\d+)(-\d+)?$/)
+						let values = undefined
+						if (match) {
+							filePath = match[1]
+							values = { line: parseInt(match[2]) }
+						}
+
+						// Add ./ prefix if needed
+						if (!filePath.startsWith("/") && !filePath.startsWith("./")) {
+							filePath = "./" + filePath
+						}
+
+						vscode.postMessage({
+							type: "openFile",
+							text: filePath,
+							values,
+						})
+					} else if (isExternalUrl) {
+						e.preventDefault()
+
+						// Отправляем сообщение расширению для обработки внешней ссылки
+						vscode.postMessage({
+							type: "openExternal",
+							url: href,
+						})
 					}
-
-					e.preventDefault()
-
-					// Handle absolute vs project-relative paths
-					let filePath = href.replace("file://", "")
-
-					// Extract line number if present
-					const match = filePath.match(/(.*):(\d+)(-\d+)?$/)
-					let values = undefined
-					if (match) {
-						filePath = match[1]
-						values = { line: parseInt(match[2]) }
-					}
-
-					// Add ./ prefix if needed
-					if (!filePath.startsWith("/") && !filePath.startsWith("./")) {
-						filePath = "./" + filePath
-					}
-
-					vscode.postMessage({
-						type: "openFile",
-						text: filePath,
-						values,
-					})
+					// Для остальных ссылок используем обычное поведение браузера
 				}
 
 				return (

@@ -46,6 +46,25 @@ function getUrlErrorMessage(error: unknown): string {
 	return t("common:errors.url_fetch_failed", { error: errorMessage })
 }
 
+async function isTrustedDomain(url: string): Promise<boolean> {
+	try {
+		const parsedUrl = new URL(url)
+		const domain = parsedUrl.hostname
+
+		// Получаем список доверенных доменов из настроек
+		const trustedDomains = vscode.workspace.getConfiguration("ai-ide-bas").get<string[]>("trustedDomains") || []
+
+		// Проверяем, есть ли домен в списке доверенных
+		return trustedDomains.some((trustedDomain) => {
+			// Поддерживаем точное совпадение и поддомены
+			return domain === trustedDomain || domain.endsWith("." + trustedDomain)
+		})
+	} catch (error) {
+		console.error("Error parsing URL:", error)
+		return false
+	}
+}
+
 export async function openMention(mention?: string): Promise<void> {
 	if (!mention) {
 		return
@@ -70,7 +89,21 @@ export async function openMention(mention?: string): Promise<void> {
 	} else if (mention === "terminal") {
 		vscode.commands.executeCommand("workbench.action.terminal.focus")
 	} else if (mention.startsWith("http")) {
-		vscode.env.openExternal(vscode.Uri.parse(mention))
+		const isTrusted = await isTrustedDomain(mention)
+
+		if (isTrusted) {
+			// Для доверенных доменов пытаемся открыть без диалога
+			try {
+				await vscode.env.openExternal(vscode.Uri.parse(mention))
+			} catch (error) {
+				console.error("Error opening trusted domain:", error)
+				// Fallback к обычному способу
+				vscode.env.openExternal(vscode.Uri.parse(mention))
+			}
+		} else {
+			// Для недоверенных доменов - обычное поведение с диалогом
+			vscode.env.openExternal(vscode.Uri.parse(mention))
+		}
 	}
 }
 

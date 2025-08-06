@@ -407,6 +407,19 @@
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.useAgentRules.description%"
+				},
+				"ai-ide-bas.trustedDomains": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"youtube.com",
+						"www.youtube.com",
+						"telegra.ph",
+						"telegraph.com"
+					],
+					"description": "Список доменов, которые будут открываться без диалога подтверждения"
 				}
 			}
 		}
