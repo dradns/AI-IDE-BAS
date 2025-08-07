@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { vscode } from "@src/utils/vscode"
 
 interface InstructionsLinkProps {
@@ -12,12 +12,33 @@ export const InstructionsLink: React.FC<InstructionsLinkProps> = ({
 	title = "Инструкция по настройке",
 	className = "",
 }) => {
+	const [isLightTheme, setIsLightTheme] = useState(false)
+
+	useEffect(() => {
+		const checkTheme = () => {
+			setIsLightTheme(document.body.className.toLowerCase().includes("light"))
+		}
+
+		// Проверяем тему при монтировании
+		checkTheme()
+
+		// Создаем наблюдатель за изменениями класса body
+		const observer = new MutationObserver(checkTheme)
+		observer.observe(document.body, { attributes: true, attributeFilter: ["class"] })
+
+		return () => observer.disconnect()
+	}, [])
+
 	const handleClick = () => {
 		vscode.postMessage({
 			type: "openExternal",
 			url: instructionsUrl,
 		})
 	}
+
+	const buttonClasses = isLightTheme
+		? "w-full bg-white hover:bg-gray-100 active:bg-gray-200 text-blue-600 border border-blue-600 font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center gap-3 no-underline"
+		: "w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center gap-3 no-underline"
 
 	return (
 		<div className={`w-full max-w-md mx-auto my-4 ${className}`}>
@@ -29,7 +50,7 @@ export const InstructionsLink: React.FC<InstructionsLinkProps> = ({
 					e.preventDefault()
 					handleClick()
 				}}
-				className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center gap-3 no-underline">
+				className={buttonClasses}>
 				{/* Иконка документа */}
 				<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path
