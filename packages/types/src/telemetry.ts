@@ -68,6 +68,13 @@ export enum TelemetryEventName {
 	CODE_INDEX_ERROR = "Code Index Error",
 
 	VSIX_BUILD_COMPLETED = "VSIX Build Completed",
+
+	// Новые события для кнопок и режимов
+	NAVIGATION_BUTTON_CLICKED = "Navigation Button Clicked",
+	MODE_SELECTED = "Mode Selected",
+	MODE_NAVIGATION = "Mode Navigation",
+	MODE_MARKETPLACE_ACCESSED = "Mode Marketplace Accessed",
+	MODE_SETTINGS_ACCESSED = "Mode Settings Accessed",
 }
 
 /**
