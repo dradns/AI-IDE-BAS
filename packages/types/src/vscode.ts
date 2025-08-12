@@ -53,6 +53,9 @@ export const commandIds = [
 	"focusInput",
 	"acceptInput",
 	"focusPanel",
+
+	// Export utilities
+	"exportMarkdownToPdf",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]

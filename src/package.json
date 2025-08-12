@@ -3,7 +3,7 @@
 	"displayName": "AI IDE BAS",
 	"description": "IDE for analysts and architects",
 	"publisher": "8eton",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"icon": "assets/icons/bas-logo.png",
 	"aiKey": "InstrumentationKey=e8a16c83-dab4-48d4-bf92-408c9e579a85",
 	"galleryBanner": {
@@ -86,6 +86,11 @@
 			]
 		},
 		"commands": [
+			{
+				"command": "ai-ide-bas.exportMarkdownToPdf",
+				"title": "Export Markdown to PDF (with watermark)",
+				"category": "Markdown"
+			},
 			{
 				"command": "ai-ide-bas.plusButtonClicked",
 				"title": "%command.newTask.title%",
@@ -197,6 +202,17 @@
 				{
 					"submenu": "ai-ide-bas.contextMenu",
 					"group": "1"
+				},
+				{
+					"command": "ai-ide-bas.exportMarkdownToPdf",
+					"when": "resourceLangId == markdown",
+					"group": "navigation@99"
+				}
+			],
+			"editor/title/context": [
+				{
+					"command": "ai-ide-bas.exportMarkdownToPdf",
+					"when": "resourceLangId == markdown"
 				}
 			],
 			"ai-ide-bas.contextMenu": [

@@ -16,6 +16,7 @@ import { CodeIndexManager } from "../services/code-index/manager"
 import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
 import { t } from "../i18n"
+import { exportMarkdownToPdf } from "../integrations/misc/export-markdown-to-pdf"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -218,6 +219,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
 	},
+	exportMarkdownToPdf: () => exportMarkdownToPdf(),
 })
 
 export const openClineInNewTab = async ({ context, outputChannel }: Omit<RegisterCommandOptions, "provider">) => {
