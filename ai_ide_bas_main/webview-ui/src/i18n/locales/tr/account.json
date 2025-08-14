@@ -1,0 +1,14 @@
+{
+	"title": "Hesap",
+	"profilePicture": "Profil resmi",
+	"logOut": "Çıkış yap",
+	"testApiAuthentication": "API Kimlik Doğrulamayı Test Et",
+	"signIn": "AI IDE BAS Cloud'a bağlan",
+	"connect": "Bağlan",
+	"cloudBenefitsTitle": "AI IDE BAS Cloud'a bağlan",
+	"cloudBenefitsSubtitle": "Aşağıdakileri etkinleştirmek için promptlarını ve telemetriyi senkronize et:",
+	"cloudBenefitHistory": "Çevrimiçi görev geçmişi",
+	"cloudBenefitSharing": "Paylaşım ve işbirliği özellikleri",
+	"cloudBenefitMetrics": "Görev, token ve maliyet tabanlı kullanım metrikleri",
+	"visitCloudWebsite": "AI IDE BAS Cloud'u ziyaret et"
+}
