@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { vscode } from "@src/utils/vscode"
+import { telemetryClient } from "@src/utils/TelemetryClient"
+import { TelemetryEventName } from "@roo-code/types"
 
 interface InstructionsLinkProps {
 	instructionsUrl: string
@@ -30,6 +32,15 @@ export const InstructionsLink: React.FC<InstructionsLinkProps> = ({
 	}, [])
 
 	const handleClick = () => {
+		// Отправляем телеметрию клика по кнопке инструкции
+		telemetryClient.capture(TelemetryEventName.NAVIGATION_BUTTON_CLICKED, {
+			buttonType: "instructions",
+			buttonText: title,
+			buttonPosition: "bottom",
+			destination: "external_link",
+			timestamp: new Date().toISOString(),
+		})
+
 		vscode.postMessage({
 			type: "openExternal",
 			url: instructionsUrl,

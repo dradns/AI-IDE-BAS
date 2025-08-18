@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { vscode } from "@src/utils/vscode"
+import { telemetryClient } from "@src/utils/TelemetryClient"
+import { TelemetryEventName } from "@roo-code/types"
 
 interface YouTubeLinkProps {
 	videoUrl: string
@@ -26,6 +28,15 @@ export const YouTubeLink: React.FC<YouTubeLinkProps> = ({ videoUrl, title = "С�
 	}, [])
 
 	const handleClick = () => {
+		// Отправляем телеметрию клика по кнопке YouTube
+		telemetryClient.capture(TelemetryEventName.NAVIGATION_BUTTON_CLICKED, {
+			buttonType: "youtube_video",
+			buttonText: title,
+			buttonPosition: "top",
+			destination: "external_link",
+			timestamp: new Date().toISOString(),
+		})
+
 		vscode.postMessage({
 			type: "openExternal",
 			url: videoUrl,
