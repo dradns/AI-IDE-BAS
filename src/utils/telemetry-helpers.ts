@@ -20,15 +20,12 @@ export class TelemetryHelpers {
 	static trackNavigationButtonClick(buttonType: string, buttonText: string, buttonPosition?: string) {
 		if (!this.telemetryService) return
 
-		this.telemetryService.capture({
-			event: TelemetryEventName.NAVIGATION_BUTTON_CLICKED,
-			properties: {
-				buttonType,
-				buttonText,
-				buttonPosition,
-				destination: "external_link",
-				timestamp: new Date().toISOString(),
-			},
+		this.telemetryService.captureEvent(TelemetryEventName.NAVIGATION_BUTTON_CLICKED, {
+			buttonType,
+			buttonText,
+			buttonPosition,
+			destination: "external_link",
+			timestamp: new Date().toISOString(),
 		})
 	}
 
@@ -44,16 +41,13 @@ export class TelemetryHelpers {
 	) {
 		if (!this.telemetryService) return
 
-		this.telemetryService.capture({
-			event: TelemetryEventName.MODE_SELECTED,
-			properties: {
-				modeName,
-				modeFullName,
-				previousMode,
-				selectionMethod,
-				keyboardShortcut,
-				timestamp: new Date().toISOString(),
-			},
+		this.telemetryService.captureEvent(TelemetryEventName.MODE_SELECTED, {
+			modeName,
+			modeFullName,
+			previousMode,
+			selectionMethod,
+			keyboardShortcut,
+			timestamp: new Date().toISOString(),
 		})
 	}
 
@@ -68,15 +62,12 @@ export class TelemetryHelpers {
 	) {
 		if (!this.telemetryService) return
 
-		this.telemetryService.capture({
-			event: TelemetryEventName.MODE_NAVIGATION,
-			properties: {
-				navigationType,
-				currentMode,
-				targetMode,
-				keyboardShortcut,
-				timestamp: new Date().toISOString(),
-			},
+		this.telemetryService.captureEvent(TelemetryEventName.MODE_NAVIGATION, {
+			navigationType,
+			currentMode,
+			targetMode,
+			keyboardShortcut,
+			timestamp: new Date().toISOString(),
 		})
 	}
 
@@ -86,13 +77,10 @@ export class TelemetryHelpers {
 	static trackModeMarketplaceAccessed(accessMethod: "button_click" | "menu_navigation", currentMode?: string) {
 		if (!this.telemetryService) return
 
-		this.telemetryService.capture({
-			event: TelemetryEventName.MODE_MARKETPLACE_ACCESSED,
-			properties: {
-				accessMethod,
-				currentMode,
-				timestamp: new Date().toISOString(),
-			},
+		this.telemetryService.captureEvent(TelemetryEventName.MODE_MARKETPLACE_ACCESSED, {
+			accessMethod,
+			currentMode,
+			timestamp: new Date().toISOString(),
 		})
 	}
 
@@ -102,12 +90,9 @@ export class TelemetryHelpers {
 	static trackModeSettingsAccessed(currentMode?: string) {
 		if (!this.telemetryService) return
 
-		this.telemetryService.capture({
-			event: TelemetryEventName.MODE_SETTINGS_ACCESSED,
-			properties: {
-				currentMode,
-				timestamp: new Date().toISOString(),
-			},
+		this.telemetryService.captureEvent(TelemetryEventName.MODE_SETTINGS_ACCESSED, {
+			currentMode,
+			timestamp: new Date().toISOString(),
 		})
 	}
 
