@@ -122,6 +122,7 @@ async function renderHtmlToPdfWithWatermark(html: string, pdfPath: string): Prom
 
 async function resolveChromiumExecutablePath(): Promise<string | undefined> {
 	try {
+		// @ts-ignore
 		const pcrMod: any = await import("puppeteer-chromium-resolver")
 		const resolverFn = pcrMod?.PuppeteerChromiumResolver ?? pcrMod?.default ?? pcrMod
 		if (typeof resolverFn === "function") {
