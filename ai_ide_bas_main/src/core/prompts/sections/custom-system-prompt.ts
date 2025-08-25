@@ -2,6 +2,7 @@ import fs from "fs/promises"
 import path from "path"
 import { Mode } from "../../../shared/modes"
 import { fileExistsAtPath } from "../../../utils/fs"
+import * as vscode from "vscode"
 
 export type PromptVariables = {
 	workspace?: string
@@ -49,18 +50,57 @@ export function getSystemPromptFilePath(cwd: string, mode: Mode): string {
 	return path.join(cwd, ".roo", `system-prompt-${mode}`)
 }
 
+// Map mode slugs to built-in prompt filenames
+function getBuiltinPromptFilename(mode: Mode): string | undefined {
+	switch (mode) {
+		case "code":
+			return "ba.txt"
+		case "architect":
+			return "architect.txt"
+		case "ask":
+			return "sa.txt"
+		case "debug":
+			return "reviewer.txt"
+		case "designer":
+			return "designer.txt"
+		case "helper":
+			return "helper.txt"
+		case "pm":
+			return "pm.txt"
+		default:
+			return undefined
+	}
+}
+
 /**
  * Loads custom system prompt from a file at .roo/system-prompt-[mode slug]
- * If the file doesn't exist, returns an empty string
+ * If the file doesn't exist, tries to load from the extension's dist/prompts/[filename]
+ * If neither exists, returns an empty string
  */
 export async function loadSystemPromptFile(cwd: string, mode: Mode, variables: PromptVariables): Promise<string> {
-	const filePath = getSystemPromptFilePath(cwd, mode)
-	const rawContent = await safeReadFile(filePath)
-	if (!rawContent) {
-		return ""
+	// 1) Project-local override: .roo/system-prompt-[mode]
+	const projectFilePath = getSystemPromptFilePath(cwd, mode)
+	let rawContent = await safeReadFile(projectFilePath)
+	if (rawContent) {
+		return interpolatePromptContent(rawContent, variables)
 	}
-	const interpolatedContent = interpolatePromptContent(rawContent, variables)
-	return interpolatedContent
+
+	// 2) Built-in prompts packaged with the extension: dist/prompts/<mapped filename>
+	const filename = getBuiltinPromptFilename(mode)
+	if (filename) {
+		try {
+			const uri = vscode.Uri.joinPath(vscode.extensions.getExtension("8eton.ai-ide-bas")!.extensionUri, "dist", "prompts", filename)
+			const content = await fs.readFile(uri.fsPath, "utf-8")
+			rawContent = content.trim()
+			if (rawContent) {
+				return interpolatePromptContent(rawContent, variables)
+			}
+		} catch (err) {
+			// ignore, fallback to empty
+		}
+	}
+
+	return ""
 }
 
 /**

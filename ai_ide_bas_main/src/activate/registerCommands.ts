@@ -17,6 +17,8 @@ import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
 import { t } from "../i18n"
 import { exportMarkdownToPdf } from "../integrations/misc/export-markdown-to-pdf"
+import * as path from "path"
+import * as fs from "fs/promises"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -155,6 +157,64 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
 		if (!visibleProvider) return
 		visibleProvider.postMessageToWebview({ type: "action", action: "marketplaceButtonClicked" })
+	},
+	filesButtonClicked: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		TelemetryService.instance.captureTitleButtonClicked("files")
+
+		visibleProvider.postMessageToWebview({ type: "action", action: "filesButtonClicked" })
+	},
+	exportRoleInstructions: async () => {
+		try {
+			const visibleProvider = getVisibleProviderOrLog(outputChannel)
+			if (!visibleProvider) return
+
+			const workspaceRoot = visibleProvider.cwd || (await import("../utils/path")).getWorkspacePath()
+			if (!workspaceRoot) {
+				vscode.window.showErrorMessage("Нет открытой рабочей папки")
+				return
+			}
+
+			// Source: packaged dist/prompts directory
+			const srcPromptsUri = vscode.Uri.joinPath(context.extensionUri, "dist", "prompts")
+			let srcStats: any
+			try {
+				srcStats = await fs.stat(srcPromptsUri.fsPath)
+				if (!srcStats.isDirectory()) throw new Error("Папка dist/prompts не найдена в пакете")
+			} catch (e) {
+				vscode.window.showErrorMessage("В пакете не найдена папка dist/prompts")
+				return
+			}
+
+			// Target: workspace prompts at root
+			const dstPromptsDir = path.join(workspaceRoot, "prompts")
+			await fs.mkdir(dstPromptsDir, { recursive: true })
+
+			// Recursive copy of entire dist/prompts to project /prompts (overwrite)
+			const copyRecursive = async (src: string, dst: string) => {
+				const entries = await fs.readdir(src, { withFileTypes: true })
+				for (const entry of entries) {
+					const srcPath = path.join(src, entry.name)
+					const dstPath = path.join(dst, entry.name)
+					if (entry.isDirectory()) {
+						await fs.mkdir(dstPath, { recursive: true })
+						await copyRecursive(srcPath, dstPath)
+					} else if (entry.isFile()) {
+						await fs.copyFile(srcPath, dstPath)
+					}
+				}
+			}
+			await copyRecursive(srcPromptsUri.fsPath, dstPromptsDir)
+
+			vscode.window.showInformationMessage("Папка dist/prompts экспортирована в корень проекта как 'prompts'") 
+		} catch (error) {
+			vscode.window.showErrorMessage(`Не удалось экспортировать инструкции: ${error instanceof Error ? error.message : String(error)}`)
+		}
 	},
 	showHumanRelayDialog: (params: { requestId: string; promptText: string }) => {
 		const panel = getPanel()

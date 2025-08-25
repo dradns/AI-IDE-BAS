@@ -130,6 +130,7 @@ export interface ExtensionMessage {
 		| "promptsButtonClicked"
 		| "marketplaceButtonClicked"
 		| "accountButtonClicked"
+		| "filesButtonClicked"
 		| "didBecomeVisible"
 		| "focusInput"
 		| "switchTab"

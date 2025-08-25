@@ -79,7 +79,18 @@ async function main() {
 			name: "copyPrompts",
 			setup(build) {
 				build.onEnd(() => {
-					copyPaths([["../roo-code/src/prompts", "prompts"]], srcDir, distDir)
+					// Copy built-in prompts first, then overlay optional sources
+					copyPaths(
+						[
+							["../roo-code/src/prompts", "prompts"],
+							// Optionally include repository-level Modes directory with role subfolders
+							["../../Modes", "prompts", { optional: true }],
+							// Include repository-level .roo directory with rules (required for export)
+							["../../.roo", "prompts", { optional: true }],
+						],
+						srcDir,
+						distDir,
+					)
 				})
 			},
 		},

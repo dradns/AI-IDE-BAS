@@ -909,6 +909,11 @@ export class ClineProvider
 		await this.postStateToWebview()
 	}
 
+	public async postFilesAuthStatus() {
+		const isAuthorized = Boolean(await this.context.secrets.get("aiidebas.token"))
+		await this.postMessageToWebview({ type: "files:authChanged", isAuthorized })
+	}
+
 	// Provider Profile Management
 
 	getProviderProfileEntries(): ProviderSettingsEntry[] {

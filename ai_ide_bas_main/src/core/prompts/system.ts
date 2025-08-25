@@ -28,6 +28,7 @@ import {
 	addCustomInstructions,
 	markdownFormattingSection,
 } from "./sections"
+import { promises as fs } from "fs"
 
 // Helper function to get prompt component, filtering out empty objects
 export function getPromptComponent(
@@ -73,6 +74,44 @@ async function generatePrompt(
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
 	const { roleDefinition, baseInstructions } = getModeSelection(mode, promptComponent, customModeConfigs)
 
+	// Load built-in base instructions from dist/prompts if available
+	async function loadBuiltInModeInstructions(context: vscode.ExtensionContext, mode: Mode): Promise<string> {
+		const base = context.extensionUri
+		const candidates: Array<string> = (() => {
+			switch (mode) {
+				case "code":
+					return ["dist/prompts/ba.txt", "dist/prompts/BA/ba.txt"]
+				case "architect":
+					return ["dist/prompts/architect.txt", "dist/prompts/Architect/architect.txt"]
+				case "ask":
+					return ["dist/prompts/sa.txt", "dist/prompts/SA/SA.txt"]
+				case "debug":
+					return ["dist/prompts/review.txt", "dist/prompts/Reviewer/reviewer.txt"]
+				case "designer":
+					return ["dist/prompts/designer.txt", "dist/prompts/Designer/designer.txt"]
+				case "helper":
+					return ["dist/prompts/helper.txt", "dist/prompts/Helper/helper.txt"]
+				case "pm":
+					return ["dist/prompts/pm.txt", "dist/prompts/PM/pm.txt"]
+				default:
+					return []
+			}
+		})()
+
+		for (const rel of candidates) {
+			try {
+				const uri = vscode.Uri.joinPath(base, ...rel.split("/"))
+				const content = await fs.readFile(uri.fsPath, "utf-8")
+				const trimmed = content.trim()
+				if (trimmed) return trimmed
+			} catch {}
+		}
+		return ""
+	}
+
+	const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode)
+	const effectiveBaseInstructions = builtInModeInstructions
+
 	// Check if MCP functionality should be included
 	const hasMcpGroup = modeConfig.groups.some((groupEntry) => getGroupName(groupEntry) === "mcp")
 	const hasMcpServers = mcpHub && mcpHub.getServers().length > 0
@@ -94,18 +133,18 @@ ${markdownFormattingSection()}
 ${getSharedToolUseSection()}
 
 ${getToolDescriptionsForMode(
-	mode,
-	cwd,
-	supportsComputerUse,
-	codeIndexManager,
-	effectiveDiffStrategy,
-	browserViewportSize,
-	shouldIncludeMcp ? mcpHub : undefined,
-	customModeConfigs,
-	experiments,
-	partialReadsEnabled,
-	settings,
-)}
+		mode,
+		cwd,
+		supportsComputerUse,
+		codeIndexManager,
+		effectiveDiffStrategy,
+		browserViewportSize,
+		shouldIncludeMcp ? mcpHub : undefined,
+		customModeConfigs,
+		experiments,
+		partialReadsEnabled,
+		settings,
+	)}
 
 ${getToolUseGuidelinesSection(codeIndexManager)}
 
@@ -121,11 +160,11 @@ ${getSystemInfoSection(cwd)}
 
 ${getObjectiveSection(codeIndexManager, experiments)}
 
-${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
-	language: language ?? formatLanguage(vscode.env.language),
-	rooIgnoreInstructions,
-	settings,
-})}`
+${await addCustomInstructions(effectiveBaseInstructions, globalCustomInstructions || "", cwd, mode, {
+		language: language ?? formatLanguage(vscode.env.language),
+		rooIgnoreInstructions,
+		settings,
+	})}`
 
 	return basePrompt
 }
@@ -172,14 +211,14 @@ export const SYSTEM_PROMPT = async (
 
 	// If a file-based custom system prompt exists, use it
 	if (fileCustomSystemPrompt) {
-		const { roleDefinition, baseInstructions: baseInstructionsForFile } = getModeSelection(
+		const { roleDefinition } = getModeSelection(
 			mode,
 			promptComponent,
 			customModes,
 		)
 
 		const customInstructions = await addCustomInstructions(
-			baseInstructionsForFile,
+			"",
 			globalCustomInstructions || "",
 			cwd,
 			mode,

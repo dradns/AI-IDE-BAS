@@ -49,6 +49,7 @@ import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { getCommand } from "../../utils/commands"
+import { AiIdeBasFilesClient } from "../../services/files/client"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -708,6 +709,87 @@ export const webviewMessageHandler = async (
 				await openMention(message.url)
 			}
 			break
+		case "files:status": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			const isAuthorized = await client.isAuthorized()
+			await provider.postMessageToWebview({ type: "files:authChanged", isAuthorized })
+			break
+		}
+		case "files:login": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			const url = client.getLoginUrl()
+			await openMention(url)
+			break
+		}
+		case "files:logout": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			await client.logout()
+			await provider.postMessageToWebview({ type: "files:authChanged", isAuthorized: false })
+			break
+		}
+		case "files:list": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const files = await client.listFiles(message.values)
+				await provider.postMessageToWebview({ type: "files:list:result", files })
+			} catch (error) {
+				await provider.postMessageToWebview({ type: "files:error", error: (error as Error).message })
+			}
+			break
+		}
+		case "files:delete": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				await client.deleteFile(message.text!)
+				await provider.postMessageToWebview({ type: "files:delete:result", id: message.text })
+				// refresh list if we have last used projectName
+				const projectName: string | undefined = message.values?.projectName
+				const files = await client.listFiles({ projectName })
+				await provider.postMessageToWebview({ type: "files:list:result", files })
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				const status = anyErr?.response?.status
+				await provider.postMessageToWebview({ type: "files:error", error: detail, values: { status } })
+			}
+			break
+		}
+		case "files:chooseUpload": {
+			const fileUris = await vscode.window.showOpenDialog({ canSelectMany: true })
+			if (!fileUris || fileUris.length === 0) break
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const projectName: string | undefined = message.values?.projectName
+				for (const uri of fileUris) {
+					await client.uploadFile(uri.fsPath, projectName || "default")
+				}
+				const files = await client.listFiles({ projectName })
+				await provider.postMessageToWebview({ type: "files:list:result", files })
+			} catch (error) {
+				await provider.postMessageToWebview({ type: "files:error", error: (error as Error).message })
+			}
+			break
+		}
+		case "files:download": {
+			const id = message.text!
+			const dest = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.file(id) })
+			if (!dest) break
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				await client.downloadFile(id, dest.fsPath)
+			} catch (error) {
+				await provider.postMessageToWebview({ type: "files:error", error: (error as Error).message })
+			}
+			break
+		}
+		case "files:setToken": {
+			const token = (message.text || "").trim()
+			if (token) {
+				await provider.context.secrets.store("aiidebas.token", token)
+				await provider.postMessageToWebview({ type: "files:authChanged", isAuthorized: true })
+			}
+			break
+		}
 		case "checkpointDiff":
 			const result = checkoutDiffPayloadSchema.safeParse(message.payload)
 

@@ -34,6 +34,7 @@ export const commandIds = [
 	"mcpButtonClicked",
 	"historyButtonClicked",
 	"marketplaceButtonClicked",
+	"filesButtonClicked",
 	"popoutButtonClicked",
 	"accountButtonClicked",
 	"settingsButtonClicked",
@@ -56,6 +57,8 @@ export const commandIds = [
 
 	// Export utilities
 	"exportMarkdownToPdf",
+	// Export role instructions
+	"exportRoleInstructions",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]
