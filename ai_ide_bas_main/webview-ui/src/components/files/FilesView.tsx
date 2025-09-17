@@ -41,8 +41,22 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
     vscode.postMessage({ type: "openExternal", url })
   }, [])
 
-  // Удаление файлов отключено для релиза
-  const _unusedConfirmAndDelete = undefined as unknown as (file: FileItem) => void
+  const confirmAndDelete = useCallback((file: FileItem) => {
+    if (!file.id) {
+      setError("У файла отсутствует идентификатор")
+      return
+    }
+    const ok = window.confirm(`Удалить файл "${file.filename}"?`)
+    if (!ok) return
+    setLoading(true)
+    setNotice(undefined)
+    setError(undefined)
+    vscode.postMessage({
+      type: "files:delete",
+      text: file.id,
+      values: { projectName: projectName.trim() || undefined },
+    })
+  }, [projectName])
 
   useEffect(() => {
     const onMessage = (e: MessageEvent<any>) => {
@@ -122,7 +136,17 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
                     <button className="link text-xs" onClick={() => openPublicUrl(f.public_url)}>Открыть</button>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2" />
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => confirmAndDelete(f)}
+                    disabled={loading || !f.id}
+                    aria-label="Удалить файл"
+                    title="Удалить файл"
+                  >
+                    Удалить
+                  </button>
+                </div>
               </div>
             ))
           )}
