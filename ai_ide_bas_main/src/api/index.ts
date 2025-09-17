@@ -30,6 +30,7 @@ import {
 	ChutesHandler,
 	LiteLLMHandler,
 	ClaudeCodeHandler,
+	LoodsenHandler,
 } from "./providers"
 
 export interface SingleCompletionHandler {
@@ -85,6 +86,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 			return new OllamaHandler(options)
 		case "lmstudio":
 			return new LmStudioHandler(options)
+		case "loodsen":
+			return new LoodsenHandler(options)
 		case "gemini":
 			return new GeminiHandler(options)
 		case "openai-native":
@@ -116,7 +119,7 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 		case "litellm":
 			return new LiteLLMHandler(options)
 		default:
-			apiProvider satisfies "gemini-cli" | undefined
+			apiProvider satisfies "loodsen" | "gemini-cli" | undefined
 			return new AnthropicHandler(options)
 	}
 }

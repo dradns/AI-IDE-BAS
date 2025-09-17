@@ -13,6 +13,7 @@ import {
 	xaiModels,
 	groqModels,
 	chutesModels,
+	loodsenModels,
 } from "@roo-code/types"
 
 export const MODELS_BY_PROVIDER: Partial<Record<ProviderName, Record<string, ModelInfo>>> = {
@@ -28,6 +29,7 @@ export const MODELS_BY_PROVIDER: Partial<Record<ProviderName, Record<string, Mod
 	xai: xaiModels,
 	groq: groqModels,
 	chutes: chutesModels,
+	loodsen: loodsenModels,
 }
 
 export const PROVIDERS = [
@@ -46,6 +48,7 @@ export const PROVIDERS = [
 	{ value: "mistral", label: "Mistral" },
 	{ value: "lmstudio", label: "LM Studio" },
 	{ value: "ollama", label: "Ollama" },
+	{ value: "loodsen", label: "Loodsen AI" },
 	{ value: "unbound", label: "Unbound" },
 	{ value: "requesty", label: "Requesty" },
 	{ value: "human-relay", label: "Human Relay" },

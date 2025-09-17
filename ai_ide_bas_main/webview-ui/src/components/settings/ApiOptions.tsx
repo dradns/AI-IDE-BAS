@@ -23,6 +23,7 @@ import {
 	xaiDefaultModelId,
 	groqDefaultModelId,
 	chutesDefaultModelId,
+	loodsenDefaultModelId,
 	bedrockDefaultModelId,
 	vertexDefaultModelId,
 } from "@roo-code/types"
@@ -62,6 +63,7 @@ import {
 	HuggingFace,
 	LMStudio,
 	LiteLLM,
+	Loodsen,
 	Mistral,
 	Moonshot,
 	Ollama,
@@ -295,6 +297,7 @@ const ApiOptions = ({
 				xai: { field: "apiModelId", default: xaiDefaultModelId },
 				groq: { field: "apiModelId", default: groqDefaultModelId },
 				chutes: { field: "apiModelId", default: chutesDefaultModelId },
+				loodsen: { field: "apiModelId", default: loodsenDefaultModelId },
 				bedrock: { field: "apiModelId", default: bedrockDefaultModelId },
 				vertex: { field: "apiModelId", default: vertexDefaultModelId },
 				openai: { field: "openAiModelId" },
@@ -462,6 +465,10 @@ const ApiOptions = ({
 
 			{selectedProvider === "lmstudio" && (
 				<LMStudio apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
+			)}
+
+			{selectedProvider === "loodsen" && (
+				<Loodsen apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
 			)}
 
 			{selectedProvider === "deepseek" && (

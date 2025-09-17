@@ -2,7 +2,7 @@
 	"name": "ai-ide-bas",
 	"displayName": "AI IDE BAS",
 	"description": "IDE for analysts and architects",
-	"publisher": "8eton",
+	"publisher": "Aleksandr Mitin",
 	"version": "0.1.0",
 	"icon": "assets/icons/bas-logo.png",
 	"aiKey": "InstrumentationKey=e8a16c83-dab4-48d4-bf92-408c9e579a85",
@@ -15,7 +15,7 @@
 		"node": "20.19.2"
 	},
 	"author": {
-		"name": "8eton"
+		"name": "Aleksandr Mitin"
 	},
 	"extensionPack": [
 		"jebbs.plantuml",

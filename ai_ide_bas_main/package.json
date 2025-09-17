@@ -1,8 +1,10 @@
 {
-	"name": "ai-ide-bas",
+	"name": "ai-ide-bas-loodsen",
+	"version": "1.0.0",
 	"packageManager": "pnpm@10.8.1",
 	"engines": {
-		"node": "20.19.2"
+		"vscode": "^1.90.0",
+		"node": "22.16.0"
 	},
 	"extensionPack": [
 		"jebbs.plantuml",
