@@ -10,7 +10,7 @@ mock/
 .DS_Store
 
 # IDEs
-.idea
+.idea/
 
 # Local prompts and rules
 /local-prompts
