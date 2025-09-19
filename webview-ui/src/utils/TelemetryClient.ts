@@ -5,6 +5,7 @@ import { TelemetrySetting } from "@roo/TelemetrySetting"
 class TelemetryClient {
 	private static instance: TelemetryClient
 	private static telemetryEnabled: boolean = false
+	private sessionId?: string
 
 	public updateTelemetryState(
 		telemetrySetting: TelemetrySetting,
@@ -31,11 +32,12 @@ class TelemetryClient {
 					try {
 						posthog.register_once({ appVersion: (window as any)?.APP_VERSION })
 						posthog.register({ platform: navigator.platform, editorName: "VSCode Webview" })
-						posthog.capture("App Session Started", { sessionId: this.sessionId })
+						// Поймаем активацию UI (webview). Клиент на стороне extensionHost уже отправил EXTENSION_ACTIVATED; это будет дополнительно как UI session
+						posthog.capture("Extension Activated", this.baseProps())
 						this.startHeartbeat()
 						window.addEventListener("beforeunload", () => {
 							try {
-								posthog.capture("App Session Ended", { sessionId: this.sessionId })
+								posthog.capture("UI Session Ended", { sessionId: this.sessionId })
 							} catch (_e) {
 								/* noop */
 							}
@@ -54,6 +56,14 @@ class TelemetryClient {
 		}
 	}
 
+	private baseProps() {
+		return {
+			sessionId: this.sessionId,
+			platform: navigator.platform,
+			version: (window as any)?.APP_VERSION,
+		}
+	}
+
 	public static getInstance(): TelemetryClient {
 		if (!TelemetryClient.instance) {
 			TelemetryClient.instance = new TelemetryClient()
@@ -62,7 +72,6 @@ class TelemetryClient {
 		return TelemetryClient.instance
 	}
 
-	private sessionId?: string
 	private heartbeatTimer?: any
 
 	public getSessionId(): string | undefined {
@@ -94,7 +103,8 @@ class TelemetryClient {
 	public capture(eventName: string, properties?: Record<string, any>) {
 		if (TelemetryClient.telemetryEnabled) {
 			try {
-				posthog.capture(eventName, properties)
+				const payload = { ...this.baseProps(), ...(properties || {}) }
+				posthog.capture(eventName, payload)
 			} catch (_error) {
 				// Silently fail if there's an error capturing an event.
 			}

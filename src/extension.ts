@@ -61,6 +61,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	extensionContext = context
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)
+
+	// Экспортируем context в глобальную область для TelemetryClient (без цикла зависимостей)
+	;(global as unknown as { __vscodeExtensionContext?: vscode.ExtensionContext }).__vscodeExtensionContext = context
+
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
 
 	// Initialize Azure telemetry if aiKey is available
@@ -107,12 +111,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	try {
 		telemetryService.register(new PostHogTelemetryClient(true)) // Enable debug mode
 
-		// Initialize telemetry with default settings to enable early event capture
-		// This will be updated when webview launches with user preferences
-		telemetryService.updateTelemetryState(true) // Enable by default for debugging
+		// Initialize telemetry with default settings; реальная настройка придёт позже из webview
+		telemetryService.updateTelemetryState(true)
 
-		// Webview handles 'Extension Activated' with Session ID; avoid host-side duplicate emit
-		console.info("[Extension] Skipping host-side 'Extension Activated'; webview will emit with session.")
+		// Зафиксировать первичную активацию; сам клиент определит activated vs relaunch по дневному счётчику
+		telemetryService.captureEvent(TelemetryEventName.EXTENSION_ACTIVATED, {
+			source: "extensionHost",
+		})
 	} catch (error) {
 		console.warn("Failed to register PostHogTelemetryClient:", error)
 	}

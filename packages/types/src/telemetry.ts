@@ -71,6 +71,7 @@ export enum TelemetryEventName {
 
 	// Extension lifecycle events
 	EXTENSION_ACTIVATED = "Extension Activated",
+	EXTENSION_RELAUNCH = "Extension Relaunch",
 
 	// Новые события для кнопок и режимов
 	NAVIGATION_BUTTON_CLICKED = "Navigation Button Clicked",
@@ -181,6 +182,7 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			TelemetryEventName.CUSTOM_MODE_CREATED,
 			TelemetryEventName.VSIX_BUILD_COMPLETED,
 			TelemetryEventName.EXTENSION_ACTIVATED,
+			TelemetryEventName.EXTENSION_RELAUNCH,
 		]),
 		properties: telemetryPropertiesSchema,
 	}),

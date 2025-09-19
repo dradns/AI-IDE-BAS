@@ -60,6 +60,10 @@ export class TelemetryService {
 		this.clients.forEach((client) => client.capture({ event: eventName, properties }))
 	}
 
+	public captureExtensionLifecycle(): void {
+		this.captureEvent(TelemetryEventName.EXTENSION_ACTIVATED)
+	}
+
 	public captureTaskCreated(taskId: string): void {
 		this.captureEvent(TelemetryEventName.TASK_CREATED, { taskId })
 	}
