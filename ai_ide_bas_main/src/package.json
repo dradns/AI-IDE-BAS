@@ -2,7 +2,7 @@
 	"name": "ai-ide-bas",
 	"displayName": "AI IDE BAS LOODSEN",
 	"description": "IDE for analysts and architects, loodsen version",
-	"publisher": "Aleksandr Mitin",
+	"publisher": "aleksandrmitin",
 	"version": "0.1.0",
 	"icon": "assets/icons/bas-logo.png",
 	"aiKey": "InstrumentationKey=e8a16c83-dab4-48d4-bf92-408c9e579a85",
