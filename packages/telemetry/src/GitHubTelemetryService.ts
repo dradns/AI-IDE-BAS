@@ -1,7 +1,5 @@
 import * as vscode from "vscode"
 
-import * as vscode from "vscode"
-
 import { GitHubRepoProperties } from "@roo-code/types"
 
 import { GitHubAnalyticsService } from "./GitHubAnalyticsService.js"
