@@ -341,15 +341,15 @@ export const registerGitHubCommands = (context: vscode.ExtensionContext) => {
 						// Show results
 						const message =
 							`Repository Health Score: ${insights.healthScore.toFixed(1)}/100\n\n` +
-							`Insights:\n${insights.insights.map((i) => `• ${i}`).join("\n")}\n\n` +
-							`Recommendations:\n${insights.recommendations.map((r) => `• ${r}`).join("\n")}\n\n` +
+							`Insights:\n${insights.insights.map((i: string) => `• ${i}`).join("\n")}\n\n` +
+							`Recommendations:\n${insights.recommendations.map((r: string) => `• ${r}`).join("\n")}\n\n` +
 							`Predictions (7 days):\n• Stars: ${insights.predictions.predictedStars.toFixed(0)} (${(insights.predictions.confidence * 100).toFixed(0)}% confidence)\n` +
 							`• Forks: ${insights.predictions.predictedForks.toFixed(0)}`
 
-						vscode.window.showInformationMessage(message, "View Details").then((selection) => {
+						vscode.window.showInformationMessage(message, "View Details").then(async (selection) => {
 							if (selection === "View Details") {
 								// Open a new document with detailed analysis
-								const doc = vscode.workspace.openTextDocument({
+								const doc = await vscode.workspace.openTextDocument({
 									content: `# GitHub Repository Analysis\n\n${message.replace(/\n/g, "\n\n")}`,
 									language: "markdown",
 								})
@@ -398,10 +398,10 @@ ${insights.summary.peakStarsDay ? `- Peak stars day: ${insights.summary.peakStar
 ${insights.summary.peakForksDay ? `- Peak forks day: ${insights.summary.peakForksDay}` : ""}
 
 ## Current Insights
-${insights.insights.map((i) => `- ${i}`).join("\n")}
+${insights.insights.map((i: string) => `- ${i}`).join("\n")}
 
 ## Recommendations
-${insights.recommendations.map((r) => `- ${r}`).join("\n")}
+${insights.recommendations.map((r: string) => `- ${r}`).join("\n")}
 
 ## Growth Predictions (7 days)
 - Predicted stars: ${insights.predictions.predictedStars.toFixed(0)}
@@ -411,7 +411,7 @@ ${insights.recommendations.map((r) => `- ${r}`).join("\n")}
 ## Recent Data Points
 ${historicalData
 	.slice(-10)
-	.map((d) => `- ${d.date}: ${d.stars_count} stars, ${d.forks_count} forks`)
+	.map((d: any) => `- ${d.date}: ${d.stars_count} stars, ${d.forks_count} forks`)
 	.join("\n")}
 `
 
