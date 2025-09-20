@@ -73,6 +73,10 @@ export enum TelemetryEventName {
 	EXTENSION_ACTIVATED = "Extension Activated",
 	EXTENSION_RELAUNCH = "Extension Relaunch",
 
+	// Retention/Churn events
+	FIRST_ACTIVATION = "First Activation",
+	USER_RETURNED = "User Returned",
+
 	// Новые события для кнопок и режимов
 	NAVIGATION_BUTTON_CLICKED = "Navigation Button Clicked",
 	MODE_SELECTED = "Mode Selected",
@@ -183,6 +187,8 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			TelemetryEventName.VSIX_BUILD_COMPLETED,
 			TelemetryEventName.EXTENSION_ACTIVATED,
 			TelemetryEventName.EXTENSION_RELAUNCH,
+			TelemetryEventName.FIRST_ACTIVATION,
+			TelemetryEventName.USER_RETURNED,
 		]),
 		properties: telemetryPropertiesSchema,
 	}),

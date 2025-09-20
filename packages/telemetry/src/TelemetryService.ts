@@ -64,6 +64,26 @@ export class TelemetryService {
 		this.captureEvent(TelemetryEventName.EXTENSION_ACTIVATED)
 	}
 
+	/**
+	 * Captures first activation event for retention analysis
+	 * @param properties Additional properties for first activation
+	 */
+	public captureFirstActivation(properties?: Record<string, unknown>): void {
+		this.captureEvent(TelemetryEventName.FIRST_ACTIVATION, properties)
+	}
+
+	/**
+	 * Captures user returned event for retention analysis
+	 * @param daysAbsent Number of days user was absent
+	 * @param properties Additional properties for user return
+	 */
+	public captureUserReturned(daysAbsent: number, properties?: Record<string, unknown>): void {
+		this.captureEvent(TelemetryEventName.USER_RETURNED, {
+			days_absent: daysAbsent,
+			...properties,
+		})
+	}
+
 	public captureTaskCreated(taskId: string): void {
 		this.captureEvent(TelemetryEventName.TASK_CREATED, { taskId })
 	}

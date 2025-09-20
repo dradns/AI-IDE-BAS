@@ -4,6 +4,7 @@ import * as vscode from "vscode"
 import { TelemetryEventName, type TelemetryEvent } from "@roo-code/types"
 
 import { BaseTelemetryClient } from "./BaseTelemetryClient"
+import { ChurnPredictor } from "./ChurnPredictor"
 
 /**
  * PostHogTelemetryClient handles telemetry event tracking for the Roo Code extension.
@@ -22,6 +23,10 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		DAILY_SESSION_COUNT: "telemetry:dailySessionCount",
 		INSTALL_SOURCE: "telemetry:installSource",
 		COUNTRY: "telemetry:country",
+		FIRST_ACTIVATION_SENT: "telemetry:firstActivationSent",
+		LAST_ACTIVATION_DATE: "telemetry:lastActivationDate",
+		USER_TIER: "telemetry:userTier",
+		FIRST_FEATURE_USED: "telemetry:firstFeatureUsed",
 	} as const
 
 	constructor(debug = false) {
@@ -72,13 +77,13 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		return true
 	}
 
-	private async getBaseProps(event: TelemetryEvent): Promise<Record<string, unknown>> {
+	private async getBaseProps(_event: TelemetryEvent): Promise<Record<string, unknown>> {
 		const dayKey = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
 		const ctx = (global as unknown as { __vscodeExtensionContext?: vscode.ExtensionContext })
 			.__vscodeExtensionContext
 		const globalState = ctx?.globalState
 
-		let lastDay = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_ACTIVE_DAY)
+		const lastDay = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_ACTIVE_DAY)
 		let sessionCount = globalState?.get<number>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.DAILY_SESSION_COUNT) ?? 0
 		let firstEver = globalState?.get<boolean>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_EVER_SESSION)
 
@@ -100,6 +105,8 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 
 		const country = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.COUNTRY)
 		const source = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.INSTALL_SOURCE)
+		const userTier = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.USER_TIER) ?? "free"
+		const firstFeatureUsed = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_FEATURE_USED)
 
 		const props = {
 			distinct_id: this.distinctId,
@@ -109,10 +116,115 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 			source,
 			sessionCount,
 			first_ever_session: firstEver,
+			user_tier: userTier,
+			first_feature_used: firstFeatureUsed,
 		}
 
 		// Для EXTENSION_ACTIVATED/RELAUNCH добавим event-type специфичные ключи позже при capture
 		return props
+	}
+
+	private async handleRetentionEvents(
+		eventName: string,
+		properties: Record<string, unknown>,
+		globalState?: vscode.Memento,
+	): Promise<void> {
+		if (!globalState) return
+
+		const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+		const firstActivationSent = globalState.get<boolean>(
+			PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_ACTIVATION_SENT,
+		)
+		const lastActivationDate = globalState.get<string>(
+			PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_ACTIVATION_DATE,
+		)
+
+		// Отправляем first_activation только один раз
+		if (!firstActivationSent && eventName === TelemetryEventName.EXTENSION_ACTIVATED) {
+			await this.client.capture({
+				distinctId: this.distinctId,
+				event: TelemetryEventName.FIRST_ACTIVATION,
+				properties: {
+					...properties,
+					activation_date: today,
+				},
+			})
+			globalState.update(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_ACTIVATION_SENT, true)
+		}
+
+		// Проверяем user_returned: если пользователь отсутствовал > 7 дней
+		if (lastActivationDate && eventName === TelemetryEventName.EXTENSION_ACTIVATED) {
+			const lastDate = new Date(lastActivationDate)
+			const currentDate = new Date(today)
+			const daysDiff = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
+
+			if (daysDiff >= 7) {
+				await this.client.capture({
+					distinctId: this.distinctId,
+					event: TelemetryEventName.USER_RETURNED,
+					properties: {
+						...properties,
+						days_absent: daysDiff,
+						return_date: today,
+					},
+				})
+			}
+		}
+
+		// Обновляем дату последней активации
+		if (eventName === TelemetryEventName.EXTENSION_ACTIVATED) {
+			globalState.update(PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_ACTIVATION_DATE, today)
+		}
+	}
+
+	private async trackFirstFeatureUsed(
+		eventName: string,
+		properties: Record<string, unknown>,
+		globalState?: vscode.Memento,
+	): Promise<void> {
+		if (!globalState) return
+
+		const firstFeatureUsed = globalState.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_FEATURE_USED)
+
+		// Если первая фича ещё не записана и это не системное событие
+		if (!firstFeatureUsed && !this.isSystemEvent(eventName)) {
+			globalState.update(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_FEATURE_USED, eventName)
+		}
+	}
+
+	private isSystemEvent(eventName: string): boolean {
+		const systemEvents = [
+			TelemetryEventName.EXTENSION_ACTIVATED,
+			TelemetryEventName.EXTENSION_RELAUNCH,
+			TelemetryEventName.FIRST_ACTIVATION,
+			TelemetryEventName.USER_RETURNED,
+		]
+		return systemEvents.includes(eventName as TelemetryEventName)
+	}
+
+	private async updateChurnPrediction(eventName: string, globalState?: vscode.Memento): Promise<void> {
+		if (!globalState || this.isSystemEvent(eventName)) return
+
+		// Estimate session duration (simplified - in real app would track actual duration)
+		const sessionDuration = 15 // minutes - placeholder
+
+		await ChurnPredictor.updateUsagePatterns(eventName, sessionDuration, globalState)
+
+		// Check churn risk and send alert if high
+		const churnRisk = await ChurnPredictor.calculateChurnRisk(globalState)
+		if (churnRisk.riskLevel === "high") {
+			// Send churn prediction event
+			await this.client.capture({
+				distinctId: this.distinctId,
+				event: "Churn Risk Detected",
+				properties: {
+					churn_probability: churnRisk.probability,
+					risk_level: churnRisk.riskLevel,
+					recommendations: churnRisk.recommendations,
+					prediction_date: new Date().toISOString().slice(0, 10),
+				},
+			})
+		}
 	}
 
 	public override async capture(event: TelemetryEvent): Promise<void> {
@@ -143,6 +255,17 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 				eventName =
 					sessionCount === 1 ? TelemetryEventName.EXTENSION_ACTIVATED : TelemetryEventName.EXTENSION_RELAUNCH
 			}
+
+			// Логика для first_activation и user_returned
+			const ctx = (global as unknown as { __vscodeExtensionContext?: vscode.ExtensionContext })
+				.__vscodeExtensionContext
+			await this.handleRetentionEvents(eventName, properties, ctx?.globalState)
+
+			// Отслеживаем первую использованную фичу
+			await this.trackFirstFeatureUsed(eventName, properties, ctx?.globalState)
+
+			// Обновляем паттерны использования для churn prediction
+			await this.updateChurnPrediction(eventName, ctx?.globalState)
 
 			await this.client.capture({
 				distinctId: this.distinctId,
@@ -181,6 +304,20 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 	}
 
 	public override async shutdown(): Promise<void> {
-		await this.client.shutdownAsync()
+		const anyClient = this.client as unknown as {
+			shutdownAsync?: () => Promise<void>
+			flushAsync?: () => Promise<void>
+			shutdown?: () => void
+		}
+		if (typeof anyClient.shutdownAsync === "function") {
+			await anyClient.shutdownAsync()
+			return
+		}
+		if (typeof anyClient.flushAsync === "function") {
+			await anyClient.flushAsync()
+		}
+		if (typeof anyClient.shutdown === "function") {
+			anyClient.shutdown()
+		}
 	}
 }

@@ -1,3 +1,4 @@
+/* eslint-disable no-var */
 import type { RooCodeAPI } from "@roo-code/types"
 
 declare global {
