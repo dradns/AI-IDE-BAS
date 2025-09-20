@@ -16,8 +16,8 @@ import { ScrollButton } from "@/components/ui"
 import ThemeToggle from "@/components/chromes/theme-toggle"
 
 interface NavBarProps {
-	stars: string | null
-	downloads: string | null
+	stars: string
+	downloads: string
 }
 
 export function NavBar({ stars, downloads }: NavBarProps) {
@@ -96,7 +96,7 @@ export function NavBar({ stars, downloads }: NavBarProps) {
 							target="_blank"
 							className="hidden items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground md:flex">
 							<RxGithubLogo className="h-4 w-4" />
-							{stars !== null && <span>{stars}</span>}
+							<span>{stars}</span>
 						</Link>
 					</div>
 					<Link
@@ -107,7 +107,7 @@ export function NavBar({ stars, downloads }: NavBarProps) {
 						<span>
 							Install <span className="font-black max-lg:text-xs">&middot;</span>
 						</span>
-						{downloads !== null && <span>{downloads}</span>}
+						<span>{downloads}</span>
 					</Link>
 				</div>
 
@@ -201,7 +201,7 @@ export function NavBar({ stars, downloads }: NavBarProps) {
 							className="inline-flex items-center gap-2 rounded-md p-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
 							onClick={() => setIsMenuOpen(false)}>
 							<RxGithubLogo className="h-5 w-5" />
-							{stars !== null && <span>{stars}</span>}
+							<span>{stars}</span>
 						</Link>
 						<div className="flex items-center rounded-md p-2 transition-colors hover:bg-accent">
 							<ThemeToggle />
@@ -212,7 +212,7 @@ export function NavBar({ stars, downloads }: NavBarProps) {
 							className="inline-flex items-center gap-2 rounded-md p-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
 							onClick={() => setIsMenuOpen(false)}>
 							<VscVscode className="h-5 w-5" />
-							{downloads !== null && <span>{downloads}</span>}
+							<span>{downloads}</span>
 						</Link>
 					</div>
 				</nav>

@@ -6,6 +6,7 @@ import { NavBar, Footer } from "@/components/chromes"
 export const revalidate = 3600
 
 export default async function Shell({ children }: { children: React.ReactNode }) {
+	// Use static values during build to avoid API call issues
 	const [stars, downloads] = await Promise.all([getGitHubStars(), getVSCodeDownloads()])
 
 	return (

@@ -17,7 +17,8 @@ import {
 export const revalidate = 3600
 
 export default async function Home() {
-	const downloads = await getVSCodeDownloads()
+	// Use static values during build to avoid API call issues
+	const downloads = await getVSCodeDownloads().catch(() => "10k+")
 
 	return (
 		<>

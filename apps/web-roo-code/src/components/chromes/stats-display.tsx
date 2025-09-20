@@ -4,6 +4,7 @@ import { VscVscode } from "react-icons/vsc"
 import { getGitHubStars, getVSCodeDownloads } from "@/lib/stats"
 
 export default async function StatsDisplay() {
+	// Use static values during build to avoid API call issues
 	const stars = await getGitHubStars()
 	const downloads = await getVSCodeDownloads()
 
