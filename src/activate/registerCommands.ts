@@ -297,3 +297,170 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	return tabProvider
 }
+
+/**
+ * GitHub Analytics Commands
+ */
+export const registerGitHubCommands = (context: vscode.ExtensionContext) => {
+	// Command to manually trigger GitHub analysis
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ai-ide-bas.github.analyze", async () => {
+			try {
+				const githubService = (global as unknown as { __githubTelemetryService?: any }).__githubTelemetryService
+
+				if (!githubService) {
+					vscode.window.showErrorMessage("GitHub Telemetry Service not initialized")
+					return
+				}
+
+				if (!githubService.isConfigured()) {
+					vscode.window.showErrorMessage(
+						"GitHub repository not configured. Please set GITHUB_REPO_OWNER and GITHUB_REPO_NAME environment variables.",
+					)
+					return
+				}
+
+				// Show progress
+				await vscode.window.withProgress(
+					{
+						location: vscode.ProgressLocation.Notification,
+						title: "Analyzing GitHub Repository",
+						cancellable: false,
+					},
+					async (progress) => {
+						progress.report({ increment: 0, message: "Collecting repository data..." })
+
+						await githubService.performDailyAnalysis()
+
+						progress.report({ increment: 50, message: "Analyzing metrics..." })
+
+						const insights = githubService.getRepositoryInsights()
+
+						progress.report({ increment: 100, message: "Analysis complete!" })
+
+						// Show results
+						const message =
+							`Repository Health Score: ${insights.healthScore.toFixed(1)}/100\n\n` +
+							`Insights:\n${insights.insights.map((i) => `• ${i}`).join("\n")}\n\n` +
+							`Recommendations:\n${insights.recommendations.map((r) => `• ${r}`).join("\n")}\n\n` +
+							`Predictions (7 days):\n• Stars: ${insights.predictions.predictedStars.toFixed(0)} (${(insights.predictions.confidence * 100).toFixed(0)}% confidence)\n` +
+							`• Forks: ${insights.predictions.predictedForks.toFixed(0)}`
+
+						vscode.window.showInformationMessage(message, "View Details").then((selection) => {
+							if (selection === "View Details") {
+								// Open a new document with detailed analysis
+								const doc = vscode.workspace.openTextDocument({
+									content: `# GitHub Repository Analysis\n\n${message.replace(/\n/g, "\n\n")}`,
+									language: "markdown",
+								})
+								vscode.window.showTextDocument(doc)
+							}
+						})
+					},
+				)
+			} catch (error) {
+				vscode.window.showErrorMessage(`GitHub analysis failed: ${error}`)
+			}
+		}),
+	)
+
+	// Command to show GitHub insights
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ai-ide-bas.github.insights", async () => {
+			try {
+				const githubService = (global as unknown as { __githubTelemetryService?: any }).__githubTelemetryService
+
+				if (!githubService) {
+					vscode.window.showErrorMessage("GitHub Telemetry Service not initialized")
+					return
+				}
+
+				const insights = githubService.getRepositoryInsights()
+				const historicalData = githubService.getHistoricalData()
+
+				if (historicalData.length === 0) {
+					vscode.window.showInformationMessage("No historical data available. Run analysis first.")
+					return
+				}
+
+				// Create detailed report
+				const report = `# GitHub Repository Insights
+
+## Health Score: ${insights.healthScore.toFixed(1)}/100
+
+## Summary Statistics
+- Total tracking days: ${insights.summary.totalDays}
+- Total stars gained: ${insights.summary.totalStarsGained}
+- Total forks gained: ${insights.summary.totalForksGained}
+- Average daily stars: ${insights.summary.averageDailyStars.toFixed(1)}
+- Average daily forks: ${insights.summary.averageDailyForks.toFixed(1)}
+${insights.summary.peakStarsDay ? `- Peak stars day: ${insights.summary.peakStarsDay}` : ""}
+${insights.summary.peakForksDay ? `- Peak forks day: ${insights.summary.peakForksDay}` : ""}
+
+## Current Insights
+${insights.insights.map((i) => `- ${i}`).join("\n")}
+
+## Recommendations
+${insights.recommendations.map((r) => `- ${r}`).join("\n")}
+
+## Growth Predictions (7 days)
+- Predicted stars: ${insights.predictions.predictedStars.toFixed(0)}
+- Predicted forks: ${insights.predictions.predictedForks.toFixed(0)}
+- Confidence: ${(insights.predictions.confidence * 100).toFixed(0)}%
+
+## Recent Data Points
+${historicalData
+	.slice(-10)
+	.map((d) => `- ${d.date}: ${d.stars_count} stars, ${d.forks_count} forks`)
+	.join("\n")}
+`
+
+				const doc = await vscode.workspace.openTextDocument({
+					content: report,
+					language: "markdown",
+				})
+				await vscode.window.showTextDocument(doc)
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to show insights: ${error}`)
+			}
+		}),
+	)
+
+	// Command to configure GitHub repository
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ai-ide-bas.github.configure", async () => {
+			try {
+				const owner = await vscode.window.showInputBox({
+					prompt: "Enter GitHub repository owner (e.g., 'dradns')",
+					placeHolder: "dradns",
+				})
+
+				if (!owner) return
+
+				const repo = await vscode.window.showInputBox({
+					prompt: "Enter GitHub repository name (e.g., 'AI-IDE-BAS')",
+					placeHolder: "AI-IDE-BAS",
+				})
+
+				if (!repo) return
+
+				const token = await vscode.window.showInputBox({
+					prompt: "Enter GitHub token (optional, for higher rate limits)",
+					placeHolder: "ghp_...",
+					password: true,
+				})
+
+				const githubService = (global as unknown as { __githubTelemetryService?: any }).__githubTelemetryService
+
+				if (githubService) {
+					await githubService.configureRepository(owner, repo, token)
+					vscode.window.showInformationMessage(`GitHub repository configured: ${owner}/${repo}`)
+				} else {
+					vscode.window.showErrorMessage("GitHub Telemetry Service not initialized")
+				}
+			} catch (error) {
+				vscode.window.showErrorMessage(`Configuration failed: ${error}`)
+			}
+		}),
+	)
+}

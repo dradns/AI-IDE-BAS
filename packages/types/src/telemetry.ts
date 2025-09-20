@@ -77,6 +77,11 @@ export enum TelemetryEventName {
 	FIRST_ACTIVATION = "First Activation",
 	USER_RETURNED = "User Returned",
 
+	// GitHub Repository events
+	GITHUB_REPO_SNAPSHOT = "GitHub Repository Snapshot",
+	GITHUB_REPO_ANOMALY_DETECTED = "GitHub Repository Anomaly Detected",
+	GITHUB_REPO_HEALTH_ALERT = "GitHub Repository Health Alert",
+
 	// Новые события для кнопок и режимов
 	NAVIGATION_BUTTON_CLICKED = "Navigation Button Clicked",
 	MODE_SELECTED = "Mode Selected",
@@ -122,6 +127,32 @@ export const gitPropertiesSchema = z.object({
 	defaultBranch: z.string().optional(),
 })
 
+export const githubRepoPropertiesSchema = z.object({
+	stars_count: z.number(),
+	forks_count: z.number(),
+	watchers_count: z.number(),
+	open_issues_count: z.number(),
+	open_pr_count: z.number(),
+	releases_total: z.number(),
+	delta_stars: z.number().optional(),
+	delta_forks: z.number().optional(),
+	delta_watchers: z.number().optional(),
+	delta_issues: z.number().optional(),
+	delta_pr: z.number().optional(),
+	delta_releases: z.number().optional(),
+	stars_7day_avg: z.number().optional(),
+	forks_7day_avg: z.number().optional(),
+	watchers_7day_avg: z.number().optional(),
+	issues_7day_avg: z.number().optional(),
+	pr_7day_avg: z.number().optional(),
+	releases_7day_avg: z.number().optional(),
+	health_index: z.number().optional(),
+	stars_forks_ratio: z.number().optional(),
+	anomaly_detected: z.boolean().optional(),
+	anomaly_type: z.string().optional(),
+	anomaly_severity: z.enum(["low", "medium", "high"]).optional(),
+})
+
 export const telemetryPropertiesSchema = z.object({
 	...appPropertiesSchema.shape,
 	...taskPropertiesSchema.shape,
@@ -130,6 +161,7 @@ export const telemetryPropertiesSchema = z.object({
 
 export type TelemetryProperties = z.infer<typeof telemetryPropertiesSchema>
 export type GitProperties = z.infer<typeof gitPropertiesSchema>
+export type GitHubRepoProperties = z.infer<typeof githubRepoPropertiesSchema>
 
 /**
  * TelemetryEvent
@@ -189,6 +221,9 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			TelemetryEventName.EXTENSION_RELAUNCH,
 			TelemetryEventName.FIRST_ACTIVATION,
 			TelemetryEventName.USER_RETURNED,
+			TelemetryEventName.GITHUB_REPO_SNAPSHOT,
+			TelemetryEventName.GITHUB_REPO_ANOMALY_DETECTED,
+			TelemetryEventName.GITHUB_REPO_HEALTH_ALERT,
 		]),
 		properties: telemetryPropertiesSchema,
 	}),
@@ -209,6 +244,17 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			cacheReadTokens: z.number().optional(),
 			cacheWriteTokens: z.number().optional(),
 			cost: z.number().optional(),
+		}),
+	}),
+	z.object({
+		type: z.enum([
+			TelemetryEventName.GITHUB_REPO_SNAPSHOT,
+			TelemetryEventName.GITHUB_REPO_ANOMALY_DETECTED,
+			TelemetryEventName.GITHUB_REPO_HEALTH_ALERT,
+		]),
+		properties: z.object({
+			...telemetryPropertiesSchema.shape,
+			...githubRepoPropertiesSchema.shape,
 		}),
 	}),
 ])

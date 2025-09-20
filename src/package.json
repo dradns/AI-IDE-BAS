@@ -195,6 +195,21 @@
 				"command": "ai-ide-bas.acceptInput",
 				"title": "%command.acceptInput.title%",
 				"category": "%configuration.title%"
+			},
+			{
+				"command": "ai-ide-bas.github.analyze",
+				"title": "Analyze GitHub Repository",
+				"category": "GitHub"
+			},
+			{
+				"command": "ai-ide-bas.github.insights",
+				"title": "Show GitHub Insights",
+				"category": "GitHub"
+			},
+			{
+				"command": "ai-ide-bas.github.configure",
+				"title": "Configure GitHub Repository",
+				"category": "GitHub"
 			}
 		],
 		"menus": {

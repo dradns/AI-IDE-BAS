@@ -15,7 +15,7 @@ try {
 }
 
 import { CloudService } from "@roo-code/cloud"
-import { TelemetryService, PostHogTelemetryClient } from "@roo-code/telemetry"
+import { TelemetryService, PostHogTelemetryClient, GitHubTelemetryService } from "@roo-code/telemetry"
 import { TelemetryEventName } from "@roo-code/types"
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
@@ -37,6 +37,7 @@ import { API } from "./extension/api"
 import {
 	handleUri,
 	registerCommands,
+	registerGitHubCommands,
 	registerCodeActions,
 	registerTerminalActions,
 	CodeActionProvider,
@@ -118,6 +119,40 @@ export async function activate(context: vscode.ExtensionContext) {
 		telemetryService.captureEvent(TelemetryEventName.EXTENSION_ACTIVATED, {
 			source: "extensionHost",
 		})
+
+		// Initialize GitHub Telemetry Service
+		try {
+			const githubOwner = process.env.GITHUB_REPO_OWNER || "dradns"
+			const githubRepo = process.env.GITHUB_REPO_NAME || "AI-IDE-BAS"
+			const githubToken = process.env.GITHUB_TOKEN
+
+			const githubTelemetryService = new GitHubTelemetryService(
+				githubOwner,
+				githubRepo,
+				context.globalState,
+				telemetryService,
+				githubToken,
+			)
+
+			// Store GitHub service globally for access from other parts of the extension
+			;(global as unknown as { __githubTelemetryService?: GitHubTelemetryService }).__githubTelemetryService =
+				githubTelemetryService
+
+			// Perform daily analysis if configured
+			if (githubTelemetryService.isConfigured()) {
+				// Run in background to avoid blocking extension activation
+				setTimeout(async () => {
+					try {
+						await githubTelemetryService.performDailyAnalysis()
+						outputChannel.appendLine("GitHub daily analysis completed successfully")
+					} catch (error) {
+						outputChannel.appendLine(`GitHub daily analysis failed: ${error}`)
+					}
+				}, 5000) // Wait 5 seconds after activation
+			}
+		} catch (error) {
+			console.warn("Failed to initialize GitHub Telemetry Service:", error)
+		}
 	} catch (error) {
 		console.warn("Failed to register PostHogTelemetryClient:", error)
 	}
@@ -186,6 +221,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	registerCommands({ context, outputChannel, provider })
+	registerGitHubCommands(context)
 
 	/**
 	 * We use the text document content provider API to show the left side for diff

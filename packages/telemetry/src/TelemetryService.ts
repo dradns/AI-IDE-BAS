@@ -251,6 +251,30 @@ export class TelemetryService {
 	}
 
 	/**
+	 * Captures GitHub repository snapshot event
+	 * @param properties GitHub repository properties
+	 */
+	public captureGitHubRepoSnapshot(properties: Record<string, unknown>): void {
+		this.captureEvent(TelemetryEventName.GITHUB_REPO_SNAPSHOT, properties)
+	}
+
+	/**
+	 * Captures GitHub repository anomaly detection event
+	 * @param properties Anomaly detection properties
+	 */
+	public captureGitHubRepoAnomaly(properties: Record<string, unknown>): void {
+		this.captureEvent(TelemetryEventName.GITHUB_REPO_ANOMALY_DETECTED, properties)
+	}
+
+	/**
+	 * Captures GitHub repository health alert event
+	 * @param properties Health alert properties
+	 */
+	public captureGitHubRepoHealthAlert(properties: Record<string, unknown>): void {
+		this.captureEvent(TelemetryEventName.GITHUB_REPO_HEALTH_ALERT, properties)
+	}
+
+	/**
 	 * Checks if telemetry is currently enabled
 	 * @returns Whether telemetry is enabled
 	 */
