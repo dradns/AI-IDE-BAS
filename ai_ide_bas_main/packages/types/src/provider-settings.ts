@@ -16,6 +16,7 @@ export const providerNames = [
 	"vertex",
 	"openai",
 	"ollama",
+	"loodsen",
 	"vscode-lm",
 	"lmstudio",
 	"gemini",
@@ -148,6 +149,11 @@ const ollamaSchema = baseProviderSettingsSchema.extend({
 	ollamaBaseUrl: z.string().optional(),
 })
 
+const loodsenSchema = baseProviderSettingsSchema.extend({
+	loodsenApiKey: z.string().optional(),
+	loodsenBaseUrl: z.string().optional(),
+})
+
 const vsCodeLmSchema = baseProviderSettingsSchema.extend({
 	vsCodeLmModelSelector: z
 		.object({
@@ -254,6 +260,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	vertexSchema.merge(z.object({ apiProvider: z.literal("vertex") })),
 	openAiSchema.merge(z.object({ apiProvider: z.literal("openai") })),
 	ollamaSchema.merge(z.object({ apiProvider: z.literal("ollama") })),
+	loodsenSchema.merge(z.object({ apiProvider: z.literal("loodsen") })),
 	vsCodeLmSchema.merge(z.object({ apiProvider: z.literal("vscode-lm") })),
 	lmStudioSchema.merge(z.object({ apiProvider: z.literal("lmstudio") })),
 	geminiSchema.merge(z.object({ apiProvider: z.literal("gemini") })),
@@ -284,6 +291,7 @@ export const providerSettingsSchema = z.object({
 	...vertexSchema.shape,
 	...openAiSchema.shape,
 	...ollamaSchema.shape,
+	...loodsenSchema.shape,
 	...vsCodeLmSchema.shape,
 	...lmStudioSchema.shape,
 	...geminiSchema.shape,

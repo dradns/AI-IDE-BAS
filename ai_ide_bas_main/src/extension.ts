@@ -62,6 +62,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
 
+	const testCommand = vscode.commands.registerCommand('ai-ide-bas.test', () => {
+		vscode.window.showInformationMessage("Привет Лоция")
+	})
+	context.subscriptions.push(testCommand)
+
 	// Initialize Azure telemetry if aiKey is available
 	try {
 		const { id, packageJSON } = context.extension
