@@ -17,6 +17,8 @@ import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
 import { t } from "../i18n"
 import { exportMarkdownToPdf } from "../integrations/misc/export-markdown-to-pdf"
+import { TelemetryEventName } from "@roo-code/types"
+import { runPosthogSetup, runPosthogAnalyze, runPosthogAlertTest } from "../services/posthog"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -69,8 +71,62 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 
 	for (const [id, callback] of Object.entries(getCommandsMap(options))) {
 		const command = getCommand(id as CommandId)
-		context.subscriptions.push(vscode.commands.registerCommand(command, callback))
+		// Wrap handler to emit COMMAND_EXECUTED
+		const wrapped = async (...args: unknown[]) => {
+			try {
+				TelemetryService.instance.captureEvent(TelemetryEventName.COMMAND_EXECUTED, {
+					command_id: command,
+				})
+			} catch {
+				// ignore telemetry failures
+			}
+			return callback(...args)
+		}
+		context.subscriptions.push(vscode.commands.registerCommand(command, wrapped))
 	}
+
+	// PostHog commands (VS Code palette)
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ai-ide-bas.posthog.setup", async () => {
+			const { outputChannel } = options
+			vscode.window.showInformationMessage("PostHog: запуск Setup Funnels…")
+			try {
+				await runPosthogSetup(outputChannel)
+				vscode.window.showInformationMessage("PostHog: Setup завершён успешно")
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				vscode.window.showErrorMessage(`PostHog: Setup ошибка: ${message}`)
+			}
+		}),
+	)
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ai-ide-bas.posthog.analyze", async () => {
+			const { outputChannel } = options
+			vscode.window.showInformationMessage("PostHog: запуск Analyze…")
+			try {
+				await runPosthogAnalyze(outputChannel)
+				vscode.window.showInformationMessage("PostHog: Analyze завершён успешно")
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				vscode.window.showErrorMessage(`PostHog: Analyze ошибка: ${message}`)
+			}
+		}),
+	)
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ai-ide-bas.posthog.alertTest", async () => {
+			const { outputChannel } = options
+			vscode.window.showInformationMessage("PostHog: запуск Alert Test…")
+			try {
+				await runPosthogAlertTest(outputChannel)
+				vscode.window.showInformationMessage("PostHog: Alert Test завершён успешно")
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				vscode.window.showErrorMessage(`PostHog: Alert Test ошибка: ${message}`)
+			}
+		}),
+	)
 }
 
 const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<CommandId, any> => ({

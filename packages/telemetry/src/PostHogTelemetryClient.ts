@@ -1,4 +1,5 @@
 import { PostHog } from "posthog-node"
+import * as path from "path"
 import * as vscode from "vscode"
 
 import { TelemetryEventName, type TelemetryEvent } from "@roo-code/types"
@@ -27,6 +28,9 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		LAST_ACTIVATION_DATE: "telemetry:lastActivationDate",
 		USER_TIER: "telemetry:userTier",
 		FIRST_FEATURE_USED: "telemetry:firstFeatureUsed",
+		EXTENSION_INSTALLED_SENT: "telemetry:extensionInstalledSent",
+		FIRST_ACTIVATION_TIMESTAMP: "telemetry:firstActivationTs",
+		LAST_COMMAND_TIMESTAMP: "telemetry:lastCommandTs",
 	} as const
 
 	constructor(debug = false) {
@@ -38,8 +42,9 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 			debug,
 		)
 
-		const apiKey = process.env.POSTHOG_API_KEY || ""
-		let host = process.env.POSTHOG_HOST || "https://us.i.posthog.com"
+		// SDK должен использовать только Project API Key (phc_...) из NEXT_PUBLIC_POSTHOG_KEY
+		const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY || ""
+		let host = process.env.NEXT_PUBLIC_POSTHOG_HOST || process.env.POSTHOG_HOST || "https://us.i.posthog.com"
 		// Нормализуем хост: протокол и завершающий слеш
 		try {
 			if (!/^https?:\/\//i.test(host)) {
@@ -62,6 +67,28 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		}
 
 		this.client = new PostHog(apiKey, { host })
+
+		// Валидация типа ключа: SDK должен быть phc_
+		try {
+			const channel = vscode.window.createOutputChannel("AI IDE BAS")
+			if (apiKey && apiKey.startsWith("phx_")) {
+				const msg =
+					"[PostHog][SDK] Обнаружен Personal API Key (phx_...). Для отправки событий используйте Project API Key (phc_...) в NEXT_PUBLIC_POSTHOG_KEY."
+				channel.appendLine(msg)
+				console.warn(msg)
+				vscode.window.showWarningMessage(
+					"PostHog SDK сконфигурирован с phx_ ключом — используйте phc_ для телеметрии",
+				)
+			}
+			if (apiKey && !apiKey.startsWith("phc_")) {
+				const msg =
+					"[PostHog][SDK] Ключ не похож на Project API Key (phc_...). Проверьте NEXT_PUBLIC_POSTHOG_KEY."
+				channel.appendLine(msg)
+				console.warn(msg)
+			}
+		} catch {
+			/* ignore */
+		}
 	}
 
 	/**
@@ -77,7 +104,7 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		return true
 	}
 
-	private async getBaseProps(_event: TelemetryEvent): Promise<Record<string, unknown>> {
+	private async getBaseProps(event: TelemetryEvent): Promise<Record<string, unknown>> {
 		const dayKey = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
 		const ctx = (global as unknown as { __vscodeExtensionContext?: vscode.ExtensionContext })
 			.__vscodeExtensionContext
@@ -108,7 +135,7 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		const userTier = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.USER_TIER) ?? "free"
 		const firstFeatureUsed = globalState?.get<string>(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_FEATURE_USED)
 
-		const props = {
+		const props: Record<string, unknown> = {
 			distinct_id: this.distinctId,
 			version: vscode.extensions.getExtension("RooCode.roo-code")?.packageJSON?.version ?? undefined,
 			platform: process.platform,
@@ -118,6 +145,36 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 			first_ever_session: firstEver,
 			user_tier: userTier,
 			first_feature_used: firstFeatureUsed,
+		}
+
+		// Time-to-next-step scaffolding
+		try {
+			const now = Date.now()
+			if (event.event === TelemetryEventName.EXTENSION_ACTIVATED) {
+				const firstActivationTs = globalState?.get<number>(
+					PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_ACTIVATION_TIMESTAMP,
+				)
+				if (!firstActivationTs) {
+					globalState?.update(PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_ACTIVATION_TIMESTAMP, now)
+				}
+			}
+			if (event.event === TelemetryEventName.COMMAND_EXECUTED) {
+				const firstActivationTs = globalState?.get<number>(
+					PostHogTelemetryClient.GLOBAL_STATE_KEYS.FIRST_ACTIVATION_TIMESTAMP,
+				)
+				if (firstActivationTs) {
+					props.time_to_command_ms = now - firstActivationTs
+				}
+				const lastCommandTs = globalState?.get<number>(
+					PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_COMMAND_TIMESTAMP,
+				)
+				if (lastCommandTs) {
+					props.time_since_prev_command_ms = now - lastCommandTs
+				}
+				globalState?.update(PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_COMMAND_TIMESTAMP, now)
+			}
+		} catch {
+			/* ignore */
 		}
 
 		// Для EXTENSION_ACTIVATED/RELAUNCH добавим event-type специфичные ключи позже при capture
@@ -138,6 +195,19 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 		const lastActivationDate = globalState.get<string>(
 			PostHogTelemetryClient.GLOBAL_STATE_KEYS.LAST_ACTIVATION_DATE,
 		)
+
+		// Отправляем extension_installed один раз на первой активации
+		const installedSent = globalState.get<boolean>(
+			PostHogTelemetryClient.GLOBAL_STATE_KEYS.EXTENSION_INSTALLED_SENT,
+		)
+		if (!installedSent && eventName === TelemetryEventName.EXTENSION_ACTIVATED) {
+			await this.client.capture({
+				distinctId: this.distinctId,
+				event: TelemetryEventName.EXTENSION_INSTALLED,
+				properties,
+			})
+			globalState.update(PostHogTelemetryClient.GLOBAL_STATE_KEYS.EXTENSION_INSTALLED_SENT, true)
+		}
 
 		// Отправляем first_activation только один раз
 		if (!firstActivationSent && eventName === TelemetryEventName.EXTENSION_ACTIVATED) {

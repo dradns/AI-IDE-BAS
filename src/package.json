@@ -210,6 +210,21 @@
 				"command": "ai-ide-bas.github.configure",
 				"title": "Configure GitHub Repository",
 				"category": "GitHub"
+			},
+			{
+				"command": "ai-ide-bas.posthog.setup",
+				"title": "PostHog: Setup Funnels",
+				"category": "PostHog"
+			},
+			{
+				"command": "ai-ide-bas.posthog.analyze",
+				"title": "PostHog: Run Analysis",
+				"category": "PostHog"
+			},
+			{
+				"command": "ai-ide-bas.posthog.alertTest",
+				"title": "PostHog: Send Alert Test",
+				"category": "PostHog"
 			}
 		],
 		"menus": {

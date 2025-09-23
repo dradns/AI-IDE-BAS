@@ -70,8 +70,12 @@ export enum TelemetryEventName {
 	VSIX_BUILD_COMPLETED = "VSIX Build Completed",
 
 	// Extension lifecycle events
+	EXTENSION_INSTALLED = "Extension Installed",
 	EXTENSION_ACTIVATED = "Extension Activated",
 	EXTENSION_RELAUNCH = "Extension Relaunch",
+
+	// Commands
+	COMMAND_EXECUTED = "Command Executed",
 
 	// Retention/Churn events
 	FIRST_ACTIVATION = "First Activation",
@@ -217,10 +221,12 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			TelemetryEventName.MODE_SETTINGS_CHANGED,
 			TelemetryEventName.CUSTOM_MODE_CREATED,
 			TelemetryEventName.VSIX_BUILD_COMPLETED,
+			TelemetryEventName.EXTENSION_INSTALLED,
 			TelemetryEventName.EXTENSION_ACTIVATED,
 			TelemetryEventName.EXTENSION_RELAUNCH,
 			TelemetryEventName.FIRST_ACTIVATION,
 			TelemetryEventName.USER_RETURNED,
+			TelemetryEventName.COMMAND_EXECUTED,
 		]),
 		properties: telemetryPropertiesSchema,
 	}),

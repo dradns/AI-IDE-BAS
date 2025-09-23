@@ -1,0 +1,27 @@
+name: PostHog Analysis
+
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run analysis
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ secrets.POSTHOG_PROJECT_ID }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+        run: node scripts/posthog/analyze.mjs | tee analysis-output.txt
+      - name: Upload analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: posthog-analysis
+          path: analysis-output.txt
+
