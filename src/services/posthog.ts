@@ -10,7 +10,6 @@ function getScriptsRoot(contextPath?: string): string {
 
 function ensureEnvLoaded(output: vscode.OutputChannel): void {
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		require("dotenv").config({ path: path.join(vscode.workspace.rootPath || process.cwd(), ".env") })
 		output.appendLine("[PostHog] .env загружен")
 	} catch (e) {

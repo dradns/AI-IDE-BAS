@@ -1,5 +1,4 @@
 import { PostHog } from "posthog-node"
-import * as path from "path"
 import * as vscode from "vscode"
 
 import { TelemetryEventName, type TelemetryEvent } from "@roo-code/types"
