@@ -60,8 +60,8 @@ export function Evals({
 		<div className="mx-auto flex max-w-screen-lg flex-col gap-8 p-8">
 			<div className="flex flex-col gap-4">
 				<div>
-					Roo Code tests each frontier model against{" "}
-					<a href="https://github.com/RooCodeInc/Roo-Code-Evals" className="underline">
+					AI IDE BAS tests each frontier model against{" "}
+					<a href="https://github.com/RooCodeInc/AI IDE BAS-Code-Evals" className="underline">
 						a suite of hundreds of exercises
 					</a>{" "}
 					across 5 programming languages with varying difficulty. These results can help you find the right

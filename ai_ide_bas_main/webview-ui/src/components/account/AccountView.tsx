@@ -45,7 +45,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						? (me as any)?.credits
 						: (userInfo as any)?.tokens
 
-	// const _rooLogoUri = (window as any).IMAGES_BASE_URI + "/roo-logo.svg" // unused after design change
+	// const _productLogoUri = (window as any).IMAGES_BASE_URI + "/product-logo.svg" // unused after design change
 
 	// Backend auth state + profile fetch
 	useEffect(() => {
