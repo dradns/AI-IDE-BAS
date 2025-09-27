@@ -1,6 +1,6 @@
 export async function getGitHubStars() {
 	try {
-		const res = await fetch("https://api.github.com/repos/RooCodeInc/Roo-Code")
+		const res = await fetch("https://api.github.com/repos/RooCodeInc/AI IDE BAS-Code")
 		const data = await res.json()
 
 		if (typeof data.stargazers_count !== "number") {
