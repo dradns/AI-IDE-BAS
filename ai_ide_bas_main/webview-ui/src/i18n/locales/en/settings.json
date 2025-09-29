@@ -340,6 +340,14 @@
 			"description": "Ollama allows you to run models locally on your computer. For instructions on how to get started, see their quickstart guide.",
 			"warning": "Note: Roo Code uses complex prompts and works best with Claude models. Less capable models may not work as expected."
 		},
+		"loodsen": {
+			"apiKey": "Your personal API key",
+			"getApiKey": "Get API key from Loodsen AI",
+			"baseUrl": "Base URL",
+			"modelId": "Model ID",
+			"description": "To get started, check out the quick guide.",
+			"warning": "Note: Roo Code uses complex prompts and works best with Claude models. Less capable models may not work as expected."
+		},
 		"unboundApiKey": "Unbound API Key",
 		"getUnboundApiKey": "Get Unbound API Key",
 		"unboundRefreshModelsSuccess": "Models list updated! You can now select from the latest models.",

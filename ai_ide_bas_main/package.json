@@ -1,6 +1,6 @@
 {
 	"name": "ai-ide-bas",
-	"version": "0.1.0",
+	"version": "0.0.1",
 	"packageManager": "pnpm@10.8.1",
 	"engines": {
 		"vscode": "^1.84.0",

@@ -33,7 +33,7 @@ export const Loodsen = ({ apiConfiguration, setApiConfigurationField }: LoodsenP
         value={apiConfiguration?.loodsenBaseUrl || ""}
         type="url"
         onInput={handleInputChange("loodsenBaseUrl")}
-        placeholder={t("settings:defaults.loodsenUrl")}
+        placeholder={t("settings:placeholders.baseUrl")}
         className="w-full">
         <label className="block font-medium mb-1">{t("settings:providers.loodsen.baseUrl")}</label>
       </VSCodeTextField>
@@ -43,14 +43,14 @@ export const Loodsen = ({ apiConfiguration, setApiConfigurationField }: LoodsenP
         onInput={handleInputChange("loodsenApiKey")}
         placeholder={t("settings:placeholders.apiKey")}
         className="w-full">
-        <label className="block font-medium mb-1">{t("settings:providers.loodsenApiKey")}</label>
+        <label className="block font-medium mb-1">{t("settings:providers.loodsen.apiKey")}</label>
       </VSCodeTextField>
       <div className="text-sm text-vscode-descriptionForeground -mt-2">
         {t("settings:providers.apiKeyStorageNotice")}
       </div>
       {!apiConfiguration?.loodsenApiKey && (
         <VSCodeButtonLink href="https://ai.ldsn.ru" appearance="secondary">
-          {t("settings:providers.getLoodsenApiKey")}
+          {t("settings:providers.loodsen.getApiKey")}
         </VSCodeButtonLink>
       )}
     </>
