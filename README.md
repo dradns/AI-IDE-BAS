@@ -58,16 +58,21 @@
 
 ## Быстрый старт
 
-1. Склонируйте проект из https://git01.loodsen.ru/loodsen/ai/ai-bas.
-2. Откройте проект в vscode. Проверьте что ваши версии nodejs и vscode соответствуют требованиям для расширения:
-		"vscode": "^1.84.0",
-		"node": "20.19.2"
-3. Установите зависимости запустив команду из корня проекта npm install
-4. Из файла ai_ide_bas_main/package.json в воле scripts запустите команду vsix, либо из терминала запустите `turbo vsix --log-order grouped --output-logs new-only`
-  Если сборка пройдет успешно - появится папка bin в которой будет находится файл установки с расширением .vsix
-5. Установите расширение в vscode через контекстное меню и опцию Install Extension VSIX
-6. Подключите провайдер ИИ, выбрав в настройках Loodsen AI.
-7. Запустите первое задание через командную палитру `AI IDE BAS: New Task`.
+1. Cкачать готовый [файл установки](https://git01.loodsen.ru/loodsen/ai/ai-bas/installer.vsix).
+<details> 
+  <summary>Способ ручного создания файла установки:</summary>
+    1. Склонируйте проект из https://git01.loodsen.ru/loodsen/ai/ai-bas.
+    2. Откройте проект в vscode. Проверьте что ваши версии nodejs и vscode соответствуют требованиям для расширения:
+      "vscode": "^1.84.0",
+      "node": "20.19.2"
+    3. Установите зависимости, запустив команду из корня проекта `npm install`
+    4. Из файла ai_ide_bas_main/package.json в поле scripts запустите команду vsix, либо из терминала запустите `turbo vsix --log-order grouped --output-logs new-only`
+    Если сборка пройдет успешно - появится папка bin, в которой будет находится файл установки с расширением .vsix
+</details>
+
+2. Установите расширение в vscode через контекстное меню и опцию Install Extension VSIX
+3. Подключите провайдер ИИ, выбрав в настройках Loodsen AI.
+4. Запустите первое задание через командную палитру `AI IDE BAS: New Task`.
 Для подробной информации обратитесь к [инструкции](https://telegra.ph/Instrukciya-po-ustanovke-i-nastrojke-AI-IDE-BAS-07-30)
 
 ---
