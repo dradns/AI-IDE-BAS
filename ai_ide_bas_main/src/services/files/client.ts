@@ -2,6 +2,8 @@ import axios, { AxiosInstance } from "axios"
 import FormData from "form-data"
 import * as vscode from "vscode"
 
+import { AIIDEBAS_EXTENSION_URI_SCHEME, AIIDEBAS_PLATFORM_STORAGE_KEY } from "../../shared/constants"
+
 const BASE_URL = "https://api.aiidebas.com/api/v1"
 
 export type FileItem = { id?: string; filename: string; public_url?: string | null; project?: string | null }
@@ -35,14 +37,20 @@ export class AiIdeBasFilesClient {
 		return await this.context.secrets.get("aiidebas.token")
 	}
 
+	private getPlatform(): string | undefined {
+		return this.context.workspaceState.get<string>(AIIDEBAS_PLATFORM_STORAGE_KEY) ?? undefined
+	}
+
 	public async isAuthorized(): Promise<boolean> {
 		return Boolean(await this.getToken())
 	}
 
 	public getLoginUrl(state?: string): string {
-		const cb = encodeURIComponent("vscode://8eton.ai-ide-bas/auth/callback")
+		const cb = encodeURIComponent(AIIDEBAS_EXTENSION_URI_SCHEME)
 		const s = state ? `&state=${encodeURIComponent(state)}` : ""
-		return `https://api.aiidebas.com/api/v1/login?redirect_uri=${cb}${s}`
+		const platform = this.getPlatform()
+		const platformQuery = platform ? `&platform=${encodeURIComponent(platform)}` : ""
+		return `https://api.aiidebas.com/api/v1/login?redirect_uri=${cb}${s}${platformQuery}`
 	}
 
 	public async logout(): Promise<void> {
@@ -92,5 +100,3 @@ export class AiIdeBasFilesClient {
 		return data
 	}
 }
-
-

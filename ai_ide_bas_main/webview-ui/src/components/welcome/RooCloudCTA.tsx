@@ -6,6 +6,7 @@ export function RooCloudCTA() {
 	// Keep translation context available for future localization
 	useTranslation("chat")
 	const [isAuthorized, setIsAuthorized] = useState<boolean>(false)
+	const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false)
 
 	// Track backend auth state for Files API
 	useEffect(() => {
@@ -13,6 +14,10 @@ export function RooCloudCTA() {
 			const message = e.data
 			if (message?.type === "files:authChanged") {
 				setIsAuthorized(Boolean(message.isAuthorized))
+				// Сбросить состояние загрузки при успешной авторизации
+				if (message.isAuthorized) {
+					setIsLoggingIn(false)
+				}
 			}
 		}
 
@@ -20,6 +25,18 @@ export function RooCloudCTA() {
 		vscode.postMessage({ type: "files:status" })
 		return () => window.removeEventListener("message", handler)
 	}, [])
+
+	// Обработчик нажатия кнопки авторизации
+	const handleLogin = () => {
+		setIsLoggingIn(true)
+		vscode.postMessage({ type: "files:login" })
+		
+		// Таймаут на случай, если пользователь закроет окно авторизации
+		// или что-то пойдет не так - сбросим состояние через 30 секунд
+		setTimeout(() => {
+			setIsLoggingIn(false)
+		}, 30000)
+	}
 
 	return (
 		<div className="border border-muted/20 px-4 py-3 flex flex-col gap-3">
@@ -88,20 +105,41 @@ export function RooCloudCTA() {
 
 			{/* Google sign-in */}
 			{!isAuthorized && (
-				<div className="flex justify-start">
-					<button
-						className="h-9 rounded-full px-4 inline-flex items-center gap-2 border border-vscode-editorWidget-border bg-[color:var(--vscode-editor-background)] hover:bg-vscode-list-hoverBackground"
-						onClick={() => vscode.postMessage({ type: "files:login" })}
-						aria-label="Sign in with Google">
-						{/* Google G logo */}
-						<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-							<path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.6 2 30.8 0 24 0 14.6 0 6.4 5.3 2.4 13l8.8 6.8C13 14.1 18.1 9.5 24 9.5z"/>
-							<path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-2.7-.4-4H24v8h12.7c-.6 3.1-2.4 5.7-5 7.4l7.7 6c4.5-4.2 7.1-10.4 7.1-17.4z"/>
-							<path fill="#FBBC05" d="M11.2 28.2C10.7 26.7 10.5 25 10.5 23s.2-3.7.7-5.2l-8.8-6.8C.8 14.8 0 18.3 0 23c0 4.7.8 8.2 2.4 12l8.8-6.8z"/>
-							<path fill="#34A853" d="M24 46c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6 0-11.1-4.1-12.8-9.6l-8.8 6.8C6.4 42.7 14.6 46 24 46z"/>
-						</svg>
-						<span className="text-sm">Sign in with Google</span>
-					</button>
+				<div className="flex flex-col gap-2">
+					<div className="flex justify-start">
+						<button
+							className="h-9 rounded-full px-4 inline-flex items-center gap-2 border border-vscode-editorWidget-border bg-[color:var(--vscode-editor-background)] hover:bg-vscode-list-hoverBackground disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+							onClick={handleLogin}
+							disabled={isLoggingIn}
+							aria-label="Sign in with Google">
+							{isLoggingIn ? (
+								<>
+									{/* Спиннер загрузки */}
+									<svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+									</svg>
+									<span className="text-sm">Открытие браузера...</span>
+								</>
+							) : (
+								<>
+									{/* Google G logo */}
+									<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+										<path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.6 2 30.8 0 24 0 14.6 0 6.4 5.3 2.4 13l8.8 6.8C13 14.1 18.1 9.5 24 9.5z"/>
+										<path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-2.7-.4-4H24v8h12.7c-.6 3.1-2.4 5.7-5 7.4l7.7 6c4.5-4.2 7.1-10.4 7.1-17.4z"/>
+										<path fill="#FBBC05" d="M11.2 28.2C10.7 26.7 10.5 25 10.5 23s.2-3.7.7-5.2l-8.8-6.8C.8 14.8 0 18.3 0 23c0 4.7.8 8.2 2.4 12l8.8-6.8z"/>
+										<path fill="#34A853" d="M24 46c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6 0-11.1-4.1-12.8-9.6l-8.8 6.8C6.4 42.7 14.6 46 24 46z"/>
+									</svg>
+									<span className="text-sm">Sign in with Google</span>
+								</>
+							)}
+						</button>
+					</div>
+					{isLoggingIn && (
+						<p className="text-xs text-vscode-descriptionForeground m-0">
+							💡 Проверьте, не открылось ли окно авторизации в браузере
+						</p>
+					)}
 				</div>
 			)}
 		</div>
