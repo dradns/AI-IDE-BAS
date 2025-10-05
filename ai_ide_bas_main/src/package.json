@@ -34,9 +34,13 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/santouch88/ide-bas-extension"
+		"url": "https://github.com/dradns/AI-IDE-BAS"
 	},
-	"homepage": "https://github.com/santouch88/ide-bas-extension",
+	"homepage": "https://aiidebas.com",
+	"bugs": {
+		"url": "https://t.me/+E2c8DPMkAyFjMjcy"
+	},
+	"license": "MIT",
 	"categories": [
 		"AI",
 		"Chat",
