@@ -1,8 +1,14 @@
 <div align="center">
 
-[English](../en/README.md) • **Русский** • [Deutsch](../de/README.md) • [Français](../fr/README.md) • [Español](../es/README.md)
+[English](https://github.com/dradns/AI-IDE-BAS/blob/main/ai_ide_bas_main/locales/en/README.md) • 
+**🇷🇺 Русский** • 
+[Deutsch](https://github.com/dradns/AI-IDE-BAS/blob/main/ai_ide_bas_main/locales/de/README.md) • 
+[Français](https://github.com/dradns/AI-IDE-BAS/blob/main/ai_ide_bas_main/locales/fr/README.md) • 
+[Español](https://github.com/dradns/AI-IDE-BAS/blob/main/ai_ide_bas_main/locales/es/README.md)
 
 </div>
+
+<br>
 
 <div align="center">
   <h1>AI IDE BAS</h1>
