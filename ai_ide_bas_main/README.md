@@ -8,8 +8,6 @@
 
 </div>
 
-<br>
-
 <div align="center">
   <h1>AI IDE BAS</h1>
   <p>
