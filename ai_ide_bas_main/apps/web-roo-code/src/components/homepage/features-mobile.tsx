@@ -58,7 +58,7 @@ export function FeaturesMobile() {
 			<div className="relative px-4">
 				<div className="overflow-hidden" ref={emblaRef}>
 					<div className="flex">
-						{features.map((feature, index) => (
+						{(features || []).map((feature, index) => (
 							<div className="flex min-w-0 flex-[0_0_100%] px-4" key={index}>
 								<div className="relative h-full min-h-[280px] rounded-2xl border border-border/50 bg-background/30 p-6 backdrop-blur-xl transition-colors duration-300 hover:border-border hover:bg-gray-900/20">
 									<div className="mb-2 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-500/5 to-cyan-500/5 p-2.5">
@@ -96,7 +96,7 @@ export function FeaturesMobile() {
 					</div>
 
 					<div className="flex gap-2">
-						{scrollSnaps.map((_, index) => (
+						{(scrollSnaps || []).map((_, index) => (
 							<button
 								key={index}
 								type="button"

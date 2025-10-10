@@ -130,7 +130,7 @@ export function Testimonials() {
 					whileInView="visible"
 					viewport={{ once: true }}>
 					<div className="relative grid grid-cols-1 gap-12 md:grid-cols-2">
-						{testimonials.map((testimonial, index) => (
+						{(testimonials || []).map((testimonial, index) => (
 							<motion.div
 								key={testimonial.id}
 								variants={itemVariants}

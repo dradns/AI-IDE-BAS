@@ -486,7 +486,14 @@
 						"www.youtube.com",
 						"telegra.ph",
 						"telegraph.com",
-						"api.aiidebas.com"
+						"api.aiidebas.com",
+						"aiidebas.com",
+						"t.me",
+						"github.com",
+						"www.github.com",
+						"instagram.com",
+						"www.instagram.com",
+						"vk.com"
 					],
 					"description": "Список доменов, которые будут открываться без диалога подтверждения"
 				}

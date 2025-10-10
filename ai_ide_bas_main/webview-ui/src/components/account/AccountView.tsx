@@ -12,6 +12,7 @@ import { useCopyToClipboard } from "@src/utils/clipboard"
 import { Button } from "@src/components/ui/button"
 import { Input } from "@src/components/ui/input"
 import { cn } from "@src/lib/utils"
+import { useStatusMessage } from "@src/hooks/useSafeVscodeMessage"
 
 type AccountViewProps = {
 	userInfo: CloudUserInfo | null
@@ -153,6 +154,9 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 
 	// const _productLogoUri = (window as any).IMAGES_BASE_URI + "/product-logo.svg" // unused after design change
 
+	// Безопасная отправка статусного сообщения с защитой от рекурсивных сбоев
+	useStatusMessage("files:status")
+
 	// Backend auth state + profile fetch + referral data
 	useEffect(() => {
 		const handler = (e: MessageEvent<any>) => {
@@ -206,7 +210,6 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		}
 
 		window.addEventListener("message", handler)
-		vscode.postMessage({ type: "files:status" })
 		return () => window.removeEventListener("message", handler)
 	}, [addToast])
 
@@ -245,7 +248,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		<div className="flex flex-col h-full bg-vscode-editor-background">
 			<div className="flex justify-between items-center px-4 pt-4 pb-2 flex-shrink-0">
 				<h1 className="text-xl font-medium text-vscode-foreground">{t("account:title")}</h1>
-				<VSCodeButton appearance="primary" onClick={onDone}>
+				<VSCodeButton appearance="primary" data-click-handler onClick={onDone}>
 					{t("settings:common.done")}
 				</VSCodeButton>
 			</div>
@@ -306,7 +309,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						</div>
 					)}
 					<div className="flex flex-col gap-2 mt-4">
-						<VSCodeButton appearance="secondary" onClick={handleLogoutClick} className="w-full">
+						<VSCodeButton appearance="secondary" data-click-handler onClick={handleLogoutClick} className="w-full">
 							{t("account:logOut")}
 						</VSCodeButton>
 					</div>
@@ -441,7 +444,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 					</div>
 
 					<div className="flex flex-col gap-4">
-						<VSCodeButton appearance="primary" onClick={handleConnectClick} className="w-full">
+						<VSCodeButton appearance="primary" data-click-handler onClick={handleConnectClick} className="w-full">
 							{t("account:connect")}
 						</VSCodeButton>
 					</div>
