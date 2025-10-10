@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react"
 import { useEvent } from "react-use"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
@@ -226,28 +226,41 @@ const App = () => {
 		console.debug(`[DEBUG] VS Code API Status: ${status}`)
 	}, [])
 
-	// Global click diagnostics and external link handling
+	// Гарантированная отправка сигнала готовности после завершения рендеринга React
+	useLayoutEffect(() => {
+		console.log("[READY] React rendering completed - sending ready signal to Host")
+		vscode.readyForHost()
+	}, [])
+
+	// Global click diagnostics and external link handling (only for external links without onClick handlers)
 	useEffect(() => {
 		function onDocumentClick(ev: MouseEvent) {
-			console.debug("[DEBUG] CLICK DETECTED")
 			const target = ev.target as HTMLElement | null
 			if (!target) return
+			
+			// Check if the element or its parent has an onClick handler (React elements)
+			// React doesn't add onclick attribute, so we check for data attributes or specific classes
+			const elementWithHandler = target.closest("button") || 
+									  target.closest("[role='button']") ||
+									  target.closest("[data-click-handler]") ||
+									  target.closest(".click-handler")
+			
+			if (elementWithHandler) {
+				// Element has its own click handler, don't interfere
+				return
+			}
+			
 			const anchor = target.closest("a") as HTMLAnchorElement | null
 			if (!anchor) return
 			const href = anchor.getAttribute("href") || ""
 			if (!href) return
 			const isHttp = href.startsWith("http://") || href.startsWith("https://")
 			if (!isHttp) return
-			// Strict sequence for external links
+			
+			// Only handle external links that don't have onClick handlers
+			console.debug("[DEBUG] External link clicked without onClick handler")
 			ev.preventDefault()
 			sendMessage({ type: "openExternal", url: href })
-			let win: Window | null = null
-			try {
-				win = window.open(href, "_blank", "noopener")
-				console.debug(`[DEBUG] window.open result: ${win ? "OK" : "BLOCKED"}`)
-			} catch (err) {
-				console.warn("[DEBUG] window.open threw", err)
-			}
 		}
 
 		document.addEventListener("click", onDocumentClick, true)
@@ -269,7 +282,7 @@ const App = () => {
 
 	// Tell the extension that we are ready to receive messages.
 	useEffect(() => {
-		sendMessage({ type: "webviewDidLaunch" })
+		// webviewDidLaunch is already sent via vscode.readyForHost() in useLayoutEffect
 		sendMessage({ type: "files:status" })
 	}, [sendMessage])
 

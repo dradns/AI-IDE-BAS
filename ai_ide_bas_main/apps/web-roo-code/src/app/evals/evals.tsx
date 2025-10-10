@@ -38,7 +38,7 @@ export function Evals({
 
 	const tableData = useMemo(
 		() =>
-			runs.map((run) => ({
+			(runs || []).map((run) => ({
 				...run,
 				label: run.description || run.model,
 				score: run.score,

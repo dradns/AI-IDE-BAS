@@ -102,7 +102,13 @@ export async function openMention(mention?: string): Promise<void> {
 			}
 		} else {
 			// Для недоверенных доменов - обычное поведение с диалогом
-			vscode.env.openExternal(vscode.Uri.parse(mention))
+			try {
+				await vscode.env.openExternal(vscode.Uri.parse(mention))
+			} catch (error) {
+				console.error("Error opening external URL:", error)
+				// Fallback: try to open anyway
+				vscode.env.openExternal(vscode.Uri.parse(mention))
+			}
 		}
 	}
 }

@@ -84,7 +84,7 @@ export async function getVSCodeDownloads() {
 		const data = await res.json()
 		const statistics = data?.results?.[0]?.extensions?.[0]?.statistics
 
-		if (!statistics) {
+		if (!statistics || !Array.isArray(statistics)) {
 			console.error("VSCode API: Missing statistics in response")
 			return null
 		}

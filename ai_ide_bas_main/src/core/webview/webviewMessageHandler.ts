@@ -705,27 +705,51 @@ export const webviewMessageHandler = async (
 			break
 		case "openExternal":
 			if (message.url) {
-				console.log("[HOST DEBUG] openExternal command received:", message.url)
-				
-				// Windsurf aggressive fallback for external links
-				const isWindsurf = vscode.env.appName?.toLowerCase().includes('windsurf') || 
-								  vscode.env.appName?.toLowerCase().includes('web') ||
-								  process.env.VSCODE_BROWSER === '1'
-				
-				if (isWindsurf) {
-					console.log("[HOST DEBUG] Windsurf detected, using vscode.open fallback")
+				try {
+					// Получаем список доверенных доменов из настроек
+					const trustedDomains = vscode.workspace.getConfiguration("ai-ide-bas").get<string[]>("trustedDomains") || []
+					
+					// Проверяем, является ли домен доверенным
+					let isTrusted = false
 					try {
-						// Try vscode.open command first (more reliable in web environments)
-						await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(message.url))
-						console.log("[HOST DEBUG] vscode.open SUCCESS")
-					} catch (error) {
-						console.error("[HOST DEBUG] vscode.open failed, falling back to openMention:", error)
-						// Fallback to openMention
-						await openMention(message.url)
+						const parsedUrl = new URL(message.url)
+						const domain = parsedUrl.hostname
+						isTrusted = trustedDomains.some((trustedDomain) => {
+							return domain === trustedDomain || domain.endsWith("." + trustedDomain)
+						})
+					} catch (urlError) {
+						console.error("[ERROR] Failed to parse URL:", message.url, urlError)
 					}
-				} else {
-					// Standard behavior for desktop VS Code
-					await openMention(message.url)
+
+					if (isTrusted) {
+						// Для доверенных доменов пытаемся открыть без диалога
+						try {
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+							console.log("[EXTERNAL] Trusted domain opened successfully:", message.url)
+						} catch (error) {
+							console.error("[ERROR] Failed to open trusted domain:", message.url, error)
+							// Fallback к обычному способу
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+						}
+					} else {
+						// Для недоверенных доменов - обычное поведение с диалогом
+						try {
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+							console.log("[EXTERNAL] External URL opened with confirmation:", message.url)
+						} catch (error) {
+							console.error("[ERROR] Failed to open external URL:", message.url, error)
+							// Fallback: try to open anyway
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+						}
+					}
+				} catch (error) {
+					console.error("[ERROR] Failed to open external URL directly:", message.url, error)
+					// Fallback to openMention if direct openExternal fails
+					try {
+						await openMention(message.url)
+					} catch (mentionError) {
+						console.error("[ERROR] Fallback to openMention also failed:", mentionError)
+					}
 				}
 			}
 			break
@@ -736,44 +760,40 @@ export const webviewMessageHandler = async (
 			break
 		}
 		case "files:login": {
-			console.log("[HOST DEBUG] files:login command received - START")
-			
 			try {
 				const client = new AiIdeBasFilesClient(provider.context)
-				console.log("[HOST DEBUG] AiIdeBasFilesClient created successfully")
-				
 				const url = client.getLoginUrl()
-				console.log("[HOST DEBUG] Login URL generated:", url)
-				
-				// Windsurf aggressive fallback for login URL
-				const isWindsurf = vscode.env.appName?.toLowerCase().includes('windsurf') || 
-								  vscode.env.appName?.toLowerCase().includes('web') ||
-								  process.env.VSCODE_BROWSER === '1'
-				
-				if (isWindsurf) {
-					console.log("[HOST DEBUG] Windsurf detected for login, using vscode.open fallback")
+
+				try {
+					await vscode.env.openExternal(vscode.Uri.parse(url))
+					console.log("[LOGIN] Login URL opened successfully:", url)
+					// Отправляем подтверждение что URL открыт (пользователь может авторизоваться)
+					await provider.postMessageToWebview({ 
+						type: "files:notice", 
+						text: "Откройте браузер для авторизации. После входа вернитесь в VS Code." 
+					})
+				} catch (error) {
+					console.error("[ERROR] Failed to open login URL directly:", url, error)
 					try {
-						// Try vscode.open command first (more reliable in web environments)
-						await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url))
-						console.log("[HOST DEBUG] vscode.open for login SUCCESS")
-					} catch (error) {
-						console.error("[HOST DEBUG] vscode.open for login failed, falling back to openMention:", error)
-						// Fallback to openMention
 						await openMention(url)
+						console.log("[LOGIN] Login URL opened via openMention:", url)
+						await provider.postMessageToWebview({ 
+							type: "files:notice", 
+							text: "Откройте браузер для авторизации. После входа вернитесь в VS Code." 
+						})
+					} catch (mentionError) {
+						console.error("[ERROR] Fallback to openMention for login URL also failed:", mentionError)
+						await provider.postMessageToWebview({ 
+							type: "files:error", 
+							error: "Не удалось открыть страницу авторизации. Попробуйте еще раз." 
+						})
 					}
-				} else {
-					// Standard behavior for desktop VS Code
-					await openMention(url)
 				}
-				
-				console.log("[HOST DEBUG] files:login command completed - SUCCESS")
 			} catch (error) {
-				console.error("[HOST DEBUG] files:login command failed:", error)
-				// Send error back to webview
+				console.error("[ERROR] Failed to get login URL:", error)
 				await provider.postMessageToWebview({ 
-					type: "files:authChanged", 
-					isAuthorized: false,
-					error: error instanceof Error ? error.message : String(error)
+					type: "files:error", 
+					error: "Ошибка получения URL авторизации. Проверьте настройки." 
 				})
 			}
 			break

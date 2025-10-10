@@ -12,9 +12,14 @@ export function CodeExample() {
 
 	// simulate typing effect
 	useEffect(() => {
-		if (isTyping && textIndex < codeExamples[currentMode].code.length) {
+		const currentExample = codeExamples[currentMode]
+		if (!currentExample?.code) {
+			return
+		}
+
+		if (isTyping && textIndex < currentExample.code.length) {
 			const timer = setTimeout(() => {
-				setCurrentText((prev) => prev + codeExamples[currentMode].code[textIndex])
+				setCurrentText((prev) => prev + currentExample.code[textIndex])
 				setTextIndex(textIndex + 1)
 
 				// Auto-scroll to the bottom
@@ -23,7 +28,7 @@ export function CodeExample() {
 				}
 			}, 15) // adjust speed as needed
 			return () => clearTimeout(timer)
-		} else if (textIndex >= codeExamples[currentMode].code.length) {
+		} else if (textIndex >= currentExample.code.length) {
 			setIsTyping(false)
 			// switch to next mode after a delay
 			const timer = setTimeout(() => {
