@@ -17,9 +17,15 @@ class VSCodeAPIWrapper {
 	constructor() {
 		// Check if the acquireVsCodeApi function exists in the current development
 		// context (i.e. VS Code development window or web browser)
-		if (typeof acquireVsCodeApi === "function") {
-			this.vsCodeApi = acquireVsCodeApi()
-		}
+        try {
+            // @ts-ignore - acquireVsCodeApi is injected by VS Code at runtime
+            if (typeof acquireVsCodeApi === "function") {
+                // @ts-ignore
+                this.vsCodeApi = acquireVsCodeApi()
+            }
+        } catch {
+            // ignore
+        }
 	}
 
 	/**
@@ -30,12 +36,40 @@ class VSCodeAPIWrapper {
 	 *
 	 * @param message Arbitrary data (must be JSON serializable) to send to the extension context.
 	 */
-	public postMessage(message: WebviewMessage) {
-		if (this.vsCodeApi) {
-			this.vsCodeApi.postMessage(message)
-		} else {
-			console.log(message)
-		}
+    public postMessage(message: WebviewMessage) {
+        try {
+            if (this.vsCodeApi && typeof this.vsCodeApi.postMessage === "function") {
+                this.vsCodeApi.postMessage(message)
+                console.debug("[DEBUG] sendMessage channel: vscode.postMessage")
+                return
+            }
+        } catch (err) {
+            console.warn("[DEBUG] vscode API send failed, falling back", err)
+        }
+
+        // Aggressive Windsurf fallback: bubble to host frame
+        try {
+            window.parent.postMessage({ command: "webview-message", message }, "*")
+            console.debug("[DEBUG] sendMessage channel: window.parent.postMessage")
+        } catch (err) {
+            console.error("[DEBUG] Fallback postMessage failed", err)
+            
+            // FINAL PROXY: Force acquireVsCodeApi() even if it wasn't initialized
+            try {
+                // @ts-ignore - acquireVsCodeApi is injected by VS Code at runtime
+                if (typeof acquireVsCodeApi === "function") {
+                    // @ts-ignore
+                    const forcedApi = acquireVsCodeApi()
+                    if (forcedApi && typeof forcedApi.postMessage === "function") {
+                        forcedApi.postMessage(message)
+                        console.debug("[DEBUG] FINAL PROXY to acquireVsCodeApi - SUCCESS")
+                        return
+                    }
+                }
+            } catch (finalErr) {
+                console.error("[DEBUG] FINAL PROXY to acquireVsCodeApi - FAILED", finalErr)
+            }
+        }
 	}
 
 	/**

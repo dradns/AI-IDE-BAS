@@ -705,8 +705,28 @@ export const webviewMessageHandler = async (
 			break
 		case "openExternal":
 			if (message.url) {
-				// Используем openMention для обработки внешних ссылок с доверенными доменами
-				await openMention(message.url)
+				console.log("[HOST DEBUG] openExternal command received:", message.url)
+				
+				// Windsurf aggressive fallback for external links
+				const isWindsurf = vscode.env.appName?.toLowerCase().includes('windsurf') || 
+								  vscode.env.appName?.toLowerCase().includes('web') ||
+								  process.env.VSCODE_BROWSER === '1'
+				
+				if (isWindsurf) {
+					console.log("[HOST DEBUG] Windsurf detected, using vscode.open fallback")
+					try {
+						// Try vscode.open command first (more reliable in web environments)
+						await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(message.url))
+						console.log("[HOST DEBUG] vscode.open SUCCESS")
+					} catch (error) {
+						console.error("[HOST DEBUG] vscode.open failed, falling back to openMention:", error)
+						// Fallback to openMention
+						await openMention(message.url)
+					}
+				} else {
+					// Standard behavior for desktop VS Code
+					await openMention(message.url)
+				}
 			}
 			break
 		case "files:status": {
@@ -716,9 +736,46 @@ export const webviewMessageHandler = async (
 			break
 		}
 		case "files:login": {
-			const client = new AiIdeBasFilesClient(provider.context)
-			const url = client.getLoginUrl()
-			await openMention(url)
+			console.log("[HOST DEBUG] files:login command received - START")
+			
+			try {
+				const client = new AiIdeBasFilesClient(provider.context)
+				console.log("[HOST DEBUG] AiIdeBasFilesClient created successfully")
+				
+				const url = client.getLoginUrl()
+				console.log("[HOST DEBUG] Login URL generated:", url)
+				
+				// Windsurf aggressive fallback for login URL
+				const isWindsurf = vscode.env.appName?.toLowerCase().includes('windsurf') || 
+								  vscode.env.appName?.toLowerCase().includes('web') ||
+								  process.env.VSCODE_BROWSER === '1'
+				
+				if (isWindsurf) {
+					console.log("[HOST DEBUG] Windsurf detected for login, using vscode.open fallback")
+					try {
+						// Try vscode.open command first (more reliable in web environments)
+						await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url))
+						console.log("[HOST DEBUG] vscode.open for login SUCCESS")
+					} catch (error) {
+						console.error("[HOST DEBUG] vscode.open for login failed, falling back to openMention:", error)
+						// Fallback to openMention
+						await openMention(url)
+					}
+				} else {
+					// Standard behavior for desktop VS Code
+					await openMention(url)
+				}
+				
+				console.log("[HOST DEBUG] files:login command completed - SUCCESS")
+			} catch (error) {
+				console.error("[HOST DEBUG] files:login command failed:", error)
+				// Send error back to webview
+				await provider.postMessageToWebview({ 
+					type: "files:authChanged", 
+					isAuthorized: false,
+					error: error instanceof Error ? error.message : String(error)
+				})
+			}
 			break
 		}
 		case "files:logout": {
