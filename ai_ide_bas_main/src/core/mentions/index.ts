@@ -70,6 +70,27 @@ export async function openMention(mention?: string): Promise<void> {
 		return
 	}
 
+	// Для HTTP-ссылок проект не требуется - обрабатываем их сразу
+	if (mention.startsWith("http")) {
+		const isTrusted = await isTrustedDomain(mention)
+
+		if (isTrusted) {
+			// Для доверенных доменов пытаемся открыть без диалога
+			try {
+				await vscode.env.openExternal(vscode.Uri.parse(mention))
+			} catch (error) {
+				console.error("Error opening trusted domain:", error)
+				// Fallback к обычному способу
+				vscode.env.openExternal(vscode.Uri.parse(mention))
+			}
+		} else {
+			// Для недоверенных доменов - обычное поведение с диалогом
+			vscode.env.openExternal(vscode.Uri.parse(mention))
+		}
+		return
+	}
+
+	// Для остальных типов mention требуется открытый проект
 	const cwd = getWorkspacePath()
 	if (!cwd) {
 		return
@@ -88,22 +109,6 @@ export async function openMention(mention?: string): Promise<void> {
 		vscode.commands.executeCommand("workbench.actions.view.problems")
 	} else if (mention === "terminal") {
 		vscode.commands.executeCommand("workbench.action.terminal.focus")
-	} else if (mention.startsWith("http")) {
-		const isTrusted = await isTrustedDomain(mention)
-
-		if (isTrusted) {
-			// Для доверенных доменов пытаемся открыть без диалога
-			try {
-				await vscode.env.openExternal(vscode.Uri.parse(mention))
-			} catch (error) {
-				console.error("Error opening trusted domain:", error)
-				// Fallback к обычному способу
-				vscode.env.openExternal(vscode.Uri.parse(mention))
-			}
-		} else {
-			// Для недоверенных доменов - обычное поведение с диалогом
-			vscode.env.openExternal(vscode.Uri.parse(mention))
-		}
 	}
 }
 
