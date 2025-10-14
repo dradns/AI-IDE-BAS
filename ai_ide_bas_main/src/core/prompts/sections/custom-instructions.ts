@@ -7,7 +7,7 @@ import { isLanguage } from "@roo-code/types"
 
 import type { SystemPromptSettings } from "../types"
 
-import { LANGUAGES } from "../../../shared/language"
+import { LANGUAGES, formatLanguage } from "../../../shared/language"
 import { getRooDirectoriesForCwd, getGlobalRooDirectory } from "../../../services/roo-config"
 
 /**
@@ -182,14 +182,26 @@ function formatDirectoryContent(dirPath: string, files: Array<{ filename: string
  * Load rule files from global and project-local directories
  * Global rules are loaded first, then project-local rules which can override global ones
  */
-export async function loadRuleFiles(cwd: string): Promise<string> {
+export async function loadRuleFiles(cwd: string, language?: string): Promise<string> {
 	const rules: string[] = []
 	const rooDirectories = getRooDirectoriesForCwd(cwd)
 
-	// Check for .roo/rules/ directories in order (global first, then project-local)
+	// Check for .roo/<lang>/rules/ first (global first, then project-local), then fallback to .roo/rules/
 	for (const rooDir of rooDirectories) {
+		const lang = language ? formatLanguage(language) : "en"
+		const langRulesDir = (lang && lang !== "en") ? path.join(rooDir, lang, "rules") : ""
+		let addedForThisDir = false
+		if (langRulesDir && (await directoryExists(langRulesDir))) {
+			const files = await readTextFilesFromDirectory(langRulesDir)
+			if (files.length > 0) {
+				const content = formatDirectoryContent(langRulesDir, files)
+				rules.push(content)
+				addedForThisDir = true
+			}
+		}
+
 		const rulesDir = path.join(rooDir, "rules")
-		if (await directoryExists(rulesDir)) {
+		if (!addedForThisDir && (await directoryExists(rulesDir))) {
 			const files = await readTextFilesFromDirectory(rulesDir)
 			if (files.length > 0) {
 				const content = formatDirectoryContent(rulesDir, files)
@@ -256,10 +268,22 @@ export async function addCustomInstructions(
 		const modeRules: string[] = []
 		const rooDirectories = getRooDirectoriesForCwd(cwd)
 
-		// Check for .roo/rules-${mode}/ directories in order (global first, then project-local)
+		// Check for .roo/<lang>/rules-${mode}/ first, then .roo/rules-${mode}/
 		for (const rooDir of rooDirectories) {
+			const lang = options.language ? formatLanguage(options.language) : "en"
+			const langModeRulesDir = (lang && lang !== "en") ? path.join(rooDir, lang, `rules-${mode}`) : ""
+			let addedForThisDir = false
+			if (langModeRulesDir && (await directoryExists(langModeRulesDir))) {
+				const files = await readTextFilesFromDirectory(langModeRulesDir)
+				if (files.length > 0) {
+					const content = formatDirectoryContent(langModeRulesDir, files)
+					modeRules.push(content)
+					addedForThisDir = true
+				}
+			}
+
 			const modeRulesDir = path.join(rooDir, `rules-${mode}`)
-			if (await directoryExists(modeRulesDir)) {
+			if (!addedForThisDir && (await directoryExists(modeRulesDir))) {
 				const files = await readTextFilesFromDirectory(modeRulesDir)
 				if (files.length > 0) {
 					const content = formatDirectoryContent(modeRulesDir, files)
@@ -338,7 +362,7 @@ export async function addCustomInstructions(
 	}
 
 	// Add generic rules
-	const genericRuleContent = await loadRuleFiles(cwd)
+	const genericRuleContent = await loadRuleFiles(cwd, options.language)
 	if (genericRuleContent && genericRuleContent.trim()) {
 		rules.push(genericRuleContent.trim())
 	}

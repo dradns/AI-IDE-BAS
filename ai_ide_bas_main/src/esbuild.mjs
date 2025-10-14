@@ -87,10 +87,42 @@ async function main() {
 							["../../Modes", "prompts", { optional: true }],
 							// Include repository-level .roo directory with rules (required for export)
 							["../../.roo", "prompts", { optional: true }],
+							// Localized RULES from repository-level promts/<lang>/ folder → dist/prompts/<lang>
+							["../../../promts/ru", "prompts/ru", { optional: true }],
+							["../../../promts/en", "prompts/en", { optional: true }],
+							["../../../promts/ar", "prompts/ar", { optional: true }],
+							["../../../promts/es", "prompts/es", { optional: true }],
+							["../../../promts/zh-CN", "prompts/zh-CN", { optional: true }],
 						],
 						srcDir,
 						distDir,
 					)
+					
+					// Manually copy .txt prompts to root and en/ subfolder
+					const promptsSourceDir = path.join(srcDir, "../roo-code/src/prompts")
+					const promptFiles = fs.readdirSync(promptsSourceDir).filter(f => f.endsWith('.txt'))
+					
+					// Copy to root (legacy)
+					const promptsRootDir = path.join(distDir, "prompts")
+					for (const file of promptFiles) {
+						fs.copyFileSync(
+							path.join(promptsSourceDir, file),
+							path.join(promptsRootDir, file)
+						)
+					}
+					
+					// Copy to en/ subfolder (language fallback - ALWAYS available)
+					const promptsEnDir = path.join(distDir, "prompts", "en")
+					if (!fs.existsSync(promptsEnDir)) {
+						fs.mkdirSync(promptsEnDir, { recursive: true })
+					}
+					for (const file of promptFiles) {
+						fs.copyFileSync(
+							path.join(promptsSourceDir, file),
+							path.join(promptsEnDir, file)
+						)
+					}
+					console.log(`[copyPrompts] Copied ${promptFiles.length} .txt files to prompts/ and prompts/en/ (always available)`)
 				})
 			},
 		},

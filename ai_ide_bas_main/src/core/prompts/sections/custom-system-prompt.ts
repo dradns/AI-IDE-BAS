@@ -1,6 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 import { Mode } from "../../../shared/modes"
+import { formatLanguage } from "../../../shared/language"
 import { fileExistsAtPath } from "../../../utils/fs"
 import * as vscode from "vscode"
 
@@ -46,8 +47,12 @@ async function safeReadFile(filePath: string): Promise<string> {
 /**
  * Get the path to a system prompt file for a specific mode
  */
-export function getSystemPromptFilePath(cwd: string, mode: Mode): string {
-	return path.join(cwd, ".roo", `system-prompt-${mode}`)
+export function getSystemPromptFilePath(cwd: string, mode: Mode, language?: string): string {
+    const lang = language ? formatLanguage(language) : "en"
+    if (lang && lang !== "en") {
+        return path.join(cwd, ".roo", lang, `system-prompt-${mode}`)
+    }
+    return path.join(cwd, ".roo", `system-prompt-${mode}`)
 }
 
 // Map mode slugs to built-in prompt filenames
@@ -78,29 +83,49 @@ function getBuiltinPromptFilename(mode: Mode): string | undefined {
  * If neither exists, returns an empty string
  */
 export async function loadSystemPromptFile(cwd: string, mode: Mode, variables: PromptVariables): Promise<string> {
-	// 1) Project-local override: .roo/system-prompt-[mode]
-	const projectFilePath = getSystemPromptFilePath(cwd, mode)
-	let rawContent = await safeReadFile(projectFilePath)
-	if (rawContent) {
-		return interpolatePromptContent(rawContent, variables)
-	}
+    // 1) Project-local override: .roo/<lang>/system-prompt-[mode] → .roo/system-prompt-[mode]
+    const lang = variables.language ? formatLanguage(variables.language) : "en"
+    const langProjectFilePath = (lang && lang !== "en") ? getSystemPromptFilePath(cwd, mode, lang) : ""
+    let rawContent = langProjectFilePath ? await safeReadFile(langProjectFilePath) : ""
+    if (!rawContent) {
+        const projectFilePath = getSystemPromptFilePath(cwd, mode)
+        rawContent = await safeReadFile(projectFilePath)
+    }
+    if (rawContent) {
+        return interpolatePromptContent(rawContent, variables)
+    }
 
-	// 2) Built-in prompts packaged with the extension: dist/prompts/<mapped filename>
-	const filename = getBuiltinPromptFilename(mode)
-	if (filename) {
-		try {
-			const uri = vscode.Uri.joinPath(vscode.extensions.getExtension("8eton.ai-ide-bas")!.extensionUri, "dist", "prompts", filename)
-			const content = await fs.readFile(uri.fsPath, "utf-8")
-			rawContent = content.trim()
-			if (rawContent) {
-				return interpolatePromptContent(rawContent, variables)
-			}
-		} catch (err) {
-			// ignore, fallback to empty
-		}
-	}
+    // 2) Built-in prompts packaged with the extension: try dist/prompts/<lang>/<file> → dist/prompts/en/<file> → dist/prompts/<file>
+    const filename = getBuiltinPromptFilename(mode)
+    if (filename) {
+        const extension = vscode.extensions.getExtension("8eton.ai-ide-bas")
+        if (extension) {
+            const candidates: string[] = []
+            // Try language-specific first (if not English)
+            if (lang && lang !== "en") {
+                candidates.push(`dist/prompts/${lang}/${filename}`)
+            }
+            // Explicit en fallback
+            candidates.push(`dist/prompts/en/${filename}`)
+            // Legacy location without language subfolder
+            candidates.push(`dist/prompts/${filename}`)
 
-	return ""
+            for (const rel of candidates) {
+                try {
+                    const uri = vscode.Uri.joinPath(extension.extensionUri, ...rel.split("/"))
+                    const content = await fs.readFile(uri.fsPath, "utf-8")
+                    const trimmed = content.trim()
+                    if (trimmed) {
+                        return interpolatePromptContent(trimmed, variables)
+                    }
+                } catch {
+                    // try next candidate
+                }
+            }
+        }
+    }
+
+    return ""
 }
 
 /**

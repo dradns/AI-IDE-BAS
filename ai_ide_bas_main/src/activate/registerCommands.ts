@@ -240,27 +240,40 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				return
 			}
 
-			// Source: extension's built-in rules folders (copied during build to dist/prompts)
-			const srcPromptsUri = vscode.Uri.joinPath(context.extensionUri, "dist", "prompts")
+			// Get current language from provider state
+			const state = await visibleProvider.getState()
+			const { formatLanguage } = await import("../shared/language")
+			const language = state?.language ?? formatLanguage(vscode.env.language)
+
+			// Source: extension's built-in rules folders (copied during build to dist/prompts/<lang>)
+			const srcPromptsLangUri = vscode.Uri.joinPath(context.extensionUri, "dist", "prompts", language)
 			let srcStats: any
 			try {
-				srcStats = await fs.stat(srcPromptsUri.fsPath)
-				if (!srcStats.isDirectory()) throw new Error("Папка prompts не найдена")
+				srcStats = await fs.stat(srcPromptsLangUri.fsPath)
+				if (!srcStats.isDirectory()) throw new Error(`Папка prompts/${language} не найдена`)
 			} catch (e) {
-				vscode.window.showErrorMessage(`Папка prompts не найдена по пути: ${srcPromptsUri.fsPath}`)
-				return
+				// Fallback to English if language-specific folder doesn't exist
+				const srcPromptsEnUri = vscode.Uri.joinPath(context.extensionUri, "dist", "prompts", "en")
+				try {
+					srcStats = await fs.stat(srcPromptsEnUri.fsPath)
+					if (!srcStats.isDirectory()) throw new Error("Папка prompts/en не найдена")
+					vscode.window.showWarningMessage(`Правила для языка "${language}" не найдены, используется английская версия`)
+				} catch (e2) {
+					vscode.window.showErrorMessage(`Папка prompts не найдена`)
+					return
+				}
 			}
 
-			// Target: workspace .roo directory
-			const dstRooDir = path.join(workspaceRoot, ".roo")
-			await fs.mkdir(dstRooDir, { recursive: true })
+			// Target: workspace .roo/<lang> directory
+			const dstRooLangDir = path.join(workspaceRoot, ".roo", language)
+			await fs.mkdir(dstRooLangDir, { recursive: true })
 
-			// Copy only rules-* directories from prompts to .roo
-			const entries = await fs.readdir(srcPromptsUri.fsPath, { withFileTypes: true })
+			// Copy only rules-* directories from prompts/<lang> to .roo/<lang>
+			const entries = await fs.readdir(srcPromptsLangUri.fsPath, { withFileTypes: true })
 			const rulesDirs = entries.filter(entry => entry.isDirectory() && entry.name.startsWith("rules-"))
 			
 			if (rulesDirs.length === 0) {
-				vscode.window.showErrorMessage("Не найдены папки с правилами ролей (rules-*)")
+				vscode.window.showErrorMessage(`Не найдены папки с правилами ролей (rules-*) для языка "${language}"`)
 				return
 			}
 
@@ -281,13 +294,13 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 			// Copy each rules-* directory
 			for (const rulesDir of rulesDirs) {
-				const srcRulesPath = path.join(srcPromptsUri.fsPath, rulesDir.name)
-				const dstRulesPath = path.join(dstRooDir, rulesDir.name)
+				const srcRulesPath = path.join(srcPromptsLangUri.fsPath, rulesDir.name)
+				const dstRulesPath = path.join(dstRooLangDir, rulesDir.name)
 				await fs.mkdir(dstRulesPath, { recursive: true })
 				await copyRecursive(srcRulesPath, dstRulesPath)
 			}
 
-			vscode.window.showInformationMessage(`Экспортировано ${rulesDirs.length} папок с правилами ролей в .roo папку проекта`) 
+			vscode.window.showInformationMessage(`Экспортировано ${rulesDirs.length} папок с правилами ролей (${language}) в .roo/${language} папку проекта`) 
 		} catch (error) {
 			vscode.window.showErrorMessage(`Не удалось экспортировать правила ролей: ${error instanceof Error ? error.message : String(error)}`)
 		}

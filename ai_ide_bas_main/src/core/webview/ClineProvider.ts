@@ -1400,6 +1400,13 @@ export class ClineProvider
 	 * Checks if there is a file-based system prompt override for the given mode
 	 */
 	async hasFileBasedSystemPromptOverride(mode: Mode): Promise<boolean> {
+		// Try language-specific override first, then fallback to default
+		const state = await this.getState()
+		const lang = state?.language ?? formatLanguage(vscode.env.language)
+		const langPromptFilePath = getSystemPromptFilePath(this.cwd, mode, lang)
+		if (await fileExistsAtPath(langPromptFilePath)) {
+			return true
+		}
 		const promptFilePath = getSystemPromptFilePath(this.cwd, mode)
 		return await fileExistsAtPath(promptFilePath)
 	}
