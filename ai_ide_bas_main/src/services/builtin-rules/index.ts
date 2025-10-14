@@ -1,6 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 import * as vscode from "vscode"
+import { formatLanguage } from "../../shared/language"
 import { Dirent } from "fs"
 
 /**
@@ -46,15 +47,32 @@ function formatDirectoryContent(dirPath: string, files: Array<{ filename: string
  * Load built-in rules from extension bundle as fallback
  */
 export async function loadBuiltInModeRules(mode: string): Promise<string> {
-	try {
-		const extension = vscode.extensions.getExtension("8eton.ai-ide-bas")
-		if (!extension) return ""
+    try {
+        const extension = vscode.extensions.getExtension("8eton.ai-ide-bas")
+        if (!extension) return ""
 
-		const builtInRulesDir = vscode.Uri.joinPath(extension.extensionUri, "dist", "prompts", `rules-${mode}`)
-		const files = await readTextFilesFromDirectory(builtInRulesDir.fsPath)
-		if (files.length > 0) {
-			return formatDirectoryContent(builtInRulesDir.fsPath, files)
-		}
+        const lang = formatLanguage(vscode.env.language) || "en"
+        const candidates = []
+        // Language-specific first (if not English)
+        if (lang && lang !== "en") {
+            candidates.push(["dist", "prompts", lang, `rules-${mode}`])
+        }
+        // Explicit English fallback
+        candidates.push(["dist", "prompts", "en", `rules-${mode}`])
+        // Legacy location without language subfolder
+        candidates.push(["dist", "prompts", `rules-${mode}`])
+
+        for (const parts of candidates) {
+            try {
+                const builtInRulesDir = vscode.Uri.joinPath(extension.extensionUri, ...parts)
+                const files = await readTextFilesFromDirectory(builtInRulesDir.fsPath)
+                if (files.length > 0) {
+                    return formatDirectoryContent(builtInRulesDir.fsPath, files)
+                }
+            } catch {
+                // try next candidate
+            }
+        }
 	} catch (err) {
 		// Built-in rules don't exist or can't be read, ignore
 	}

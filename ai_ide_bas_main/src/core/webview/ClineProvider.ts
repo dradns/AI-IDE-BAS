@@ -32,6 +32,7 @@ import {
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 import { CloudService, getRooCodeApiUrl } from "@roo-code/cloud"
+import { AIIDEBAS_PLATFORM_STORAGE_KEY } from "../../shared/constants"
 
 import { t } from "../../i18n"
 import { setPanel } from "../../activate/registerCommands"
@@ -159,6 +160,29 @@ export class ClineProvider
 			})
 
 		this.marketplaceManager = new MarketplaceManager(this.context, this.customModesManager)
+
+		const platform = this.detectPlatformSync()
+		if (platform) {
+			this.context.workspaceState.update(AIIDEBAS_PLATFORM_STORAGE_KEY, platform)
+		}
+
+		if (!platform) {
+			void this.detectPlatform()
+		}
+	}
+
+	private detectPlatformSync(): string | undefined {
+		const appName = vscode.env.appName?.toLowerCase()
+		const knownPlatforms = ["cursor", "windsurf", "vscode"]
+		return knownPlatforms.find((platform) => appName?.includes(platform))
+	}
+
+	private async detectPlatform(): Promise<string | undefined> {
+		const platform = this.detectPlatformSync()
+		if (platform) {
+			await this.context.workspaceState.update(AIIDEBAS_PLATFORM_STORAGE_KEY, platform)
+		}
+		return platform
 	}
 
 	// Adds a new Cline instance to clineStack, marking the start of a new task.
@@ -1387,6 +1411,13 @@ export class ClineProvider
 	 * Checks if there is a file-based system prompt override for the given mode
 	 */
 	async hasFileBasedSystemPromptOverride(mode: Mode): Promise<boolean> {
+		// Try language-specific override first, then fallback to default
+		const state = await this.getState()
+		const lang = state?.language ?? formatLanguage(vscode.env.language)
+		const langPromptFilePath = getSystemPromptFilePath(this.cwd, mode, lang)
+		if (await fileExistsAtPath(langPromptFilePath)) {
+			return true
+		}
 		const promptFilePath = getSystemPromptFilePath(this.cwd, mode)
 		return await fileExistsAtPath(promptFilePath)
 	}

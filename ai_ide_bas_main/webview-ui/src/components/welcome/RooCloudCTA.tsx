@@ -35,6 +35,18 @@ export function RooCloudCTA() {
 		return () => disposable.dispose()
 	}, [])
 
+	// Обработчик нажатия кнопки авторизации
+	const handleLogin = () => {
+		setIsLoggingIn(true)
+		vscode.postMessage({ type: "files:login" })
+		
+		// Таймаут на случай, если пользователь закроет окно авторизации
+		// или что-то пойдет не так - сбросим состояние через 30 секунд
+		setTimeout(() => {
+			setIsLoggingIn(false)
+		}, 30000)
+	}
+
 	return (
 		<div className="border border-muted/20 px-4 py-3 flex flex-col gap-3">
 			{/* Header with logo placeholder and site link */}

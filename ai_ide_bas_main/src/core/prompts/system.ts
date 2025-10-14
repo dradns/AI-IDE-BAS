@@ -76,41 +76,76 @@ async function generatePrompt(
 	const { roleDefinition, baseInstructions } = getModeSelection(mode, promptComponent, customModeConfigs)
 
 	// Load built-in base instructions from dist/prompts if available
-	async function loadBuiltInModeInstructions(context: vscode.ExtensionContext, mode: Mode): Promise<string> {
+	async function loadBuiltInModeInstructions(context: vscode.ExtensionContext, mode: Mode, language?: string): Promise<string> {
 		const base = context.extensionUri
-		const candidates: Array<string> = (() => {
-			switch (mode) {
-				case "code":
-					return ["dist/prompts/ba.txt", "dist/prompts/BA/ba.txt"]
-				case "architect":
-					return ["dist/prompts/architect.txt", "dist/prompts/Architect/architect.txt"]
-				case "ask":
-					return ["dist/prompts/sa.txt", "dist/prompts/SA/SA.txt"]
-				case "debug":
-					return ["dist/prompts/review.txt", "dist/prompts/Reviewer/reviewer.txt"]
-				case "designer":
-					return ["dist/prompts/designer.txt", "dist/prompts/Designer/designer.txt"]
-				case "helper":
-					return ["dist/prompts/helper.txt", "dist/prompts/Helper/helper.txt"]
-				case "pm":
-					return ["dist/prompts/pm.txt", "dist/prompts/PM/pm.txt"]
-				default:
-					return []
-			}
-		})()
+		const lang = language ? formatLanguage(language) : "en"
+		
+		// Build candidates based on mode and language
+		let baseCandidates: string[] = []
+		switch (mode) {
+			case "code":
+				baseCandidates = ["ba.txt", "BA/ba.txt"]
+				break
+			case "architect":
+				baseCandidates = ["architect.txt", "Architect/architect.txt"]
+				break
+			case "ask":
+				baseCandidates = ["sa.txt", "SA/SA.txt"]
+				break
+			case "debug":
+				baseCandidates = ["review.txt", "Reviewer/reviewer.txt"]
+				break
+			case "designer":
+				baseCandidates = ["designer.txt", "Designer/designer.txt"]
+				break
+			case "helper":
+				baseCandidates = ["helper.txt", "Helper/helper.txt"]
+				break
+			case "pm":
+				baseCandidates = ["pm.txt", "PM/pm.txt"]
+				break
+			default:
+				console.warn(`[loadBuiltInModeInstructions] Unknown mode: ${mode}`)
+				return ""
+		}
 
+		// Build full candidate list with language fallbacks
+		const candidates: string[] = []
+		// Try language-specific first (if not English)
+		if (lang && lang !== "en") {
+			for (const candidate of baseCandidates) {
+				candidates.push(`dist/prompts/${lang}/${candidate}`)
+			}
+		}
+		// Then English fallback
+		for (const candidate of baseCandidates) {
+			candidates.push(`dist/prompts/en/${candidate}`)
+		}
+		// Finally legacy location
+		for (const candidate of baseCandidates) {
+			candidates.push(`dist/prompts/${candidate}`)
+		}
+
+		console.log(`[loadBuiltInModeInstructions] mode=${mode}, lang=${lang}, trying ${candidates.length} candidates`)
+		
 		for (const rel of candidates) {
 			try {
 				const uri = vscode.Uri.joinPath(base, ...rel.split("/"))
 				const content = await fs.readFile(uri.fsPath, "utf-8")
 				const trimmed = content.trim()
-				if (trimmed) return trimmed
-			} catch {}
+				if (trimmed) {
+					console.log(`[loadBuiltInModeInstructions] SUCCESS: loaded from ${rel}, length=${trimmed.length}`)
+					return trimmed
+				}
+			} catch (err) {
+				// Silent fail, try next candidate
+			}
 		}
+		console.warn(`[loadBuiltInModeInstructions] FAILED: no prompt found for mode=${mode}, lang=${lang}`)
 		return ""
 	}
 
-	const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode)
+    const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode, language)
 	const effectiveBaseInstructions = builtInModeInstructions
 
 	// Check if MCP functionality should be included
@@ -194,6 +229,9 @@ export const SYSTEM_PROMPT = async (
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
 	}
+	
+	const effectiveLanguage = language ?? formatLanguage(vscode.env.language)
+	console.log(`[SYSTEM_PROMPT] mode=${mode}, language=${effectiveLanguage}, cwd=${cwd}`)
 
 	// Try to load custom system prompt from file
 	const variablesForPrompt: PromptVariables = {

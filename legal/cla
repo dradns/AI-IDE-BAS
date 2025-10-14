@@ -1,0 +1,105 @@
+Contributor License Agreement
+
+
+
+1. Introduction
+
+This IDE BAS Contributor License Agreement (“Agreement”) describes the terms and conditions for your Contributions submitted to any IDE BAS project and is concluded between you (“You”) and the IDE BAS project.
+
+This Agreement protects both You, as a contributor, and the IDE BAS project and its Users. It applies to all Contributions submitted by You to the IDE BAS project. Please read it carefully before signing and keep a copy for your records.
+
+Please also note that if You submit Contributions on behalf of different companies or individuals, a separate Contribution License Agreement must be signed for each of them.
+
+You accept this Agreement once You sign it or, if no signature is provided, at the moment You submit a Contribution.
+
+
+
+2. Definitions
+
+2.1. “Contribution” means any original work of authorship, including any modifications or additions to an existing work, submitted by You to the IDE BAS project for potential inclusion in a project. Contributions may include Patented Contributions.
+
+2.2. “Patented Contribution” means a Contribution, or combination of Contributions, or combination with IDE BAS Projects, in respect of which You own or control a valid patent.
+
+2.3. “IDE BAS project” means any project owned, initiated, or managed by IDE BAS or its affiliates (organizations that control, are controlled by, or are under common control with IDE BAS).
+
+2.4. “Contribution Date” is the date You first submitted a given Contribution to the IDE BAS project.
+
+2.5. “Submit” means the act of uploading, transmitting, submitting, or distributing a Contribution to the IDE BAS project (via electronic mailing lists, source control systems, issue trackers, etc.).
+
+2.6. “IDE BAS Users” are users of the IDE BAS project, including those who receive a Contribution directly or indirectly from IDE BAS.
+
+
+
+3. Contribution Licenses
+
+3.1. Subject to this Agreement, You grant to IDE BAS a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license:
+
+(i) to use, copy, reproduce, prepare derivative works of, distribute, sublicense, and publicly perform and display the Contribution under any license (including open source, proprietary, or commercial licenses);
+
+(ii) in relation to a Patented Contribution, to make, use, sell, import, or otherwise transfer the Contribution with or without other IDE BAS projects.
+
+3.2. License Scope and Term.IDE BAS may sublicense the Contribution under any license terms applicable to the project and may grant corresponding rights to Users. These rights apply retroactively from the Contribution Date.
+
+3.3. Other Rights Reserved.You retain all other rights, title, and interest in the Contribution, except as expressly granted herein.
+
+
+
+4. Submitting Contributions
+
+4.1. The licenses do not apply to materials You clearly mark and bring to our attention as “Not a Contribution”.
+
+4.2. You may not contribute or enter this Agreement if You are under 13 years of age.
+
+4.3. You agree that Contributions and related metadata may be stored indefinitely and published, including your name or affiliation.
+
+4.4. Support.You may choose to provide support for your Contributions. Unless explicitly agreed otherwise in writing with IDE BAS, all such support is considered voluntary and free of charge.
+
+
+
+5. Representations and Acknowledgements
+
+You represent and warrant that:
+
+5.1. The Contribution is your original work;
+
+to the best of your knowledge, it does not violate any IP rights;
+
+all third-party licenses, patents, trademarks, or restrictions are fully disclosed;
+
+it complies with applicable law (e.g., export control);
+
+it contains no harmful or unauthorized code (e.g., malware, logic bombs, backdoors).
+
+5.2. You have the legal right and authority to enter into this Agreement and to license the Contribution.
+
+5.3. If You are submitting on behalf of a company, you confirm that:
+
+(a) its employees or contractors may submit Contributions, and
+
+(b) the person signing has full authority to bind the company.
+
+5.4. If You act on behalf of your employer or another third party, You confirm that You are authorized to do so.
+
+5.5. IDE BAS is not obliged to include or retain any Contribution and may remove it at any time.
+
+5.6. These representations are true on the date of signing and at each subsequent Contribution Date.
+
+5.7. You agree to promptly inform IDE BAS if any representation becomes inaccurate.
+
+
+
+6. Warranties
+
+Unless required by applicable law or agreed in writing, You provide your Contributions "as-is", without warranties of any kind, express or implied.
+
+
+
+7. General Provisions
+
+7.1. This Agreement does not create a partnership, employment, joint venture, or other similar relationship.
+
+7.2. Headings are for convenience only and do not affect interpretation.
+
+7.3. Entire Agreement.By submitting a Contribution to any IDE BAS project repository, including but not limited to commits, pull requests, or patches, You acknowledge and agree that such action constitutes your full and binding acceptance of the terms and conditions of the IDE BAS Contributor License Agreement (the “Agreement”) as of the date of submission. You confirm that You are authorized to enter into this Agreement and grant the applicable rights under it. If You are acting on behalf of an organization, You represent that You have the authority to bind that organization to the Agreement.
+
+7.4. Assignment.This Agreement may be assigned by IDE BAS project.
