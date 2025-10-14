@@ -459,6 +459,10 @@ export class ClineProvider
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
+			// Allow command URIs for buttons/links
+			enableCommandUris: true,
+			// Keep state when hidden to avoid re-initialization glitches in web
+			retainContextWhenHidden: true,
 			localResourceRoots: [this.contextProxy.extensionUri],
 		}
 
@@ -745,11 +749,11 @@ export class ClineProvider
 		const csp = [
 			"default-src 'none'",
 			`font-src ${webview.cspSource} data:`,
-			`style-src ${webview.cspSource} 'unsafe-inline' https://* http://${localServerUrl} http://0.0.0.0:${localPort}`,
+			`style-src ${webview.cspSource} 'unsafe-inline' https:`,
 			`img-src ${webview.cspSource} https: data:`,
 			`media-src ${webview.cspSource}`,
-			`script-src 'unsafe-eval' ${webview.cspSource} https://* https://*.posthog.com http://${localServerUrl} http://0.0.0.0:${localPort} 'nonce-${nonce}'`,
-			`connect-src ${webview.cspSource} https://* https://*.posthog.com ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort}`,
+			`script-src ${webview.cspSource} 'unsafe-inline' 'unsafe-eval' https: 'nonce-${nonce}'`,
+			`connect-src ${webview.cspSource} https: ws:`,
 		]
 
 		return /*html*/ `
@@ -758,7 +762,7 @@ export class ClineProvider
 				<head>
 					<meta charset="utf-8">
 					<meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-					<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
+				<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
 					<link rel="stylesheet" type="text/css" href="${stylesUri}">
 					<link href="${codiconsUri}" rel="stylesheet" />
 					<script nonce="${nonce}">
@@ -825,29 +829,29 @@ export class ClineProvider
 
 		// Tip: Install the es6-string-html VS Code extension to enable code highlighting below
 		return /*html*/ `
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-            <meta name="theme-color" content="#000000">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:; media-src ${webview.cspSource}; script-src ${webview.cspSource} 'wasm-unsafe-eval' 'nonce-${nonce}' https://us-assets.i.posthog.com 'strict-dynamic'; connect-src ${webview.cspSource} https://openrouter.ai https://api.requesty.ai https://us.i.posthog.com https://us-assets.i.posthog.com;">
-            <link rel="stylesheet" type="text/css" href="${stylesUri}">
-			<link href="${codiconsUri}" rel="stylesheet" />
-			<script nonce="${nonce}">
-				window.IMAGES_BASE_URI = "${imagesUri}"
-				window.AUDIO_BASE_URI = "${audioUri}"
-				window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
-			</script>
-            <title>Roo Code</title>
-          </head>
-          <body>
-            <noscript>You need to enable JavaScript to run this app.</noscript>
-            <div id="root"></div>
-            <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
-          </body>
-        </html>
-      `
+	        <!DOCTYPE html>
+	        <html lang="en">
+	          <head>
+	            <meta charset="utf-8">
+	            <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+	            <meta name="theme-color" content="#000000">
+	            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline' https:; img-src ${webview.cspSource} https: data:; media-src ${webview.cspSource}; script-src ${webview.cspSource} 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}' https:; connect-src ${webview.cspSource} https: ws:;">
+	            <link rel="stylesheet" type="text/css" href="${stylesUri}">
+				<link href="${codiconsUri}" rel="stylesheet" />
+				<script nonce="${nonce}">
+					window.IMAGES_BASE_URI = "${imagesUri}"
+					window.AUDIO_BASE_URI = "${audioUri}"
+					window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
+				</script>
+	            <title>Roo Code</title>
+	          </head>
+	          <body>
+	            <noscript>You need to enable JavaScript to run this app.</noscript>
+	            <div id="root"></div>
+	            <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
+	          </body>
+	        </html>
+	      `
 	}
 
 	/**
@@ -857,8 +861,15 @@ export class ClineProvider
 	 * @param webview A reference to the extension webview
 	 */
 	private setWebviewMessageListener(webview: vscode.Webview) {
-		const onReceiveMessage = async (message: WebviewMessage) =>
-			webviewMessageHandler(this, message, this.marketplaceManager)
+		const onReceiveMessage = async (message: any) => {
+			// Windsurf fallback: unwrap parent-framed payloads
+			if (message && message.command === "webview-message" && message.message) {
+				console.log("[HOST DEBUG] Received Windsurf Fallback Message:", message.message?.type)
+				return webviewMessageHandler(this, message.message as WebviewMessage, this.marketplaceManager)
+			}
+
+			return webviewMessageHandler(this, message as WebviewMessage, this.marketplaceManager)
+		}
 
 		const messageDisposable = webview.onDidReceiveMessage(onReceiveMessage)
 		this.webviewDisposables.push(messageDisposable)

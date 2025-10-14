@@ -8,7 +8,7 @@ import type { ClineMessage } from "@roo-code/types"
 import { waitFor, sleep, waitUntilCompleted } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite("Roo Code execute_command Tool", function () {
+suite("AI IDE BAS execute_command Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string

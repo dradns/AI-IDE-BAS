@@ -1,5 +1,5 @@
 {
-	"greeting": "Bienvenue sur Roo Code",
+	"greeting": "Bienvenue sur AI IDE BAS",
 	"task": {
 		"title": "Tâche",
 		"seeMore": "Voir plus",
@@ -116,7 +116,7 @@
 		"title": "Modes",
 		"marketplace": "Marketplace de Modes",
 		"settings": "Paramètres des Modes",
-		"description": "Personas spécialisés qui adaptent le comportement de Roo.",
+		"description": "Personas spécialisés qui adaptent le comportement de AI IDE BAS.",
 		"searchPlaceholder": "Rechercher des modes...",
 		"noResults": "Aucun résultat trouvé"
 	},
@@ -130,7 +130,7 @@
 	"diffError": {
 		"title": "Modification échouée"
 	},
-	"troubleMessage": "Roo rencontre des difficultés...",
+	"troubleMessage": "AI IDE BAS rencontre des difficultés...",
 	"apiRequest": {
 		"title": "Requête API",
 		"failed": "Échec de la requête API",
@@ -156,42 +156,42 @@
 		"current": "Actuel"
 	},
 	"fileOperations": {
-		"wantsToRead": "Roo veut lire ce fichier :",
-		"wantsToReadOutsideWorkspace": "Roo veut lire ce fichier en dehors de l'espace de travail :",
-		"didRead": "Roo a lu ce fichier :",
-		"wantsToEdit": "Roo veut éditer ce fichier :",
-		"wantsToEditOutsideWorkspace": "Roo veut éditer ce fichier en dehors de l'espace de travail :",
-		"wantsToEditProtected": "Roo veut éditer un fichier de configuration protégé :",
-		"wantsToCreate": "Roo veut créer un nouveau fichier :",
-		"wantsToSearchReplace": "Roo veut effectuer une recherche et remplacement sur ce fichier :",
-		"didSearchReplace": "Roo a effectué une recherche et remplacement sur ce fichier :",
-		"wantsToInsert": "Roo veut insérer du contenu dans ce fichier :",
-		"wantsToInsertWithLineNumber": "Roo veut insérer du contenu dans ce fichier à la ligne {{lineNumber}} :",
-		"wantsToInsertAtEnd": "Roo veut ajouter du contenu à la fin de ce fichier :",
-		"wantsToReadAndXMore": "Roo veut lire ce fichier et {{count}} de plus :",
-		"wantsToReadMultiple": "Roo souhaite lire plusieurs fichiers :",
-		"wantsToApplyBatchChanges": "Roo veut appliquer des modifications à plusieurs fichiers :"
+		"wantsToRead": "AI IDE BAS veut lire ce fichier :",
+		"wantsToReadOutsideWorkspace": "AI IDE BAS veut lire ce fichier en dehors de l'espace de travail :",
+		"didRead": "AI IDE BAS a lu ce fichier :",
+		"wantsToEdit": "AI IDE BAS veut éditer ce fichier :",
+		"wantsToEditOutsideWorkspace": "AI IDE BAS veut éditer ce fichier en dehors de l'espace de travail :",
+		"wantsToEditProtected": "AI IDE BAS veut éditer un fichier de configuration protégé :",
+		"wantsToCreate": "AI IDE BAS veut créer un nouveau fichier :",
+		"wantsToSearchReplace": "AI IDE BAS veut effectuer une recherche et remplacement sur ce fichier :",
+		"didSearchReplace": "AI IDE BAS a effectué une recherche et remplacement sur ce fichier :",
+		"wantsToInsert": "AI IDE BAS veut insérer du contenu dans ce fichier :",
+		"wantsToInsertWithLineNumber": "AI IDE BAS veut insérer du contenu dans ce fichier à la ligne {{lineNumber}} :",
+		"wantsToInsertAtEnd": "AI IDE BAS veut ajouter du contenu à la fin de ce fichier :",
+		"wantsToReadAndXMore": "AI IDE BAS veut lire ce fichier et {{count}} de plus :",
+		"wantsToReadMultiple": "AI IDE BAS souhaite lire plusieurs fichiers :",
+		"wantsToApplyBatchChanges": "AI IDE BAS veut appliquer des modifications à plusieurs fichiers :"
 	},
 	"instructions": {
-		"wantsToFetch": "Roo veut récupérer des instructions détaillées pour aider à la tâche actuelle"
+		"wantsToFetch": "AI IDE BAS veut récupérer des instructions détaillées pour aider à la tâche actuelle"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Roo veut voir les fichiers de premier niveau dans ce répertoire :",
-		"didViewTopLevel": "Roo a vu les fichiers de premier niveau dans ce répertoire :",
-		"wantsToViewRecursive": "Roo veut voir récursivement tous les fichiers dans ce répertoire :",
-		"didViewRecursive": "Roo a vu récursivement tous les fichiers dans ce répertoire :",
-		"wantsToViewDefinitions": "Roo veut voir les noms de définitions de code source utilisés dans ce répertoire :",
-		"didViewDefinitions": "Roo a vu les noms de définitions de code source utilisés dans ce répertoire :",
-		"wantsToSearch": "Roo veut rechercher dans ce répertoire <code>{{regex}}</code> :",
-		"didSearch": "Roo a recherché dans ce répertoire <code>{{regex}}</code> :",
-		"wantsToSearchOutsideWorkspace": "Roo veut rechercher dans ce répertoire (hors espace de travail) <code>{{regex}}</code> :",
-		"didSearchOutsideWorkspace": "Roo a recherché dans ce répertoire (hors espace de travail) <code>{{regex}}</code> :",
-		"wantsToViewTopLevelOutsideWorkspace": "Roo veut voir les fichiers de premier niveau dans ce répertoire (hors espace de travail) :",
-		"didViewTopLevelOutsideWorkspace": "Roo a vu les fichiers de premier niveau dans ce répertoire (hors espace de travail) :",
-		"wantsToViewRecursiveOutsideWorkspace": "Roo veut voir récursivement tous les fichiers dans ce répertoire (hors espace de travail) :",
-		"didViewRecursiveOutsideWorkspace": "Roo a vu récursivement tous les fichiers dans ce répertoire (hors espace de travail) :",
-		"wantsToViewDefinitionsOutsideWorkspace": "Roo veut voir les noms de définitions de code source utilisés dans ce répertoire (hors espace de travail) :",
-		"didViewDefinitionsOutsideWorkspace": "Roo a vu les noms de définitions de code source utilisés dans ce répertoire (hors espace de travail) :"
+		"wantsToViewTopLevel": "AI IDE BAS veut voir les fichiers de premier niveau dans ce répertoire :",
+		"didViewTopLevel": "AI IDE BAS a vu les fichiers de premier niveau dans ce répertoire :",
+		"wantsToViewRecursive": "AI IDE BAS veut voir récursivement tous les fichiers dans ce répertoire :",
+		"didViewRecursive": "AI IDE BAS a vu récursivement tous les fichiers dans ce répertoire :",
+		"wantsToViewDefinitions": "AI IDE BAS veut voir les noms de définitions de code source utilisés dans ce répertoire :",
+		"didViewDefinitions": "AI IDE BAS a vu les noms de définitions de code source utilisés dans ce répertoire :",
+		"wantsToSearch": "AI IDE BAS veut rechercher dans ce répertoire <code>{{regex}}</code> :",
+		"didSearch": "AI IDE BAS a recherché dans ce répertoire <code>{{regex}}</code> :",
+		"wantsToSearchOutsideWorkspace": "AI IDE BAS veut rechercher dans ce répertoire (hors espace de travail) <code>{{regex}}</code> :",
+		"didSearchOutsideWorkspace": "AI IDE BAS a recherché dans ce répertoire (hors espace de travail) <code>{{regex}}</code> :",
+		"wantsToViewTopLevelOutsideWorkspace": "AI IDE BAS veut voir les fichiers de premier niveau dans ce répertoire (hors espace de travail) :",
+		"didViewTopLevelOutsideWorkspace": "AI IDE BAS a vu les fichiers de premier niveau dans ce répertoire (hors espace de travail) :",
+		"wantsToViewRecursiveOutsideWorkspace": "AI IDE BAS veut voir récursivement tous les fichiers dans ce répertoire (hors espace de travail) :",
+		"didViewRecursiveOutsideWorkspace": "AI IDE BAS a vu récursivement tous les fichiers dans ce répertoire (hors espace de travail) :",
+		"wantsToViewDefinitionsOutsideWorkspace": "AI IDE BAS veut voir les noms de définitions de code source utilisés dans ce répertoire (hors espace de travail) :",
+		"didViewDefinitionsOutsideWorkspace": "AI IDE BAS a vu les noms de définitions de code source utilisés dans ce répertoire (hors espace de travail) :"
 	},
 	"commandOutput": "Sortie de commande",
 	"commandExecution": {
@@ -213,18 +213,18 @@
 	"response": "Réponse",
 	"arguments": "Arguments",
 	"mcp": {
-		"wantsToUseTool": "Roo veut utiliser un outil sur le serveur MCP {{serverName}} :",
-		"wantsToAccessResource": "Roo veut accéder à une ressource sur le serveur MCP {{serverName}} :"
+		"wantsToUseTool": "AI IDE BAS veut utiliser un outil sur le serveur MCP {{serverName}} :",
+		"wantsToAccessResource": "AI IDE BAS veut accéder à une ressource sur le serveur MCP {{serverName}} :"
 	},
 	"modes": {
-		"wantsToSwitch": "Roo veut passer au mode <code>{{mode}}</code>",
-		"wantsToSwitchWithReason": "Roo veut passer au mode <code>{{mode}}</code> car : {{reason}}",
-		"didSwitch": "Roo est passé au mode <code>{{mode}}</code>",
-		"didSwitchWithReason": "Roo est passé au mode <code>{{mode}}</code> car : {{reason}}"
+		"wantsToSwitch": "AI IDE BAS veut passer au mode <code>{{mode}}</code>",
+		"wantsToSwitchWithReason": "AI IDE BAS veut passer au mode <code>{{mode}}</code> car : {{reason}}",
+		"didSwitch": "AI IDE BAS est passé au mode <code>{{mode}}</code>",
+		"didSwitchWithReason": "AI IDE BAS est passé au mode <code>{{mode}}</code> car : {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Roo veut créer une nouvelle sous-tâche en mode <code>{{mode}}</code> :",
-		"wantsToFinish": "Roo veut terminer cette sous-tâche",
+		"wantsToCreate": "AI IDE BAS veut créer une nouvelle sous-tâche en mode <code>{{mode}}</code> :",
+		"wantsToFinish": "AI IDE BAS veut terminer cette sous-tâche",
 		"newTaskContent": "Instructions de la sous-tâche",
 		"completionContent": "Sous-tâche terminée",
 		"resultContent": "Résultats de la sous-tâche",
@@ -232,7 +232,7 @@
 		"completionInstructions": "Sous-tâche terminée ! Vous pouvez examiner les résultats et suggérer des corrections ou les prochaines étapes. Si tout semble bon, confirmez pour retourner le résultat à la tâche parente."
 	},
 	"questions": {
-		"hasQuestion": "Roo a une question :"
+		"hasQuestion": "AI IDE BAS a une question :"
 	},
 	"taskCompleted": "Tâche terminée",
 	"powershell": {
@@ -241,7 +241,7 @@
 	"autoApprove": {
 		"title": "Auto-approbation :",
 		"none": "Aucune",
-		"description": "L'auto-approbation permet à Roo Code d'effectuer des actions sans demander d'autorisation. Activez-la uniquement pour les actions auxquelles vous faites entièrement confiance. Configuration plus détaillée disponible dans les <settingsLink>Paramètres</settingsLink>.",
+		"description": "L'auto-approbation permet à AI IDE BAS d'effectuer des actions sans demander d'autorisation. Activez-la uniquement pour les actions auxquelles vous faites entièrement confiance. Configuration plus détaillée disponible dans les <settingsLink>Paramètres</settingsLink>.",
 		"selectOptionsFirst": "Sélectionnez au moins une option ci-dessous pour activer l'auto-approbation",
 		"toggleAriaLabel": "Activer/désactiver l'approbation automatique",
 		"disabledAriaLabel": "Approbation automatique désactivée - sélectionnez d'abord les options"
@@ -262,17 +262,17 @@
 		"countdownDisplay": "{{count}}s"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code {{version}} est sortie",
-		"description": "Roo Code {{version}} apporte de puissantes nouvelles fonctionnalités et des améliorations significatives pour améliorer ton flux de travail de développement.",
+		"title": "🎉 AI IDE BAS {{version}} est sortie",
+		"description": "AI IDE BAS {{version}} apporte de puissantes nouvelles fonctionnalités et des améliorations significatives pour améliorer ton flux de travail de développement.",
 		"whatsNew": "Quoi de neuf",
-		"feature1": "<bold>File d'Attente de Messages</bold> : Mettez en file d'attente plusieurs messages pendant que Roo travaille, vous permettant de continuer à planifier votre flux de travail sans interruption.",
+		"feature1": "<bold>File d'Attente de Messages</bold> : Mettez en file d'attente plusieurs messages pendant que AI IDE BAS travaille, vous permettant de continuer à planifier votre flux de travail sans interruption.",
 		"feature2": "<bold>Commandes Slash Personnalisées</bold> : Créez des commandes slash personnalisées pour un accès rapide aux prompts et flux de travail fréquemment utilisés, avec une gestion complète de l'interface utilisateur.",
 		"feature3": "<bold>Outils Gemini Améliorés</bold> : De nouvelles capacités de contexte d'URL et de fondation de recherche Google fournissent aux modèles Gemini des informations web en temps réel et des capacités de recherche améliorées.",
 		"hideButton": "Masquer l'annonce",
 		"detailsDiscussLinks": "Obtenez plus de détails et participez aux discussions sur <discordLink>Discord</discordLink> et <redditLink>Reddit</redditLink> 🚀"
 	},
 	"browser": {
-		"rooWantsToUse": "Roo veut utiliser le navigateur :",
+		"rooWantsToUse": "AI IDE BAS veut utiliser le navigateur :",
 		"consoleLogs": "Journaux de console",
 		"noNewLogs": "(Pas de nouveaux journaux)",
 		"screenshot": "Capture d'écran du navigateur",
@@ -306,19 +306,19 @@
 	"profileViolationWarning": "Le profil actuel n'est pas compatible avec les paramètres de votre organisation",
 	"shellIntegration": {
 		"title": "Avertissement d'exécution de commande",
-		"description": "Votre commande est exécutée sans l'intégration shell du terminal VSCode. Pour supprimer cet avertissement, vous pouvez désactiver l'intégration shell dans la section <strong>Terminal</strong> des <settingsLink>paramètres de Roo Code</settingsLink> ou résoudre les problèmes d'intégration du terminal VSCode en utilisant le lien ci-dessous.",
+		"description": "Votre commande est exécutée sans l'intégration shell du terminal VSCode. Pour supprimer cet avertissement, vous pouvez désactiver l'intégration shell dans la section <strong>Terminal</strong> des <settingsLink>paramètres de AI IDE BAS</settingsLink> ou résoudre les problèmes d'intégration du terminal VSCode en utilisant le lien ci-dessous.",
 		"troubleshooting": "Cliquez ici pour la documentation d'intégration shell."
 	},
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "Limite de requêtes auto-approuvées atteinte",
-			"description": "Roo a atteint la limite auto-approuvée de {{count}} requête(s) API. Souhaitez-vous réinitialiser le compteur et poursuivre la tâche ?",
+			"description": "AI IDE BAS a atteint la limite auto-approuvée de {{count}} requête(s) API. Souhaitez-vous réinitialiser le compteur et poursuivre la tâche ?",
 			"button": "Réinitialiser et continuer"
 		}
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "Roo veut rechercher dans la base de code <code>{{query}}</code> :",
-		"wantsToSearchWithPath": "Roo veut rechercher dans la base de code <code>{{query}}</code> dans <code>{{path}}</code> :",
+		"wantsToSearch": "AI IDE BAS veut rechercher dans la base de code <code>{{query}}</code> :",
+		"wantsToSearchWithPath": "AI IDE BAS veut rechercher dans la base de code <code>{{query}}</code> dans <code>{{path}}</code> :",
 		"didSearch_one": "1 résultat trouvé",
 		"didSearch_other": "{{count}} résultats trouvés",
 		"resultTooltip": "Score de similarité : {{score}} (cliquer pour ouvrir le fichier)"

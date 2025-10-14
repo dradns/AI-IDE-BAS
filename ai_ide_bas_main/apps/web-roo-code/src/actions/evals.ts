@@ -8,7 +8,13 @@ import { formatScore } from "@/lib"
 export async function getEvalRuns() {
 	const languageScores = await getLanguageScores()
 
-	const runs = (await getRuns())
+	const rawRuns = await getRuns()
+	if (!rawRuns || !Array.isArray(rawRuns)) {
+		console.error("getRuns returned invalid data:", rawRuns)
+		return []
+	}
+
+	const runs = rawRuns
 		.filter((run) => !!run.taskMetrics)
 		.filter(({ settings }) => rooCodeSettingsSchema.safeParse(settings).success)
 		.sort((a, b) => b.passed - a.passed)

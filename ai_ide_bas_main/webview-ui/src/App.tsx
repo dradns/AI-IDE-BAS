@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react"
 import { useEvent } from "react-use"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
@@ -178,12 +178,101 @@ const App = () => {
 
 	useEvent("message", onMessage)
 
+	// VS Code API initialization diagnostics and universal messaging
+	const vscodeApiRef = useRef<any>(null)
+	const sendMessage = useCallback((message: unknown) => {
+		try {
+			// Prefer imported vscode if available
+			if (vscode && typeof vscode.postMessage === "function") {
+				vscode.postMessage(message as any)
+				console.debug("[DEBUG] sendMessage channel: vscode.postMessage")
+				return
+			}
+
+			// Try acquireVsCodeApi dynamically
+			if (!vscodeApiRef.current && typeof (window as any).acquireVsCodeApi === "function") {
+				vscodeApiRef.current = (window as any).acquireVsCodeApi()
+			}
+			if (vscodeApiRef.current && typeof vscodeApiRef.current.postMessage === "function") {
+				vscodeApiRef.current.postMessage(message)
+				console.debug("[DEBUG] sendMessage channel: acquireVsCodeApi.postMessage")
+				return
+			}
+		} catch (err) {
+			console.warn("[DEBUG] vscode API send failed, falling back", err)
+		}
+
+		// Aggressive fallback for Windsurf
+		try {
+			window.parent.postMessage({ command: "webview-message", message }, "*")
+			console.debug("[DEBUG] sendMessage channel: window.parent.postMessage")
+		} catch (err) {
+			console.error("[DEBUG] Fallback postMessage failed", err)
+		}
+	}, [])
+
+	useEffect(() => {
+		let status = "FAILED"
+		try {
+			if (typeof (window as any).acquireVsCodeApi === "function") {
+				vscodeApiRef.current = (window as any).acquireVsCodeApi()
+				status = vscodeApiRef.current ? "Initialized" : "FAILED"
+			} else if (vscode && typeof vscode.postMessage === "function") {
+				status = "Initialized"
+			}
+		} catch {
+			status = "FAILED"
+		}
+		console.debug(`[DEBUG] VS Code API Status: ${status}`)
+	}, [])
+
+	// Гарантированная отправка сигнала готовности после завершения рендеринга React
+	useLayoutEffect(() => {
+		console.log("[READY] React rendering completed - sending ready signal to Host")
+		vscode.readyForHost()
+	}, [])
+
+	// Global click diagnostics and external link handling (only for external links without onClick handlers)
+	useEffect(() => {
+		function onDocumentClick(ev: MouseEvent) {
+			const target = ev.target as HTMLElement | null
+			if (!target) return
+			
+			// Check if the element or its parent has an onClick handler (React elements)
+			// React doesn't add onclick attribute, so we check for data attributes or specific classes
+			const elementWithHandler = target.closest("button") || 
+									  target.closest("[role='button']") ||
+									  target.closest("[data-click-handler]") ||
+									  target.closest(".click-handler")
+			
+			if (elementWithHandler) {
+				// Element has its own click handler, don't interfere
+				return
+			}
+			
+			const anchor = target.closest("a") as HTMLAnchorElement | null
+			if (!anchor) return
+			const href = anchor.getAttribute("href") || ""
+			if (!href) return
+			const isHttp = href.startsWith("http://") || href.startsWith("https://")
+			if (!isHttp) return
+			
+			// Only handle external links that don't have onClick handlers
+			console.debug("[DEBUG] External link clicked without onClick handler")
+			ev.preventDefault()
+			sendMessage({ type: "openExternal", url: href })
+		}
+
+		document.addEventListener("click", onDocumentClick, true)
+		return () => document.removeEventListener("click", onDocumentClick, true)
+	}, [sendMessage])
+
 	useEffect(() => {
 		if (shouldShowAnnouncement) {
 			setShowAnnouncement(true)
-			vscode.postMessage({ type: "didShowAnnouncement" })
+			sendMessage({ type: "didShowAnnouncement" })
 		}
-	}, [shouldShowAnnouncement])
+	}, [shouldShowAnnouncement, sendMessage])
 
 	useEffect(() => {
 		if (didHydrateState) {
@@ -193,9 +282,9 @@ const App = () => {
 
 	// Tell the extension that we are ready to receive messages.
 	useEffect(() => {
-		vscode.postMessage({ type: "webviewDidLaunch" })
-		vscode.postMessage({ type: "files:status" })
-	}, [])
+		// webviewDidLaunch is already sent via vscode.readyForHost() in useLayoutEffect
+		sendMessage({ type: "files:status" })
+	}, [sendMessage])
 
 	// Initialize source map support for better error reporting
 	useEffect(() => {
@@ -263,14 +352,14 @@ const App = () => {
 				requestId={humanRelayDialogState.requestId}
 				promptText={humanRelayDialogState.promptText}
 				onClose={() => setHumanRelayDialogState((prev) => ({ ...prev, isOpen: false }))}
-				onSubmit={(requestId, text) => vscode.postMessage({ type: "humanRelayResponse", requestId, text })}
-				onCancel={(requestId) => vscode.postMessage({ type: "humanRelayCancel", requestId })}
+				onSubmit={(requestId, text) => sendMessage({ type: "humanRelayResponse", requestId, text })}
+				onCancel={(requestId) => sendMessage({ type: "humanRelayCancel", requestId })}
 			/>
 			<MemoizedDeleteMessageDialog
 				open={deleteMessageDialogState.isOpen}
 				onOpenChange={(open) => setDeleteMessageDialogState((prev) => ({ ...prev, isOpen: open }))}
 				onConfirm={() => {
-					vscode.postMessage({
+					sendMessage({
 						type: "deleteMessageConfirm",
 						messageTs: deleteMessageDialogState.messageTs,
 					})
@@ -280,13 +369,13 @@ const App = () => {
 			<MemoizedEditMessageDialog
 				open={editMessageDialogState.isOpen}
 				onOpenChange={(open) => setEditMessageDialogState((prev) => ({ ...prev, isOpen: open }))}
-				onConfirm={() => {
-					vscode.postMessage({
-						type: "editMessageConfirm",
-						messageTs: editMessageDialogState.messageTs,
-						text: editMessageDialogState.text,
-						images: editMessageDialogState.images,
-					})
+					onConfirm={() => {
+						sendMessage({
+							type: "editMessageConfirm",
+							messageTs: editMessageDialogState.messageTs,
+							text: editMessageDialogState.text,
+							images: editMessageDialogState.images,
+						})
 					setEditMessageDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>

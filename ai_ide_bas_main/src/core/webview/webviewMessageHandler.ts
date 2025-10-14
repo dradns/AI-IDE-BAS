@@ -705,8 +705,52 @@ export const webviewMessageHandler = async (
 			break
 		case "openExternal":
 			if (message.url) {
-				// Используем openMention для обработки внешних ссылок с доверенными доменами
-				await openMention(message.url)
+				try {
+					// Получаем список доверенных доменов из настроек
+					const trustedDomains = vscode.workspace.getConfiguration("ai-ide-bas").get<string[]>("trustedDomains") || []
+					
+					// Проверяем, является ли домен доверенным
+					let isTrusted = false
+					try {
+						const parsedUrl = new URL(message.url)
+						const domain = parsedUrl.hostname
+						isTrusted = trustedDomains.some((trustedDomain) => {
+							return domain === trustedDomain || domain.endsWith("." + trustedDomain)
+						})
+					} catch (urlError) {
+						console.error("[ERROR] Failed to parse URL:", message.url, urlError)
+					}
+
+					if (isTrusted) {
+						// Для доверенных доменов пытаемся открыть без диалога
+						try {
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+							console.log("[EXTERNAL] Trusted domain opened successfully:", message.url)
+						} catch (error) {
+							console.error("[ERROR] Failed to open trusted domain:", message.url, error)
+							// Fallback к обычному способу
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+						}
+					} else {
+						// Для недоверенных доменов - обычное поведение с диалогом
+						try {
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+							console.log("[EXTERNAL] External URL opened with confirmation:", message.url)
+						} catch (error) {
+							console.error("[ERROR] Failed to open external URL:", message.url, error)
+							// Fallback: try to open anyway
+							await vscode.env.openExternal(vscode.Uri.parse(message.url))
+						}
+					}
+				} catch (error) {
+					console.error("[ERROR] Failed to open external URL directly:", message.url, error)
+					// Fallback to openMention if direct openExternal fails
+					try {
+						await openMention(message.url)
+					} catch (mentionError) {
+						console.error("[ERROR] Fallback to openMention also failed:", mentionError)
+					}
+				}
 			}
 			break
 		case "files:status": {
@@ -716,9 +760,42 @@ export const webviewMessageHandler = async (
 			break
 		}
 		case "files:login": {
-			const client = new AiIdeBasFilesClient(provider.context)
-			const url = client.getLoginUrl()
-			await openMention(url)
+			try {
+				const client = new AiIdeBasFilesClient(provider.context)
+				const url = client.getLoginUrl()
+
+				try {
+					await vscode.env.openExternal(vscode.Uri.parse(url))
+					console.log("[LOGIN] Login URL opened successfully:", url)
+					// Отправляем подтверждение что URL открыт (пользователь может авторизоваться)
+					await provider.postMessageToWebview({ 
+						type: "files:notice", 
+						text: "Откройте браузер для авторизации. После входа вернитесь в VS Code." 
+					})
+				} catch (error) {
+					console.error("[ERROR] Failed to open login URL directly:", url, error)
+					try {
+						await openMention(url)
+						console.log("[LOGIN] Login URL opened via openMention:", url)
+						await provider.postMessageToWebview({ 
+							type: "files:notice", 
+							text: "Откройте браузер для авторизации. После входа вернитесь в VS Code." 
+						})
+					} catch (mentionError) {
+						console.error("[ERROR] Fallback to openMention for login URL also failed:", mentionError)
+						await provider.postMessageToWebview({ 
+							type: "files:error", 
+							error: "Не удалось открыть страницу авторизации. Попробуйте еще раз." 
+						})
+					}
+				}
+			} catch (error) {
+				console.error("[ERROR] Failed to get login URL:", error)
+				await provider.postMessageToWebview({ 
+					type: "files:error", 
+					error: "Ошибка получения URL авторизации. Проверьте настройки." 
+				})
+			}
 			break
 		}
 		case "files:logout": {
