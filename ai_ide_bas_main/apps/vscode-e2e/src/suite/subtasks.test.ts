@@ -4,7 +4,7 @@ import type { ClineMessage } from "@roo-code/types"
 
 import { sleep, waitFor, waitUntilCompleted } from "./utils"
 
-suite.skip("AI IDE BAS Subtasks", () => {
+suite.skip("Roo Code Subtasks", () => {
 	test("Should handle subtask cancellation and resumption correctly", async () => {
 		const api = globalThis.api
 

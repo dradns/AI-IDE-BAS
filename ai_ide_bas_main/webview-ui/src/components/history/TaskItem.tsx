@@ -51,14 +51,12 @@ const TaskItem = ({
 				"cursor-pointer group bg-vscode-editor-background rounded relative overflow-hidden hover:border-vscode-toolbar-hoverBackground/60",
 				className,
 			)}
-			data-click-handler
 			onClick={handleClick}>
 			<div className="flex gap-2 p-3">
 				{/* Selection checkbox - only in full variant */}
 				{!isCompact && isSelectionMode && (
 					<div
 						className="task-checkbox mt-1"
-						data-click-handler
 						onClick={(e) => {
 							e.stopPropagation()
 						}}>

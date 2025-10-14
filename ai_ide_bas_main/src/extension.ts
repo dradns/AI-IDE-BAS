@@ -54,50 +54,6 @@ let outputChannel: vscode.OutputChannel
 let extensionContext: vscode.ExtensionContext
 let azureTelemetryReporter: TelemetryReporter | undefined
 
-async function showReleaseNotesOnce(context: vscode.ExtensionContext, logger: vscode.OutputChannel) {
-	try {
-		const currentVersion: string = context.extension.packageJSON.version
-		const storedVersion: string | undefined = context.globalState.get("lastShownVersion")
-		if (storedVersion === currentVersion) return
-
-		const changelogUri = vscode.Uri.joinPath(context.extensionUri, "CHANGELOG.md")
-		const changelogBytes = await vscode.workspace.fs.readFile(changelogUri)
-		const changelog = Buffer.from(changelogBytes).toString("utf8")
-
-		const notes = extractTopChanges(changelog)
-		const title = `🧠✨ Выпущен AI IDE BAS ${currentVersion}`
-		const message = [title, "", ...notes.map((n) => `• ${n}`)].join("\n")
-
-		const MORE = "Подробнее"
-		const CLOSE = "Закрыть"
-		const selection = await vscode.window.showInformationMessage(message, MORE, CLOSE)
-		if (selection === MORE) {
-			vscode.commands.executeCommand("vscode.open", changelogUri)
-		}
-
-		await context.globalState.update("lastShownVersion", currentVersion)
-	} catch (err) {
-		logger.appendLine(`[ReleaseNotes] error: ${err instanceof Error ? err.message : String(err)}`)
-	}
-}
-
-function extractTopChanges(changelog: string): string[] {
-	// Берём верхний раздел после первой версии (до следующего заголовка ##)
-	const match = changelog.match(/##\s*\[[^\]]+\][\s\S]*?(?=\n##\s*\[|$)/)
-	if (!match) return ["Смотрите подробности в CHANGELOG.md"]
-	const section = match[0]
-	// Пытаемся вытащить маркеры - или строки, начинающиеся с - / * / цифры.
-	const lines = section
-		.split(/\r?\n/)
-		.map((l) => l.trim())
-		.filter((l) => l.length > 0)
-	const bullets = lines.filter((l) => /^(-|\*|\d+\.|[•])\s+/.test(l)).map((l) => l.replace(/^(-|\*|\d+\.|[•])\s+/, ""))
-	if (bullets.length > 0) return bullets.slice(0, 5)
-	// Фоллбек: взять несколько первых информативных строк без заголовков
-	const content = lines.filter((l) => !l.startsWith("##") && !l.startsWith("# "))
-	return content.slice(0, 5)
-}
-
 // This method is called when your extension is activated.
 // Your extension is activated the very first time the command is executed.
 export async function activate(context: vscode.ExtensionContext) {
@@ -255,8 +211,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerCodeActions(context)
 	registerTerminalActions(context)
-
-	showReleaseNotesOnce(context, outputChannel);
 
 	// Allows other extensions to activate once Roo is ready.
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)

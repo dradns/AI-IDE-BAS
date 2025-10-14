@@ -1,6 +1,6 @@
 {
-	"greeting": "AI IDE BASへようこそ！",
-	"introduction": "組み込みおよび拡張可能なモードを備えたAI IDE BASは、計画、アーキテクチャ設計、コーディング、デバッグ、そして今までにない生産性向上を可能にします。",
+	"greeting": "Roo Codeへようこそ！",
+	"introduction": "組み込みおよび拡張可能なモードを備えたRoo Codeは、計画、アーキテクチャ設計、コーディング、デバッグ、そして今までにない生産性向上を可能にします。",
 	"notice": "開始するには、この拡張機能にはAPIプロバイダーが必要です。",
 	"start": "さあ、始めましょう！",
 	"routers": {
@@ -12,11 +12,11 @@
 			"description": "LLMsのための統一インターフェース"
 		}
 	},
-	"chooseProvider": "AI IDE BASが機能するには、APIキーが必要です。",
+	"chooseProvider": "Rooが機能するには、APIキーが必要です。",
 	"startRouter": "LLMルーターの使用をお勧めします：",
 	"startCustom": "または、あなた自身のAPIキーを使用できます：",
 	"telemetry": {
-		"title": "AI IDE BASの改善にご協力ください",
+		"title": "Roo Codeの改善にご協力ください",
 		"anonymousTelemetry": "バグの修正と拡張機能の改善のため、匿名のエラーと使用データを送信してください。コード、プロンプト、個人情報は一切送信されません。",
 		"changeSettings": "<settingsLink>設定</settingsLink>の下部でいつでも変更できます",
 		"settings": "設定",

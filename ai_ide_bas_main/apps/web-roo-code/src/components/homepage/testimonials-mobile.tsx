@@ -16,7 +16,7 @@ export function TestimonialsMobile() {
 		<div className="md:hidden">
 			<div className="overflow-hidden px-4" ref={emblaRef}>
 				<div className="flex">
-					{(testimonials || []).map((testimonial) => (
+					{testimonials.map((testimonial) => (
 						<div className="min-w-0 flex-[0_0_100%] px-4" key={testimonial.id}>
 							<div className="relative py-8">
 								<svg

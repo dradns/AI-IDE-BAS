@@ -9,13 +9,7 @@ export async function getEvalRuns() {
 	try {
 		const languageScores = await getLanguageScores()
 
-	const rawRuns = await getRuns()
-	if (!rawRuns || !Array.isArray(rawRuns)) {
-		console.error("getRuns returned invalid data:", rawRuns)
-		return []
-	}
-
-	const runs = rawRuns
+	const runs = (await getRuns())
 		.filter((run) => !!run.taskMetrics)
 		.filter(({ settings }) => rooCodeSettingsSchema.safeParse(settings).success)
 		.sort((a, b) => b.passed - a.passed)

@@ -1,5 +1,5 @@
 {
-	"greeting": "Willkommen bei AI IDE BAS",
+	"greeting": "Willkommen bei Roo Code",
 	"task": {
 		"title": "Aufgabe",
 		"seeMore": "Mehr anzeigen",
@@ -81,7 +81,7 @@
 	},
 	"scrollToBottom": "Zum Chat-Ende scrollen",
 	"about": "Generiere, überarbeite und debugge Code mit KI-Unterstützung. Weitere Informationen findest du in unserer <DocsLink>Dokumentation</DocsLink>.",
-	"onboarding": "<strong>Deine Aufgabenliste in diesem Arbeitsbereich ist leer.</strong> Beginne mit der Eingabe einer Aufgabe unten. Du bist dir nicht sicher, wie du anfangen sollst? Lies mehr darüber, was AI IDE BAS für dich tun kann, in <DocsLink>den Dokumenten</DocsLink>.",
+	"onboarding": "<strong>Deine Aufgabenliste in diesem Arbeitsbereich ist leer.</strong> Beginne mit der Eingabe einer Aufgabe unten. Du bist dir nicht sicher, wie du anfangen sollst? Lies mehr darüber, was Roo für dich tun kann, in <DocsLink>den Dokumenten</DocsLink>.",
 	"rooTips": {
 		"boomerangTasks": {
 			"title": "Aufgaben-Orchestrierung",
@@ -130,7 +130,7 @@
 	"diffError": {
 		"title": "Bearbeitung fehlgeschlagen"
 	},
-	"troubleMessage": "AI IDE BAS hat Probleme...",
+	"troubleMessage": "Roo hat Probleme...",
 	"apiRequest": {
 		"title": "API-Anfrage",
 		"failed": "API-Anfrage fehlgeschlagen",
@@ -156,42 +156,42 @@
 		"current": "Aktuell"
 	},
 	"instructions": {
-		"wantsToFetch": "AI IDE BAS möchte detaillierte Anweisungen abrufen, um bei der aktuellen Aufgabe zu helfen"
+		"wantsToFetch": "Roo möchte detaillierte Anweisungen abrufen, um bei der aktuellen Aufgabe zu helfen"
 	},
 	"fileOperations": {
-		"wantsToRead": "AI IDE BAS möchte diese Datei lesen:",
-		"wantsToReadAndXMore": "AI IDE BAS möchte diese Datei und {{count}} weitere lesen:",
-		"wantsToReadOutsideWorkspace": "AI IDE BAS möchte diese Datei außerhalb des Arbeitsbereichs lesen:",
-		"didRead": "AI IDE BAS hat diese Datei gelesen:",
-		"wantsToEdit": "AI IDE BAS möchte diese Datei bearbeiten:",
-		"wantsToEditOutsideWorkspace": "AI IDE BAS möchte diese Datei außerhalb des Arbeitsbereichs bearbeiten:",
-		"wantsToEditProtected": "AI IDE BAS möchte eine geschützte Konfigurationsdatei bearbeiten:",
-		"wantsToCreate": "AI IDE BAS möchte eine neue Datei erstellen:",
-		"wantsToSearchReplace": "AI IDE BAS möchte in dieser Datei suchen und ersetzen:",
-		"didSearchReplace": "AI IDE BAS hat Suchen und Ersetzen in dieser Datei durchgeführt:",
-		"wantsToInsert": "AI IDE BAS möchte Inhalte in diese Datei einfügen:",
-		"wantsToInsertWithLineNumber": "AI IDE BAS möchte Inhalte in diese Datei in Zeile {{lineNumber}} einfügen:",
-		"wantsToInsertAtEnd": "AI IDE BAS möchte Inhalte am Ende dieser Datei anhängen:",
-		"wantsToReadMultiple": "AI IDE BAS möchte mehrere Dateien lesen:",
-		"wantsToApplyBatchChanges": "AI IDE BAS möchte Änderungen an mehreren Dateien vornehmen:"
+		"wantsToRead": "Roo möchte diese Datei lesen:",
+		"wantsToReadAndXMore": "Roo möchte diese Datei und {{count}} weitere lesen:",
+		"wantsToReadOutsideWorkspace": "Roo möchte diese Datei außerhalb des Arbeitsbereichs lesen:",
+		"didRead": "Roo hat diese Datei gelesen:",
+		"wantsToEdit": "Roo möchte diese Datei bearbeiten:",
+		"wantsToEditOutsideWorkspace": "Roo möchte diese Datei außerhalb des Arbeitsbereichs bearbeiten:",
+		"wantsToEditProtected": "Roo möchte eine geschützte Konfigurationsdatei bearbeiten:",
+		"wantsToCreate": "Roo möchte eine neue Datei erstellen:",
+		"wantsToSearchReplace": "Roo möchte in dieser Datei suchen und ersetzen:",
+		"didSearchReplace": "Roo hat Suchen und Ersetzen in dieser Datei durchgeführt:",
+		"wantsToInsert": "Roo möchte Inhalte in diese Datei einfügen:",
+		"wantsToInsertWithLineNumber": "Roo möchte Inhalte in diese Datei in Zeile {{lineNumber}} einfügen:",
+		"wantsToInsertAtEnd": "Roo möchte Inhalte am Ende dieser Datei anhängen:",
+		"wantsToReadMultiple": "Roo möchte mehrere Dateien lesen:",
+		"wantsToApplyBatchChanges": "Roo möchte Änderungen an mehreren Dateien vornehmen:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "AI IDE BAS möchte die Dateien auf oberster Ebene in diesem Verzeichnis anzeigen:",
-		"didViewTopLevel": "AI IDE BAS hat die Dateien auf oberster Ebene in diesem Verzeichnis angezeigt:",
-		"wantsToViewRecursive": "AI IDE BAS möchte rekursiv alle Dateien in diesem Verzeichnis anzeigen:",
-		"didViewRecursive": "AI IDE BAS hat rekursiv alle Dateien in diesem Verzeichnis angezeigt:",
-		"wantsToViewDefinitions": "AI IDE BAS möchte Quellcode-Definitionsnamen in diesem Verzeichnis anzeigen:",
-		"didViewDefinitions": "AI IDE BAS hat Quellcode-Definitionsnamen in diesem Verzeichnis angezeigt:",
-		"wantsToSearch": "AI IDE BAS möchte dieses Verzeichnis nach <code>{{regex}}</code> durchsuchen:",
-		"didSearch": "AI IDE BAS hat dieses Verzeichnis nach <code>{{regex}}</code> durchsucht:",
-		"wantsToSearchOutsideWorkspace": "AI IDE BAS möchte dieses Verzeichnis (außerhalb des Arbeitsbereichs) nach <code>{{regex}}</code> durchsuchen:",
-		"didSearchOutsideWorkspace": "AI IDE BAS hat dieses Verzeichnis (außerhalb des Arbeitsbereichs) nach <code>{{regex}}</code> durchsucht:",
-		"wantsToViewTopLevelOutsideWorkspace": "AI IDE BAS möchte die Dateien auf oberster Ebene in diesem Verzeichnis (außerhalb des Arbeitsbereichs) anzeigen:",
-		"didViewTopLevelOutsideWorkspace": "AI IDE BAS hat die Dateien auf oberster Ebene in diesem Verzeichnis (außerhalb des Arbeitsbereichs) angezeigt:",
-		"wantsToViewRecursiveOutsideWorkspace": "AI IDE BAS möchte rekursiv alle Dateien in diesem Verzeichnis (außerhalb des Arbeitsbereichs) anzeigen:",
-		"didViewRecursiveOutsideWorkspace": "AI IDE BAS hat rekursiv alle Dateien in diesem Verzeichnis (außerhalb des Arbeitsbereichs) angezeigt:",
-		"wantsToViewDefinitionsOutsideWorkspace": "AI IDE BAS möchte Quellcode-Definitionsnamen in diesem Verzeichnis (außerhalb des Arbeitsbereichs) anzeigen:",
-		"didViewDefinitionsOutsideWorkspace": "AI IDE BAS hat Quellcode-Definitionsnamen in diesem Verzeichnis (außerhalb des Arbeitsbereichs) angezeigt:"
+		"wantsToViewTopLevel": "Roo möchte die Dateien auf oberster Ebene in diesem Verzeichnis anzeigen:",
+		"didViewTopLevel": "Roo hat die Dateien auf oberster Ebene in diesem Verzeichnis angezeigt:",
+		"wantsToViewRecursive": "Roo möchte rekursiv alle Dateien in diesem Verzeichnis anzeigen:",
+		"didViewRecursive": "Roo hat rekursiv alle Dateien in diesem Verzeichnis angezeigt:",
+		"wantsToViewDefinitions": "Roo möchte Quellcode-Definitionsnamen in diesem Verzeichnis anzeigen:",
+		"didViewDefinitions": "Roo hat Quellcode-Definitionsnamen in diesem Verzeichnis angezeigt:",
+		"wantsToSearch": "Roo möchte dieses Verzeichnis nach <code>{{regex}}</code> durchsuchen:",
+		"didSearch": "Roo hat dieses Verzeichnis nach <code>{{regex}}</code> durchsucht:",
+		"wantsToSearchOutsideWorkspace": "Roo möchte dieses Verzeichnis (außerhalb des Arbeitsbereichs) nach <code>{{regex}}</code> durchsuchen:",
+		"didSearchOutsideWorkspace": "Roo hat dieses Verzeichnis (außerhalb des Arbeitsbereichs) nach <code>{{regex}}</code> durchsucht:",
+		"wantsToViewTopLevelOutsideWorkspace": "Roo möchte die Dateien auf oberster Ebene in diesem Verzeichnis (außerhalb des Arbeitsbereichs) anzeigen:",
+		"didViewTopLevelOutsideWorkspace": "Roo hat die Dateien auf oberster Ebene in diesem Verzeichnis (außerhalb des Arbeitsbereichs) angezeigt:",
+		"wantsToViewRecursiveOutsideWorkspace": "Roo möchte rekursiv alle Dateien in diesem Verzeichnis (außerhalb des Arbeitsbereichs) anzeigen:",
+		"didViewRecursiveOutsideWorkspace": "Roo hat rekursiv alle Dateien in diesem Verzeichnis (außerhalb des Arbeitsbereichs) angezeigt:",
+		"wantsToViewDefinitionsOutsideWorkspace": "Roo möchte Quellcode-Definitionsnamen in diesem Verzeichnis (außerhalb des Arbeitsbereichs) anzeigen:",
+		"didViewDefinitionsOutsideWorkspace": "Roo hat Quellcode-Definitionsnamen in diesem Verzeichnis (außerhalb des Arbeitsbereichs) angezeigt:"
 	},
 	"commandOutput": "Befehlsausgabe",
 	"commandExecution": {
@@ -213,18 +213,18 @@
 	"response": "Antwort",
 	"arguments": "Argumente",
 	"mcp": {
-		"wantsToUseTool": "AI IDE BAS möchte ein Tool auf dem {{serverName}} MCP-Server verwenden:",
-		"wantsToAccessResource": "AI IDE BAS möchte auf eine Ressource auf dem {{serverName}} MCP-Server zugreifen:"
+		"wantsToUseTool": "Roo möchte ein Tool auf dem {{serverName}} MCP-Server verwenden:",
+		"wantsToAccessResource": "Roo möchte auf eine Ressource auf dem {{serverName}} MCP-Server zugreifen:"
 	},
 	"modes": {
-		"wantsToSwitch": "AI IDE BAS möchte zum <code>{{mode}}</code>-Modus wechseln",
-		"wantsToSwitchWithReason": "AI IDE BAS möchte zum <code>{{mode}}</code>-Modus wechseln, weil: {{reason}}",
-		"didSwitch": "AI IDE BAS hat zum <code>{{mode}}</code>-Modus gewechselt",
-		"didSwitchWithReason": "AI IDE BAS hat zum <code>{{mode}}</code>-Modus gewechselt, weil: {{reason}}"
+		"wantsToSwitch": "Roo möchte zum <code>{{mode}}</code>-Modus wechseln",
+		"wantsToSwitchWithReason": "Roo möchte zum <code>{{mode}}</code>-Modus wechseln, weil: {{reason}}",
+		"didSwitch": "Roo hat zum <code>{{mode}}</code>-Modus gewechselt",
+		"didSwitchWithReason": "Roo hat zum <code>{{mode}}</code>-Modus gewechselt, weil: {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "AI IDE BAS möchte eine neue Teilaufgabe im <code>{{mode}}</code>-Modus erstellen:",
-		"wantsToFinish": "AI IDE BAS möchte diese Teilaufgabe abschließen",
+		"wantsToCreate": "Roo möchte eine neue Teilaufgabe im <code>{{mode}}</code>-Modus erstellen:",
+		"wantsToFinish": "Roo möchte diese Teilaufgabe abschließen",
 		"newTaskContent": "Teilaufgabenanweisungen",
 		"completionContent": "Teilaufgabe abgeschlossen",
 		"resultContent": "Teilaufgabenergebnisse",
@@ -232,7 +232,7 @@
 		"completionInstructions": "Teilaufgabe abgeschlossen! Du kannst die Ergebnisse überprüfen und Korrekturen oder nächste Schritte vorschlagen. Wenn alles gut aussieht, bestätige, um das Ergebnis an die übergeordnete Aufgabe zurückzugeben."
 	},
 	"questions": {
-		"hasQuestion": "AI IDE BAS hat eine Frage:"
+		"hasQuestion": "Roo hat eine Frage:"
 	},
 	"taskCompleted": "Aufgabe abgeschlossen",
 	"powershell": {
@@ -241,7 +241,7 @@
 	"autoApprove": {
 		"title": "Automatische Genehmigung:",
 		"none": "Keine",
-		"description": "Automatische Genehmigung erlaubt AI IDE BAS, Aktionen ohne Nachfrage auszuführen. Aktiviere dies nur für Aktionen, denen du vollständig vertraust. Detailliertere Konfiguration verfügbar in den <settingsLink>Einstellungen</settingsLink>.",
+		"description": "Automatische Genehmigung erlaubt Roo Code, Aktionen ohne Nachfrage auszuführen. Aktiviere dies nur für Aktionen, denen du vollständig vertraust. Detailliertere Konfiguration verfügbar in den <settingsLink>Einstellungen</settingsLink>.",
 		"selectOptionsFirst": "Wähle mindestens eine der folgenden Optionen aus, um die automatische Genehmigung zu aktivieren",
 		"toggleAriaLabel": "Automatische Genehmigung umschalten",
 		"disabledAriaLabel": "Automatische Genehmigung deaktiviert - zuerst Optionen auswählen"
@@ -262,17 +262,17 @@
 		"countdownDisplay": "{{count}}s"
 	},
 	"announcement": {
-		"title": "🎉 AI IDE BAS {{version}} veröffentlicht",
-		"description": "AI IDE BAS {{version}} bringt mächtige neue Funktionen und bedeutende Verbesserungen, um deinen Entwicklungsworkflow zu verbessern.",
+		"title": "🎉 Roo Code {{version}} veröffentlicht",
+		"description": "Roo Code {{version}} bringt mächtige neue Funktionen und bedeutende Verbesserungen, um deinen Entwicklungsworkflow zu verbessern.",
 		"whatsNew": "Was ist neu",
-		"feature1": "<bold>Nachrichten-Warteschlange</bold>: Stelle mehrere Nachrichten in die Warteschlange, während AI IDE BAS arbeitet, damit du deinen Workflow ohne Unterbrechung weiter planen kannst.",
+		"feature1": "<bold>Nachrichten-Warteschlange</bold>: Stelle mehrere Nachrichten in die Warteschlange, während Roo arbeitet, damit du deinen Workflow ohne Unterbrechung weiter planen kannst.",
 		"feature2": "<bold>Benutzerdefinierte Slash-Befehle</bold>: Erstelle personalisierte Slash-Befehle für schnellen Zugriff auf häufig verwendete Prompts und Workflows mit vollständiger UI-Verwaltung.",
 		"feature3": "<bold>Erweiterte Gemini-Tools</bold>: Neue URL-Kontext- und Google-Such-Grundlagen-Funktionen bieten Gemini-Modellen Echtzeit-Web-Informationen und erweiterte Recherche-Fähigkeiten.",
 		"hideButton": "Ankündigung ausblenden",
 		"detailsDiscussLinks": "Erhalte mehr Details und diskutiere auf <discordLink>Discord</discordLink> und <redditLink>Reddit</redditLink> 🚀"
 	},
 	"browser": {
-		"rooWantsToUse": "AI IDE BAS möchte den Browser verwenden:",
+		"rooWantsToUse": "Roo möchte den Browser verwenden:",
 		"consoleLogs": "Konsolenprotokolle",
 		"noNewLogs": "(Keine neuen Protokolle)",
 		"screenshot": "Browser-Screenshot",
@@ -306,19 +306,19 @@
 	"profileViolationWarning": "Das aktuelle Profil ist nicht kompatibel mit den Einstellungen deiner Organisation",
 	"shellIntegration": {
 		"title": "Befehlsausführungswarnung",
-		"description": "Dein Befehl wird ohne VSCode Terminal-Shell-Integration ausgeführt. Um diese Warnung zu unterdrücken, kannst du die Shell-Integration im Abschnitt <strong>Terminal</strong> der <settingsLink>AI IDE BAS Einstellungen</settingsLink> deaktivieren oder die VSCode Terminal-Integration mit dem Link unten beheben.",
+		"description": "Dein Befehl wird ohne VSCode Terminal-Shell-Integration ausgeführt. Um diese Warnung zu unterdrücken, kannst du die Shell-Integration im Abschnitt <strong>Terminal</strong> der <settingsLink>Roo Code Einstellungen</settingsLink> deaktivieren oder die VSCode Terminal-Integration mit dem Link unten beheben.",
 		"troubleshooting": "Klicke hier für die Shell-Integrationsdokumentation."
 	},
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "Limit für automatisch genehmigte Anfragen erreicht",
-			"description": "AI IDE BAS hat das automatisch genehmigte Limit von {{count}} API-Anfrage(n) erreicht. Möchtest du den Zähler zurücksetzen und mit der Aufgabe fortfahren?",
+			"description": "Roo hat das automatisch genehmigte Limit von {{count}} API-Anfrage(n) erreicht. Möchtest du den Zähler zurücksetzen und mit der Aufgabe fortfahren?",
 			"button": "Zurücksetzen und fortfahren"
 		}
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "AI IDE BAS möchte den Codebase nach <code>{{query}}</code> durchsuchen:",
-		"wantsToSearchWithPath": "AI IDE BAS möchte den Codebase nach <code>{{query}}</code> in <code>{{path}}</code> durchsuchen:",
+		"wantsToSearch": "Roo möchte den Codebase nach <code>{{query}}</code> durchsuchen:",
+		"wantsToSearchWithPath": "Roo möchte den Codebase nach <code>{{query}}</code> in <code>{{path}}</code> durchsuchen:",
 		"didSearch_one": "1 Ergebnis gefunden",
 		"didSearch_other": "{{count}} Ergebnisse gefunden",
 		"resultTooltip": "Ähnlichkeitswert: {{score}} (klicken zum Öffnen der Datei)"

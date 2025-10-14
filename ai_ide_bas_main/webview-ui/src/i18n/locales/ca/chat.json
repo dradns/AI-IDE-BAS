@@ -1,5 +1,5 @@
 {
-	"greeting": "Benvingut a AI IDE BAS",
+	"greeting": "Benvingut a Roo Code",
 	"task": {
 		"title": "Tasca",
 		"seeMore": "Veure més",
@@ -81,7 +81,7 @@
 	},
 	"scrollToBottom": "Desplaça't al final del xat",
 	"about": "Genera, refactoritza i depura codi amb l'ajuda de la IA. Consulta la nostra <DocsLink>documentació</DocsLink> per obtenir més informació.",
-	"onboarding": "<strong> La vostra llista de tasques en aquest espai de treball està buida. </strong> Comença escrivint una tasca a continuació. \nNo esteu segur per on començar? \nMés informació sobre què pot fer AI IDE BAS als documents.",
+	"onboarding": "<strong> La vostra llista de tasques en aquest espai de treball està buida. </strong> Comença escrivint una tasca a continuació. \nNo esteu segur per on començar? \nMés informació sobre què pot fer Roo als documents.",
 	"rooTips": {
 		"boomerangTasks": {
 			"title": "Orquestració de Tasques",
@@ -116,7 +116,7 @@
 		"title": "Modes",
 		"marketplace": "Marketplace de Modes",
 		"settings": "Configuració de Modes",
-		"description": "Personalitats especialitzades que adapten el comportament de AI IDE BAS.",
+		"description": "Personalitats especialitzades que adapten el comportament de Roo.",
 		"searchPlaceholder": "Cerca modes...",
 		"noResults": "No s'han trobat resultats"
 	},
@@ -130,7 +130,7 @@
 	"diffError": {
 		"title": "Edició fallida"
 	},
-	"troubleMessage": "AI IDE BAS està tenint problemes...",
+	"troubleMessage": "Roo està tenint problemes...",
 	"apiRequest": {
 		"title": "Sol·licitud API",
 		"failed": "Sol·licitud API ha fallat",
@@ -156,42 +156,42 @@
 		"current": "Actual"
 	},
 	"instructions": {
-		"wantsToFetch": "AI IDE BAS vol obtenir instruccions detallades per ajudar amb la tasca actual."
+		"wantsToFetch": "Roo vol obtenir instruccions detallades per ajudar amb la tasca actual."
 	},
 	"fileOperations": {
-		"wantsToRead": "AI IDE BAS vol llegir aquest fitxer:",
-		"wantsToReadOutsideWorkspace": "AI IDE BAS vol llegir aquest fitxer fora de l'espai de treball:",
-		"didRead": "AI IDE BAS ha llegit aquest fitxer:",
-		"wantsToEdit": "AI IDE BAS vol editar aquest fitxer:",
-		"wantsToEditOutsideWorkspace": "AI IDE BAS vol editar aquest fitxer fora de l'espai de treball:",
-		"wantsToEditProtected": "AI IDE BAS vol editar un fitxer de configuració protegit:",
-		"wantsToCreate": "AI IDE BAS vol crear un nou fitxer:",
-		"wantsToSearchReplace": "AI IDE BAS vol realitzar cerca i substitució en aquest fitxer:",
-		"didSearchReplace": "AI IDE BAS ha realitzat cerca i substitució en aquest fitxer:",
-		"wantsToInsert": "AI IDE BAS vol inserir contingut en aquest fitxer:",
-		"wantsToInsertWithLineNumber": "AI IDE BAS vol inserir contingut a la línia {{lineNumber}} d'aquest fitxer:",
-		"wantsToInsertAtEnd": "AI IDE BAS vol afegir contingut al final d'aquest fitxer:",
-		"wantsToReadAndXMore": "En AI IDE BAS vol llegir aquest fitxer i {{count}} més:",
-		"wantsToReadMultiple": "AI IDE BAS vol llegir diversos fitxers:",
-		"wantsToApplyBatchChanges": "AI IDE BAS vol aplicar canvis a múltiples fitxers:"
+		"wantsToRead": "Roo vol llegir aquest fitxer:",
+		"wantsToReadOutsideWorkspace": "Roo vol llegir aquest fitxer fora de l'espai de treball:",
+		"didRead": "Roo ha llegit aquest fitxer:",
+		"wantsToEdit": "Roo vol editar aquest fitxer:",
+		"wantsToEditOutsideWorkspace": "Roo vol editar aquest fitxer fora de l'espai de treball:",
+		"wantsToEditProtected": "Roo vol editar un fitxer de configuració protegit:",
+		"wantsToCreate": "Roo vol crear un nou fitxer:",
+		"wantsToSearchReplace": "Roo vol realitzar cerca i substitució en aquest fitxer:",
+		"didSearchReplace": "Roo ha realitzat cerca i substitució en aquest fitxer:",
+		"wantsToInsert": "Roo vol inserir contingut en aquest fitxer:",
+		"wantsToInsertWithLineNumber": "Roo vol inserir contingut a la línia {{lineNumber}} d'aquest fitxer:",
+		"wantsToInsertAtEnd": "Roo vol afegir contingut al final d'aquest fitxer:",
+		"wantsToReadAndXMore": "En Roo vol llegir aquest fitxer i {{count}} més:",
+		"wantsToReadMultiple": "Roo vol llegir diversos fitxers:",
+		"wantsToApplyBatchChanges": "Roo vol aplicar canvis a múltiples fitxers:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "AI IDE BAS vol veure els fitxers de nivell superior en aquest directori:",
-		"didViewTopLevel": "AI IDE BAS ha vist els fitxers de nivell superior en aquest directori:",
-		"wantsToViewRecursive": "AI IDE BAS vol veure recursivament tots els fitxers en aquest directori:",
-		"didViewRecursive": "AI IDE BAS ha vist recursivament tots els fitxers en aquest directori:",
-		"wantsToViewDefinitions": "AI IDE BAS vol veure noms de definicions de codi font utilitzats en aquest directori:",
-		"didViewDefinitions": "AI IDE BAS ha vist noms de definicions de codi font utilitzats en aquest directori:",
-		"wantsToSearch": "AI IDE BAS vol cercar en aquest directori <code>{{regex}}</code>:",
-		"didSearch": "AI IDE BAS ha cercat en aquest directori <code>{{regex}}</code>:",
-		"wantsToSearchOutsideWorkspace": "AI IDE BAS vol cercar en aquest directori (fora de l'espai de treball) <code>{{regex}}</code>:",
-		"didSearchOutsideWorkspace": "AI IDE BAS ha cercat en aquest directori (fora de l'espai de treball) <code>{{regex}}</code>:",
-		"wantsToViewTopLevelOutsideWorkspace": "AI IDE BAS vol veure els fitxers de nivell superior en aquest directori (fora de l'espai de treball):",
-		"didViewTopLevelOutsideWorkspace": "AI IDE BAS ha vist els fitxers de nivell superior en aquest directori (fora de l'espai de treball):",
-		"wantsToViewRecursiveOutsideWorkspace": "AI IDE BAS vol veure recursivament tots els fitxers en aquest directori (fora de l'espai de treball):",
-		"didViewRecursiveOutsideWorkspace": "AI IDE BAS ha vist recursivament tots els fitxers en aquest directori (fora de l'espai de treball):",
-		"wantsToViewDefinitionsOutsideWorkspace": "AI IDE BAS vol veure noms de definicions de codi font utilitzats en aquest directori (fora de l'espai de treball):",
-		"didViewDefinitionsOutsideWorkspace": "AI IDE BAS ha vist noms de definicions de codi font utilitzats en aquest directori (fora de l'espai de treball):"
+		"wantsToViewTopLevel": "Roo vol veure els fitxers de nivell superior en aquest directori:",
+		"didViewTopLevel": "Roo ha vist els fitxers de nivell superior en aquest directori:",
+		"wantsToViewRecursive": "Roo vol veure recursivament tots els fitxers en aquest directori:",
+		"didViewRecursive": "Roo ha vist recursivament tots els fitxers en aquest directori:",
+		"wantsToViewDefinitions": "Roo vol veure noms de definicions de codi font utilitzats en aquest directori:",
+		"didViewDefinitions": "Roo ha vist noms de definicions de codi font utilitzats en aquest directori:",
+		"wantsToSearch": "Roo vol cercar en aquest directori <code>{{regex}}</code>:",
+		"didSearch": "Roo ha cercat en aquest directori <code>{{regex}}</code>:",
+		"wantsToSearchOutsideWorkspace": "Roo vol cercar en aquest directori (fora de l'espai de treball) <code>{{regex}}</code>:",
+		"didSearchOutsideWorkspace": "Roo ha cercat en aquest directori (fora de l'espai de treball) <code>{{regex}}</code>:",
+		"wantsToViewTopLevelOutsideWorkspace": "Roo vol veure els fitxers de nivell superior en aquest directori (fora de l'espai de treball):",
+		"didViewTopLevelOutsideWorkspace": "Roo ha vist els fitxers de nivell superior en aquest directori (fora de l'espai de treball):",
+		"wantsToViewRecursiveOutsideWorkspace": "Roo vol veure recursivament tots els fitxers en aquest directori (fora de l'espai de treball):",
+		"didViewRecursiveOutsideWorkspace": "Roo ha vist recursivament tots els fitxers en aquest directori (fora de l'espai de treball):",
+		"wantsToViewDefinitionsOutsideWorkspace": "Roo vol veure noms de definicions de codi font utilitzats en aquest directori (fora de l'espai de treball):",
+		"didViewDefinitionsOutsideWorkspace": "Roo ha vist noms de definicions de codi font utilitzats en aquest directori (fora de l'espai de treball):"
 	},
 	"commandOutput": "Sortida de l'ordre",
 	"commandExecution": {
@@ -213,18 +213,18 @@
 	"response": "Resposta",
 	"arguments": "Arguments",
 	"mcp": {
-		"wantsToUseTool": "AI IDE BAS vol utilitzar una eina al servidor MCP {{serverName}}:",
-		"wantsToAccessResource": "AI IDE BAS vol accedir a un recurs al servidor MCP {{serverName}}:"
+		"wantsToUseTool": "Roo vol utilitzar una eina al servidor MCP {{serverName}}:",
+		"wantsToAccessResource": "Roo vol accedir a un recurs al servidor MCP {{serverName}}:"
 	},
 	"modes": {
-		"wantsToSwitch": "AI IDE BAS vol canviar a mode <code>{{mode}}</code>",
-		"wantsToSwitchWithReason": "AI IDE BAS vol canviar a mode <code>{{mode}}</code> perquè: {{reason}}",
-		"didSwitch": "AI IDE BAS ha canviat a mode <code>{{mode}}</code>",
-		"didSwitchWithReason": "AI IDE BAS ha canviat a mode <code>{{mode}}</code> perquè: {{reason}}"
+		"wantsToSwitch": "Roo vol canviar a mode <code>{{mode}}</code>",
+		"wantsToSwitchWithReason": "Roo vol canviar a mode <code>{{mode}}</code> perquè: {{reason}}",
+		"didSwitch": "Roo ha canviat a mode <code>{{mode}}</code>",
+		"didSwitchWithReason": "Roo ha canviat a mode <code>{{mode}}</code> perquè: {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "AI IDE BAS vol crear una nova subtasca en mode <code>{{mode}}</code>:",
-		"wantsToFinish": "AI IDE BAS vol finalitzar aquesta subtasca",
+		"wantsToCreate": "Roo vol crear una nova subtasca en mode <code>{{mode}}</code>:",
+		"wantsToFinish": "Roo vol finalitzar aquesta subtasca",
 		"newTaskContent": "Instruccions de la subtasca",
 		"completionContent": "Subtasca completada",
 		"resultContent": "Resultats de la subtasca",
@@ -232,7 +232,7 @@
 		"completionInstructions": "Subtasca completada! Pots revisar els resultats i suggerir correccions o següents passos. Si tot sembla correcte, confirma per tornar el resultat a la tasca principal."
 	},
 	"questions": {
-		"hasQuestion": "AI IDE BAS té una pregunta:"
+		"hasQuestion": "Roo té una pregunta:"
 	},
 	"taskCompleted": "Tasca completada",
 	"powershell": {
@@ -241,7 +241,7 @@
 	"autoApprove": {
 		"title": "Aprovació automàtica:",
 		"none": "Cap",
-		"description": "L'aprovació automàtica permet a AI IDE BAS realitzar accions sense demanar permís. Activa-la només per a accions en les que confies plenament. Configuració més detallada disponible a la <settingsLink>Configuració</settingsLink>.",
+		"description": "L'aprovació automàtica permet a Roo Code realitzar accions sense demanar permís. Activa-la només per a accions en les que confies plenament. Configuració més detallada disponible a la <settingsLink>Configuració</settingsLink>.",
 		"selectOptionsFirst": "Selecciona almenys una opció a continuació per activar l'aprovació automàtica",
 		"toggleAriaLabel": "Commuta l'aprovació automàtica",
 		"disabledAriaLabel": "Aprovació automàtica desactivada: seleccioneu primer les opcions"
@@ -262,17 +262,17 @@
 		"countdownDisplay": "{{count}}s"
 	},
 	"announcement": {
-		"title": "🎉 AI IDE BAS {{version}} Llançat",
-		"description": "AI IDE BAS {{version}} porta noves funcions potents i millores significatives per millorar el vostre flux de treball de desenvolupament.",
+		"title": "🎉 Roo Code {{version}} Llançat",
+		"description": "Roo Code {{version}} porta noves funcions potents i millores significatives per millorar el vostre flux de treball de desenvolupament.",
 		"whatsNew": "Novetats",
-		"feature1": "<bold>Cua de Missatges</bold>: Posa en cua múltiples missatges mentre AI IDE BAS està treballant, permetent-te continuar planificant el teu flux de treball sense interrupcions.",
+		"feature1": "<bold>Cua de Missatges</bold>: Posa en cua múltiples missatges mentre Roo està treballant, permetent-te continuar planificant el teu flux de treball sense interrupcions.",
 		"feature2": "<bold>Comandaments de Barra Personalitzats</bold>: Crea comandaments de barra personalitzats per a accés ràpid a prompts i fluxos de treball utilitzats freqüentment, amb gestió completa de la interfície d'usuari.",
 		"feature3": "<bold>Eines Gemini Millorades</bold>: Noves capacitats de context d'URL i fonamentació de cerca de Google proporcionen als models Gemini informació web en temps real i capacitats de recerca millorades.",
 		"hideButton": "Amaga l'anunci",
 		"detailsDiscussLinks": "Obtén més detalls i uneix-te a les discussions a <discordLink>Discord</discordLink> i <redditLink>Reddit</redditLink> 🚀"
 	},
 	"browser": {
-		"rooWantsToUse": "AI IDE BAS vol utilitzar el navegador:",
+		"rooWantsToUse": "Roo vol utilitzar el navegador:",
 		"consoleLogs": "Registres de consola",
 		"noNewLogs": "(Cap registre nou)",
 		"screenshot": "Captura de pantalla del navegador",
@@ -306,19 +306,19 @@
 	"profileViolationWarning": "El perfil actual no és compatible amb la configuració de la teva organització",
 	"shellIntegration": {
 		"title": "Advertència d'execució d'ordres",
-		"description": "La teva ordre s'està executant sense la integració de shell del terminal VSCode. Per suprimir aquest advertiment, pots desactivar la integració de shell a la secció <strong>Terminal</strong> de la <settingsLink>configuració de AI IDE BAS</settingsLink> o solucionar problemes d'integració del terminal VSCode utilitzant l'enllaç a continuació.",
+		"description": "La teva ordre s'està executant sense la integració de shell del terminal VSCode. Per suprimir aquest advertiment, pots desactivar la integració de shell a la secció <strong>Terminal</strong> de la <settingsLink>configuració de Roo Code</settingsLink> o solucionar problemes d'integració del terminal VSCode utilitzant l'enllaç a continuació.",
 		"troubleshooting": "Fes clic aquí per a la documentació d'integració de shell."
 	},
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "S'ha arribat al límit de sol·licituds aprovades automàticament",
-			"description": "AI IDE BAS ha arribat al límit aprovat automàticament de {{count}} sol·licitud(s) d'API. Vols reiniciar el comptador i continuar amb la tasca?",
+			"description": "Roo ha arribat al límit aprovat automàticament de {{count}} sol·licitud(s) d'API. Vols reiniciar el comptador i continuar amb la tasca?",
 			"button": "Reiniciar i continuar"
 		}
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "AI IDE BAS vol cercar a la base de codi <code>{{query}}</code>:",
-		"wantsToSearchWithPath": "AI IDE BAS vol cercar a la base de codi <code>{{query}}</code> a <code>{{path}}</code>:",
+		"wantsToSearch": "Roo vol cercar a la base de codi <code>{{query}}</code>:",
+		"wantsToSearchWithPath": "Roo vol cercar a la base de codi <code>{{query}}</code> a <code>{{path}}</code>:",
 		"didSearch_one": "S'ha trobat 1 resultat",
 		"didSearch_other": "S'han trobat {{count}} resultats",
 		"resultTooltip": "Puntuació de similitud: {{score}} (fes clic per obrir el fitxer)"

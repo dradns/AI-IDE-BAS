@@ -5,7 +5,7 @@ import type { ClineMessage } from "@roo-code/types"
 import { waitUntilCompleted } from "./utils"
 import { setDefaultSuiteTimeout } from "./test-utils"
 
-suite("AI IDE BAS Task", function () {
+suite("Roo Code Task", function () {
 	setDefaultSuiteTimeout(this)
 
 	test("Should handle prompt and response correctly", async () => {
@@ -28,9 +28,9 @@ suite("AI IDE BAS Task", function () {
 
 		assert.ok(
 			!!messages.find(
-				({ say, text }) => (say === "completion_result" || say === "text") && text?.includes("My name is AI IDE BAS"),
+				({ say, text }) => (say === "completion_result" || say === "text") && text?.includes("My name is Roo"),
 			),
-			`Completion should include "My name is AI IDE BAS"`,
+			`Completion should include "My name is Roo"`,
 		)
 	})
 })

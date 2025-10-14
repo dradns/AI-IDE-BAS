@@ -8,7 +8,7 @@ import type { ClineMessage } from "@roo-code/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite("AI IDE BAS list_files Tool", function () {
+suite("Roo Code list_files Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let workspaceDir: string

@@ -100,7 +100,6 @@ export const MarketplaceItemCard: React.FC<MarketplaceItemCardProps> = ({ item, 
 									<Button
 										variant="link"
 										className="p-0 h-auto text-lg font-semibold text-vscode-foreground hover:underline"
-										data-click-handler
 										onClick={() => vscode.postMessage({ type: "openExternal", url: item.url })}>
 										{item.name}
 									</Button>
@@ -124,7 +123,6 @@ export const MarketplaceItemCard: React.FC<MarketplaceItemCardProps> = ({ item, 
 									size="sm"
 									variant="secondary"
 									className="text-xs h-5 py-0 px-2"
-									data-click-handler
 									onClick={() => {
 										// Determine which installation to remove (prefer project over global)
 										const target = isInstalledInProject ? "project" : "global"
@@ -140,7 +138,6 @@ export const MarketplaceItemCard: React.FC<MarketplaceItemCardProps> = ({ item, 
 								size="sm"
 								variant="default"
 								className="text-xs h-5 py-0 px-2"
-								data-click-handler
 								onClick={handleInstallClick}>
 								{t("marketplace:items.card.install")}
 							</Button>
@@ -184,7 +181,6 @@ export const MarketplaceItemCard: React.FC<MarketplaceItemCardProps> = ({ item, 
 										className={cn("rounded-sm capitalize text-xs px-2 h-5", {
 											"border-solid border-primary text-primary": filters.tags.includes(tag),
 										})}
-										data-click-handler
 										onClick={() => {
 											const newTags = filters.tags.includes(tag)
 												? filters.tags.filter((t: string) => t !== tag)
@@ -232,7 +228,6 @@ export const MarketplaceItemCard: React.FC<MarketplaceItemCardProps> = ({ item, 
 					<AlertDialogFooter>
 						<AlertDialogCancel>{t("marketplace:removeConfirm.cancel")}</AlertDialogCancel>
 						<AlertDialogAction
-							data-click-handler
 							onClick={() => {
 								// Clear any previous error
 								setRemoveError(null)
@@ -276,7 +271,6 @@ const AuthorInfo: React.FC<AuthorInfoProps> = ({ item, typeLabel }) => {
 					<Button
 						variant="link"
 						className="p-0 h-auto text-sm text-vscode-textLink hover:underline"
-						data-click-handler
 						onClick={handleOpenAuthorUrl}>
 						{t("marketplace:items.card.by", { author: item.author })}
 					</Button>

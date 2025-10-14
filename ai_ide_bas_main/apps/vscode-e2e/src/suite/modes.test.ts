@@ -3,7 +3,7 @@ import * as assert from "assert"
 import { waitUntilCompleted } from "./utils"
 import { setDefaultSuiteTimeout } from "./test-utils"
 
-suite("AI IDE BAS Modes", function () {
+suite("Roo Code Modes", function () {
 	setDefaultSuiteTimeout(this)
 
 	test("Should handle switching modes correctly", async () => {

@@ -1,5 +1,5 @@
 {
-	"greeting": "AI IDE BAS에 오신 것을 환영합니다",
+	"greeting": "Roo Code에 오신 것을 환영합니다",
 	"task": {
 		"title": "작업",
 		"seeMore": "더 보기",
@@ -81,7 +81,7 @@
 	},
 	"scrollToBottom": "채팅 하단으로 스크롤",
 	"about": "AI 지원으로 코드를 생성, 리팩터링 및 디버깅합니다. 자세한 내용은 <DocsLink>문서</DocsLink>를 확인하세요.",
-	"onboarding": "<strong>이 작업 공간의 작업 목록이 비어 있습니다.</strong> 아래에 작업을 입력하여 시작하세요. 어떻게 시작해야 할지 모르겠나요? AI IDE BAS가 무엇을 할 수 있는지 <DocsLink>문서</DocsLink>에서 자세히 알아보세요.",
+	"onboarding": "<strong>이 작업 공간의 작업 목록이 비어 있습니다.</strong> 아래에 작업을 입력하여 시작하세요. 어떻게 시작해야 할지 모르겠나요? Roo가 무엇을 할 수 있는지 <DocsLink>문서</DocsLink>에서 자세히 알아보세요.",
 	"rooTips": {
 		"boomerangTasks": {
 			"title": "작업 오케스트레이션",
@@ -116,7 +116,7 @@
 		"title": "모드",
 		"marketplace": "모드 마켓플레이스",
 		"settings": "모드 설정",
-		"description": "AI IDE BAS의 행동을 맞춤화하는 전문화된 페르소나.",
+		"description": "Roo의 행동을 맞춤화하는 전문화된 페르소나.",
 		"searchPlaceholder": "모드 검색...",
 		"noResults": "결과를 찾을 수 없습니다"
 	},
@@ -130,7 +130,7 @@
 	"diffError": {
 		"title": "편집 실패"
 	},
-	"troubleMessage": "AI IDE BAS에 문제가 발생했습니다...",
+	"troubleMessage": "Roo에 문제가 발생했습니다...",
 	"apiRequest": {
 		"title": "API 요청",
 		"failed": "API 요청 실패",
@@ -156,42 +156,42 @@
 		"current": "현재"
 	},
 	"instructions": {
-		"wantsToFetch": "AI IDE BAS는 현재 작업을 지원하기 위해 자세한 지침을 가져오려고 합니다"
+		"wantsToFetch": "Roo는 현재 작업을 지원하기 위해 자세한 지침을 가져오려고 합니다"
 	},
 	"fileOperations": {
-		"wantsToRead": "AI IDE BAS가 이 파일을 읽고 싶어합니다:",
-		"wantsToReadOutsideWorkspace": "AI IDE BAS가 워크스페이스 외부의 이 파일을 읽고 싶어합니다:",
-		"didRead": "AI IDE BAS가 이 파일을 읽었습니다:",
-		"wantsToEdit": "AI IDE BAS가 이 파일을 편집하고 싶어합니다:",
-		"wantsToEditOutsideWorkspace": "AI IDE BAS가 워크스페이스 외부의 이 파일을 편집하고 싶어합니다:",
-		"wantsToEditProtected": "AI IDE BAS가 보호된 설정 파일을 편집하고 싶어합니다:",
-		"wantsToCreate": "AI IDE BAS가 새 파일을 만들고 싶어합니다:",
-		"wantsToSearchReplace": "AI IDE BAS가 이 파일에서 검색 및 바꾸기를 수행하고 싶어합니다:",
-		"didSearchReplace": "AI IDE BAS가 이 파일에서 검색 및 바꾸기를 수행했습니다:",
-		"wantsToInsert": "AI IDE BAS가 이 파일에 내용을 삽입하고 싶어합니다:",
-		"wantsToInsertWithLineNumber": "AI IDE BAS가 이 파일의 {{lineNumber}}번 줄에 내용을 삽입하고 싶어합니다:",
-		"wantsToInsertAtEnd": "AI IDE BAS가 이 파일의 끝에 내용을 추가하고 싶어합니다:",
-		"wantsToReadAndXMore": "AI IDE BAS가 이 파일과 {{count}}개의 파일을 더 읽으려고 합니다:",
-		"wantsToReadMultiple": "AI IDE BAS가 여러 파일을 읽으려고 합니다:",
-		"wantsToApplyBatchChanges": "AI IDE BAS가 여러 파일에 변경 사항을 적용하고 싶어합니다:"
+		"wantsToRead": "Roo가 이 파일을 읽고 싶어합니다:",
+		"wantsToReadOutsideWorkspace": "Roo가 워크스페이스 외부의 이 파일을 읽고 싶어합니다:",
+		"didRead": "Roo가 이 파일을 읽었습니다:",
+		"wantsToEdit": "Roo가 이 파일을 편집하고 싶어합니다:",
+		"wantsToEditOutsideWorkspace": "Roo가 워크스페이스 외부의 이 파일을 편집하고 싶어합니다:",
+		"wantsToEditProtected": "Roo가 보호된 설정 파일을 편집하고 싶어합니다:",
+		"wantsToCreate": "Roo가 새 파일을 만들고 싶어합니다:",
+		"wantsToSearchReplace": "Roo가 이 파일에서 검색 및 바꾸기를 수행하고 싶어합니다:",
+		"didSearchReplace": "Roo가 이 파일에서 검색 및 바꾸기를 수행했습니다:",
+		"wantsToInsert": "Roo가 이 파일에 내용을 삽입하고 싶어합니다:",
+		"wantsToInsertWithLineNumber": "Roo가 이 파일의 {{lineNumber}}번 줄에 내용을 삽입하고 싶어합니다:",
+		"wantsToInsertAtEnd": "Roo가 이 파일의 끝에 내용을 추가하고 싶어합니다:",
+		"wantsToReadAndXMore": "Roo가 이 파일과 {{count}}개의 파일을 더 읽으려고 합니다:",
+		"wantsToReadMultiple": "Roo가 여러 파일을 읽으려고 합니다:",
+		"wantsToApplyBatchChanges": "Roo가 여러 파일에 변경 사항을 적용하고 싶어합니다:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "AI IDE BAS가 이 디렉토리의 최상위 파일을 보고 싶어합니다:",
-		"didViewTopLevel": "AI IDE BAS가 이 디렉토리의 최상위 파일을 보았습니다:",
-		"wantsToViewRecursive": "AI IDE BAS가 이 디렉토리의 모든 파일을 재귀적으로 보고 싶어합니다:",
-		"didViewRecursive": "AI IDE BAS가 이 디렉토리의 모든 파일을 재귀적으로 보았습니다:",
-		"wantsToViewDefinitions": "AI IDE BAS가 이 디렉토리에서 사용된 소스 코드 정의 이름을 보고 싶어합니다:",
-		"didViewDefinitions": "AI IDE BAS가 이 디렉토리에서 사용된 소스 코드 정의 이름을 보았습니다:",
-		"wantsToSearch": "AI IDE BAS가 이 디렉토리에서 <code>{{regex}}</code>을(를) 검색하고 싶어합니다:",
-		"didSearch": "AI IDE BAS가 이 디렉토리에서 <code>{{regex}}</code>을(를) 검색했습니다:",
-		"wantsToSearchOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)에서 <code>{{regex}}</code>을(를) 검색하고 싶어합니다:",
-		"didSearchOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)에서 <code>{{regex}}</code>을(를) 검색했습니다:",
-		"wantsToViewTopLevelOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)의 최상위 파일을 보고 싶어합니다:",
-		"didViewTopLevelOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)의 최상위 파일을 보았습니다:",
-		"wantsToViewRecursiveOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)의 모든 파일을 재귀적으로 보고 싶어합니다:",
-		"didViewRecursiveOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)의 모든 파일을 재귀적으로 보았습니다:",
-		"wantsToViewDefinitionsOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)에서 사용된 소스 코드 정의 이름을 보고 싶어합니다:",
-		"didViewDefinitionsOutsideWorkspace": "AI IDE BAS가 이 디렉토리(워크스페이스 외부)에서 사용된 소스 코드 정의 이름을 보았습니다:"
+		"wantsToViewTopLevel": "Roo가 이 디렉토리의 최상위 파일을 보고 싶어합니다:",
+		"didViewTopLevel": "Roo가 이 디렉토리의 최상위 파일을 보았습니다:",
+		"wantsToViewRecursive": "Roo가 이 디렉토리의 모든 파일을 재귀적으로 보고 싶어합니다:",
+		"didViewRecursive": "Roo가 이 디렉토리의 모든 파일을 재귀적으로 보았습니다:",
+		"wantsToViewDefinitions": "Roo가 이 디렉토리에서 사용된 소스 코드 정의 이름을 보고 싶어합니다:",
+		"didViewDefinitions": "Roo가 이 디렉토리에서 사용된 소스 코드 정의 이름을 보았습니다:",
+		"wantsToSearch": "Roo가 이 디렉토리에서 <code>{{regex}}</code>을(를) 검색하고 싶어합니다:",
+		"didSearch": "Roo가 이 디렉토리에서 <code>{{regex}}</code>을(를) 검색했습니다:",
+		"wantsToSearchOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)에서 <code>{{regex}}</code>을(를) 검색하고 싶어합니다:",
+		"didSearchOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)에서 <code>{{regex}}</code>을(를) 검색했습니다:",
+		"wantsToViewTopLevelOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)의 최상위 파일을 보고 싶어합니다:",
+		"didViewTopLevelOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)의 최상위 파일을 보았습니다:",
+		"wantsToViewRecursiveOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)의 모든 파일을 재귀적으로 보고 싶어합니다:",
+		"didViewRecursiveOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)의 모든 파일을 재귀적으로 보았습니다:",
+		"wantsToViewDefinitionsOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)에서 사용된 소스 코드 정의 이름을 보고 싶어합니다:",
+		"didViewDefinitionsOutsideWorkspace": "Roo가 이 디렉토리(워크스페이스 외부)에서 사용된 소스 코드 정의 이름을 보았습니다:"
 	},
 	"commandOutput": "명령 출력",
 	"commandExecution": {
@@ -213,18 +213,18 @@
 	"response": "응답",
 	"arguments": "인수",
 	"mcp": {
-		"wantsToUseTool": "AI IDE BAS가 {{serverName}} MCP 서버에서 도구를 사용하고 싶어합니다:",
-		"wantsToAccessResource": "AI IDE BAS가 {{serverName}} MCP 서버에서 리소스에 접근하고 싶어합니다:"
+		"wantsToUseTool": "Roo가 {{serverName}} MCP 서버에서 도구를 사용하고 싶어합니다:",
+		"wantsToAccessResource": "Roo가 {{serverName}} MCP 서버에서 리소스에 접근하고 싶어합니다:"
 	},
 	"modes": {
-		"wantsToSwitch": "AI IDE BAS가 <code>{{mode}}</code> 모드로 전환하고 싶어합니다",
-		"wantsToSwitchWithReason": "AI IDE BAS가 다음 이유로 <code>{{mode}}</code> 모드로 전환하고 싶어합니다: {{reason}}",
-		"didSwitch": "AI IDE BAS가 <code>{{mode}}</code> 모드로 전환했습니다",
-		"didSwitchWithReason": "AI IDE BAS가 다음 이유로 <code>{{mode}}</code> 모드로 전환했습니다: {{reason}}"
+		"wantsToSwitch": "Roo가 <code>{{mode}}</code> 모드로 전환하고 싶어합니다",
+		"wantsToSwitchWithReason": "Roo가 다음 이유로 <code>{{mode}}</code> 모드로 전환하고 싶어합니다: {{reason}}",
+		"didSwitch": "Roo가 <code>{{mode}}</code> 모드로 전환했습니다",
+		"didSwitchWithReason": "Roo가 다음 이유로 <code>{{mode}}</code> 모드로 전환했습니다: {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "AI IDE BAS가 <code>{{mode}}</code> 모드에서 새 하위 작업을 만들고 싶어합니다:",
-		"wantsToFinish": "AI IDE BAS가 이 하위 작업을 완료하고 싶어합니다",
+		"wantsToCreate": "Roo가 <code>{{mode}}</code> 모드에서 새 하위 작업을 만들고 싶어합니다:",
+		"wantsToFinish": "Roo가 이 하위 작업을 완료하고 싶어합니다",
 		"newTaskContent": "하위 작업 지침",
 		"completionContent": "하위 작업 완료",
 		"resultContent": "하위 작업 결과",
@@ -232,7 +232,7 @@
 		"completionInstructions": "하위 작업 완료! 결과를 검토하고 수정 사항이나 다음 단계를 제안할 수 있습니다. 모든 것이 괜찮아 보이면, 부모 작업에 결과를 반환하기 위해 확인해주세요."
 	},
 	"questions": {
-		"hasQuestion": "AI IDE BAS에게 질문이 있습니다:"
+		"hasQuestion": "Roo에게 질문이 있습니다:"
 	},
 	"taskCompleted": "작업 완료",
 	"powershell": {
@@ -241,7 +241,7 @@
 	"autoApprove": {
 		"title": "자동 승인:",
 		"none": "없음",
-		"description": "자동 승인을 사용하면 AI IDE BAS가 권한을 요청하지 않고 작업을 수행할 수 있습니다. 완전히 신뢰할 수 있는 작업에만 활성화하세요. 더 자세한 구성은 <settingsLink>설정</settingsLink>에서 사용할 수 있습니다.",
+		"description": "자동 승인을 사용하면 Roo Code가 권한을 요청하지 않고 작업을 수행할 수 있습니다. 완전히 신뢰할 수 있는 작업에만 활성화하세요. 더 자세한 구성은 <settingsLink>설정</settingsLink>에서 사용할 수 있습니다.",
 		"selectOptionsFirst": "자동 승인을 활성화하려면 아래 옵션 중 하나 이상을 선택하세요",
 		"toggleAriaLabel": "자동 승인 전환",
 		"disabledAriaLabel": "자동 승인 비활성화됨 - 먼저 옵션을 선택하세요"
@@ -262,17 +262,17 @@
 		"countdownDisplay": "{{count}}초"
 	},
 	"announcement": {
-		"title": "🎉 AI IDE BAS {{version}} 출시",
-		"description": "AI IDE BAS {{version}}은 개발 워크플로우를 향상시키는 강력한 새 기능과 중요한 개선사항을 제공합니다.",
+		"title": "🎉 Roo Code {{version}} 출시",
+		"description": "Roo Code {{version}}은 개발 워크플로우를 향상시키는 강력한 새 기능과 중요한 개선사항을 제공합니다.",
 		"whatsNew": "새로운 기능",
-		"feature1": "<bold>메시지 대기열</bold>: AI IDE BAS가 작업하는 동안 여러 메시지를 대기열에 넣어 워크플로우 계획을 중단 없이 계속할 수 있습니다.",
+		"feature1": "<bold>메시지 대기열</bold>: Roo가 작업하는 동안 여러 메시지를 대기열에 넣어 워크플로우 계획을 중단 없이 계속할 수 있습니다.",
 		"feature2": "<bold>사용자 정의 슬래시 명령</bold>: 자주 사용하는 프롬프트와 워크플로우에 빠르게 액세스할 수 있는 개인화된 슬래시 명령을 생성하고, 완전한 UI 관리를 제공합니다.",
 		"feature3": "<bold>향상된 Gemini 도구</bold>: 새로운 URL 컨텍스트 및 Google 검색 기반 기능으로 Gemini 모델에 실시간 웹 정보와 향상된 연구 기능을 제공합니다.",
 		"hideButton": "공지 숨기기",
 		"detailsDiscussLinks": "<discordLink>Discord</discordLink>와 <redditLink>Reddit</redditLink>에서 자세한 내용을 확인하고 토론에 참여하세요 🚀"
 	},
 	"browser": {
-		"rooWantsToUse": "AI IDE BAS가 브라우저를 사용하고 싶어합니다:",
+		"rooWantsToUse": "Roo가 브라우저를 사용하고 싶어합니다:",
 		"consoleLogs": "콘솔 로그",
 		"noNewLogs": "(새 로그 없음)",
 		"screenshot": "브라우저 스크린샷",
@@ -306,19 +306,19 @@
 	"profileViolationWarning": "현재 프로필이 조직 설정과 호환되지 않습니다",
 	"shellIntegration": {
 		"title": "명령 실행 경고",
-		"description": "명령이 VSCode 터미널 쉘 통합 없이 실행되고 있습니다. 이 경고를 숨기려면 <settingsLink>AI IDE BAS 설정</settingsLink>의 <strong>Terminal</strong> 섹션에서 쉘 통합을 비활성화하거나 아래 링크를 사용하여 VSCode 터미널 통합 문제를 해결하세요.",
+		"description": "명령이 VSCode 터미널 쉘 통합 없이 실행되고 있습니다. 이 경고를 숨기려면 <settingsLink>Roo Code 설정</settingsLink>의 <strong>Terminal</strong> 섹션에서 쉘 통합을 비활성화하거나 아래 링크를 사용하여 VSCode 터미널 통합 문제를 해결하세요.",
 		"troubleshooting": "쉘 통합 문서를 보려면 여기를 클릭하세요."
 	},
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "자동 승인 요청 한도 도달",
-			"description": "AI IDE BAS가 {{count}}개의 API 요청(들)에 대한 자동 승인 한도에 도달했습니다. 카운트를 재설정하고 작업을 계속하시겠습니까?",
+			"description": "Roo가 {{count}}개의 API 요청(들)에 대한 자동 승인 한도에 도달했습니다. 카운트를 재설정하고 작업을 계속하시겠습니까?",
 			"button": "재설정 후 계속"
 		}
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "AI IDE BAS가 코드베이스에서 <code>{{query}}</code>을(를) 검색하고 싶어합니다:",
-		"wantsToSearchWithPath": "AI IDE BAS가 <code>{{path}}</code>에서 <code>{{query}}</code>을(를) 검색하고 싶어합니다:",
+		"wantsToSearch": "Roo가 코드베이스에서 <code>{{query}}</code>을(를) 검색하고 싶어합니다:",
+		"wantsToSearchWithPath": "Roo가 <code>{{path}}</code>에서 <code>{{query}}</code>을(를) 검색하고 싶어합니다:",
 		"didSearch_one": "1개의 결과를 찾았습니다",
 		"didSearch_other": "{{count}}개의 결과를 찾았습니다",
 		"resultTooltip": "유사도 점수: {{score}} (클릭하여 파일 열기)"

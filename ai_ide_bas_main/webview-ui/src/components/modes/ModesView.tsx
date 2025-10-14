@@ -479,9 +479,9 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 		modeToDeleteRef.current = modeToDelete
 	}, [modeToDelete])
 
-	// Правильная обработка сообщений от VS Code Host
 	useEffect(() => {
-		const disposable = vscode.onDidReceiveMessage((message: any) => {
+		const handler = (event: MessageEvent) => {
+			const message = event.data
 			if (message.type === "systemPrompt") {
 				if (message.text) {
 					setSelectedPromptContent(message.text)
@@ -522,9 +522,10 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 					setShowDeleteConfirm(true)
 				}
 			}
-		})
+		}
 
-		return () => disposable.dispose()
+		window.addEventListener("message", handler)
+		return () => window.removeEventListener("message", handler)
 	}, []) // Empty dependency array - only register once
 
 	const handleAgentReset = (

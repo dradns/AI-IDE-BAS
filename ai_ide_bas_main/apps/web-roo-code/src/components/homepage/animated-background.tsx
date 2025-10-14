@@ -195,10 +195,6 @@ export function AnimatedBackground() {
 				throw new Error("Context is null (not initialized?)")
 			}
 
-			if (!particles || particles.length === 0) {
-				return
-			}
-
 			const maxDistance = 150
 
 			for (let a = 0; a < particles.length; a++) {
@@ -221,10 +217,6 @@ export function AnimatedBackground() {
 		}
 
 		function updateParticles() {
-			if (!particles || particles.length === 0) {
-				return
-			}
-
 			particles.forEach((particle) => {
 				particle.update()
 				particle.draw()
