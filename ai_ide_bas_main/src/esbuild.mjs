@@ -88,11 +88,11 @@ async function main() {
 							// Include repository-level .roo directory with rules (required for export)
 							["../../.roo", "prompts", { optional: true }],
 							// Localized RULES from repository-level promts/<lang>/ folder → dist/prompts/<lang>
-							["../../../promts/ru", "prompts/ru", { optional: true }],
-							["../../../promts/en", "prompts/en", { optional: true }],
-							["../../../promts/ar", "prompts/ar", { optional: true }],
-							["../../../promts/es", "prompts/es", { optional: true }],
-							["../../../promts/zh-CN", "prompts/zh-CN", { optional: true }],
+							["../../promts/ru", "prompts/ru", { optional: true }],
+							["../../promts/en", "prompts/en", { optional: true }],
+							["../../promts/ar", "prompts/ar", { optional: true }],
+							["../../promts/es", "prompts/es", { optional: true }],
+							["../../promts/zh-CN", "prompts/zh-CN", { optional: true }],
 						],
 						srcDir,
 						distDir,
