@@ -18,10 +18,10 @@ vi.mock("@src/i18n/TranslationContext", () => ({
 	useAppTranslation: () => ({
 		t: (key: string, options?: { version: string }) => {
 			if (key === "chat:announcement.title") {
-				return `🎉 AI IDE BAS ${options?.version} Released`
+				return `🎉 Roo Code ${options?.version} Released`
 			}
 			if (key === "chat:announcement.description") {
-				return `AI IDE BAS ${options?.version} brings powerful new features and improvements based on your feedback.`
+				return `Roo Code ${options?.version} brings powerful new features and improvements based on your feedback.`
 			}
 			// Return key for other translations not relevant to this test
 			return key
@@ -37,10 +37,10 @@ describe("Announcement", () => {
 		render(<Announcement hideAnnouncement={mockHideAnnouncement} />)
 
 		// Check if the mocked version number is present in the title and description
-		expect(screen.getByText(`🎉 AI IDE BAS ${expectedVersion} Released`)).toBeInTheDocument()
+		expect(screen.getByText(`🎉 Roo Code ${expectedVersion} Released`)).toBeInTheDocument()
 		expect(
 			screen.getByText(
-				`AI IDE BAS ${expectedVersion} brings powerful new features and improvements based on your feedback.`,
+				`Roo Code ${expectedVersion} brings powerful new features and improvements based on your feedback.`,
 			),
 		).toBeInTheDocument()
 	})

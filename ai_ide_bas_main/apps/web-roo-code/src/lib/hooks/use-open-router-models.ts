@@ -46,11 +46,6 @@ export const getOpenRouterModels = async (): Promise<OpenRouterModelRecord> => {
 		return {}
 	}
 
-	if (!result.data?.data) {
-		console.error("No data found in response")
-		return {}
-	}
-
 	return result.data.data
 		.sort((a, b) => a.name.localeCompare(b.name))
 		.map((rawModel) => ({

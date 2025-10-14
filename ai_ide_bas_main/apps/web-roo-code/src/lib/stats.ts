@@ -1,6 +1,6 @@
 export async function getGitHubStars() {
 	try {
-		const res = await fetch("https://api.github.com/repos/RooCodeInc/AI IDE BAS-Code")
+		const res = await fetch("https://api.github.com/repos/RooCodeInc/Roo-Code")
 		const data = await res.json()
 
 		if (typeof data.stargazers_count !== "number") {
@@ -84,7 +84,7 @@ export async function getVSCodeDownloads() {
 		const data = await res.json()
 		const statistics = data?.results?.[0]?.extensions?.[0]?.statistics
 
-		if (!statistics || !Array.isArray(statistics)) {
+		if (!statistics) {
 			console.error("VSCode API: Missing statistics in response")
 			return null
 		}

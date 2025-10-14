@@ -9,7 +9,7 @@ import type { ClineMessage } from "@roo-code/types"
 import { waitFor, sleep } from "../utils"
 import { setDefaultSuiteTimeout } from "../test-utils"
 
-suite("AI IDE BAS read_file Tool", function () {
+suite("Roo Code read_file Tool", function () {
 	setDefaultSuiteTimeout(this)
 
 	let tempDir: string

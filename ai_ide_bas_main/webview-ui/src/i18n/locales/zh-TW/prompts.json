@@ -9,7 +9,7 @@
 		"editModesConfig": "編輯模式設定",
 		"editGlobalModes": "編輯全域模式",
 		"editProjectModes": "編輯專案模式 (.roomodes)",
-		"createModeHelpText": "模式是 AI IDE BAS 的專屬角色，用於客製化其行為。<0>了解如何使用模式</0>或<1>自訂模式。</1>",
+		"createModeHelpText": "模式是 Roo 的專屬角色，用於客製化其行為。<0>了解如何使用模式</0>或<1>自訂模式。</1>",
 		"selectMode": "搜尋模式"
 	},
 	"apiConfiguration": {
@@ -34,7 +34,7 @@
 	"roleDefinition": {
 		"title": "角色定義",
 		"resetToDefault": "重設為預設值",
-		"description": "定義此模式下 AI IDE BAS 的專業知識和個性。此描述會形塑 AI IDE BAS 如何展現自己並處理工作。"
+		"description": "定義此模式下 Roo 的專業知識和個性。此描述會形塑 Roo 如何展現自己並處理工作。"
 	},
 	"description": {
 		"title": "簡短描述（給人看的）",
@@ -101,7 +101,7 @@
 		"types": {
 			"ENHANCE": {
 				"label": "增強提示詞",
-				"description": "使用提示詞增強功能取得針對您輸入的客製化建議或改進。這確保 AI IDE BAS 能理解您的意圖並提供最佳的回應。可透過聊天中的 ✨ 圖示使用。"
+				"description": "使用提示詞增強功能取得針對您輸入的客製化建議或改進。這確保 Roo 能理解您的意圖並提供最佳的回應。可透過聊天中的 ✨ 圖示使用。"
 			},
 			"CONDENSE": {
 				"label": "上下文壓縮",
@@ -170,7 +170,7 @@
 		},
 		"roleDefinition": {
 			"label": "角色定義",
-			"description": "定義此模式下 AI IDE BAS 的專業知識和個性。"
+			"description": "定義此模式下 Roo 的專業知識和個性。"
 		},
 		"whenToUse": {
 			"label": "使用時機（選用）",

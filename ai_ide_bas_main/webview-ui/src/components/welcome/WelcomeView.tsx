@@ -89,7 +89,6 @@ const WelcomeView = () => {
 					<div className="flex justify-end">
 						<VSCodeLink
 							href="#"
-							data-click-handler
 							onClick={(e) => {
 								e.preventDefault()
 								vscode.postMessage({ type: "importSettings" })
@@ -98,7 +97,7 @@ const WelcomeView = () => {
 							{t("welcome:importSettings")}
 						</VSCodeLink>
 					</div>
-					<VSCodeButton data-click-handler onClick={handleSubmit} appearance="primary">
+					<VSCodeButton onClick={handleSubmit} appearance="primary">
 						{t("welcome:start")}
 					</VSCodeButton>
 					{errorMessage && <div className="text-vscode-errorForeground">{errorMessage}</div>}

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { vscode } from "@src/utils/vscode"
-import { useStatusMessage } from "@src/hooks/useSafeVscodeMessage"
 
 type FileItem = { id?: string; filename: string; public_url?: string | null; project?: string | null }
 
@@ -71,12 +70,9 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
     vscode.postMessage({ type: "files:delete", text: idOrName, values: { projectName: projectName.trim() || undefined } })
   }, [projectName])
 
-  // Безопасная отправка статусного сообщения с защитой от рекурсивных сбоев
-  useStatusMessage("files:status", [refreshStatus])
-
-  // Правильная обработка сообщений от VS Code Host
   useEffect(() => {
-    const disposable = vscode.onDidReceiveMessage((message: any) => {
+    const onMessage = (e: MessageEvent<any>) => {
+      const message = e.data
       if (message?.type === "files:authChanged") {
         setIsAuthorized(Boolean(message.isAuthorized))
         if (message.isAuthorized) {
@@ -113,10 +109,12 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
         else setError(String(message.error || 'Ошибка'))
         setLoading(false)
       }
-    })
+    }
 
-    return () => disposable.dispose()
-  }, [requestList])
+    window.addEventListener("message", onMessage)
+    refreshStatus()
+    return () => window.removeEventListener("message", onMessage)
+  }, [refreshStatus, requestList])
 
   const body = useMemo(() => {
     if (!isAuthorized) {
@@ -128,7 +126,6 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
           </div>
           <button
             className="h-10 rounded-full px-4 inline-flex items-center gap-2 border border-vscode-editorWidget-border bg-[color:var(--vscode-editor-background)] hover:bg-vscode-list-hoverBackground"
-            data-click-handler
             onClick={requestLogin}
             aria-label="Sign in with Google">
             <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -151,8 +148,8 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
         <div className="flex items-center justify-between">
           <div className="text-lg font-semibold">Файлы и проекты</div>
           <div className="flex items-center gap-2">
-            <button className="btn" data-click-handler onClick={requestUpload}>Загрузить</button>
-            <button className="btn" data-click-handler onClick={requestLogout}>Выйти</button>
+            <button className="btn" onClick={requestUpload}>Загрузить</button>
+            <button className="btn" onClick={requestLogout}>Выйти</button>
           </div>
         </div>
 
@@ -199,19 +196,19 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
                 <option value="private">private</option>
                 <option value="org">org</option>
               </select>
-              <button className="btn" data-click-handler onClick={requestShareProject}>Поделиться</button>
+              <button className="btn" onClick={requestShareProject}>Поделиться</button>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="btn" data-click-handler onClick={()=>{ setPage(1); requestList(); }} disabled={loading}>
+          <button className="btn" onClick={()=>{ setPage(1); requestList(); }} disabled={loading}>
             {loading ? "Загрузка..." : "Обновить список"}
           </button>
           <div className="ml-auto flex items-center gap-2">
-            <button className="btn" data-click-handler onClick={()=>{ if (page>1) { setPage(p=>p-1); requestList(); } }} disabled={page<=1}>Назад</button>
+            <button className="btn" onClick={()=>{ if (page>1) { setPage(p=>p-1); requestList(); } }} disabled={page<=1}>Назад</button>
             <div className="text-sm">Стр. {page}</div>
-            <button className="btn" data-click-handler onClick={()=>{ setPage(p=>p+1); requestList(); }}>Вперёд</button>
+            <button className="btn" onClick={()=>{ setPage(p=>p+1); requestList(); }}>Вперёд</button>
           </div>
         </div>
 
@@ -229,14 +226,14 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
                   {f.project ? <div className="text-xs text-vscode-descriptionForeground">{f.project}</div> : null}
                   {f.public_url ? (
                     <div className="flex items-center gap-2 mt-1">
-                      <button className="link text-xs" data-click-handler onClick={() => openPublicUrl(f.public_url)}>Открыть</button>
-                      <button className="link text-xs" data-click-handler onClick={() => { navigator.clipboard.writeText(f.public_url!); setNotice('Ссылка скопирована'); }}>Копировать ссылку</button>
+                      <button className="link text-xs" onClick={() => openPublicUrl(f.public_url)}>Открыть</button>
+                      <button className="link text-xs" onClick={() => { navigator.clipboard.writeText(f.public_url!); setNotice('Ссылка скопирована'); }}>Копировать ссылку</button>
                     </div>
                   ) : null}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="btn" data-click-handler onClick={() => requestDownload(f.id || f.filename)}>Скачать</button>
-                  <button className="btn" data-click-handler onClick={() => requestDelete(f)}>Удалить</button>
+                  <button className="btn" onClick={() => requestDownload(f.id || f.filename)}>Скачать</button>
+                  <button className="btn" onClick={() => requestDelete(f)}>Удалить</button>
                 </div>
               </div>
             ))

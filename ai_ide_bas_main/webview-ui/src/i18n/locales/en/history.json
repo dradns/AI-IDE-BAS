@@ -4,7 +4,7 @@
 	"exitSelectionMode": "Exit Selection Mode",
 	"enterSelectionMode": "Enter Selection Mode",
 	"done": "Done",
-	"searchPlaceholder": "Search history...",
+	"searchPlaceholder": "Fuzzy search history...",
 	"newest": "Newest",
 	"oldest": "Oldest",
 	"mostExpensive": "Most Expensive",

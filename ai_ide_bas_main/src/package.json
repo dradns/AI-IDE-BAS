@@ -34,13 +34,9 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/dradns/AI-IDE-BAS"
+		"url": "https://github.com/santouch88/ide-bas-extension"
 	},
-	"homepage": "https://aiidebas.com",
-	"bugs": {
-		"url": "https://t.me/+E2c8DPMkAyFjMjcy"
-	},
-	"license": "MIT",
+	"homepage": "https://github.com/santouch88/ide-bas-extension",
 	"categories": [
 		"AI",
 		"Chat",
@@ -471,14 +467,7 @@
 						"www.youtube.com",
 						"telegra.ph",
 						"telegraph.com",
-						"api.aiidebas.com",
-						"aiidebas.com",
-						"t.me",
-						"github.com",
-						"www.github.com",
-						"instagram.com",
-						"www.instagram.com",
-						"vk.com"
+						"api.aiidebas.com"
 					],
 					"description": "Список доменов, которые будут открываться без диалога подтверждения"
 				}
