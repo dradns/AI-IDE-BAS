@@ -24,4 +24,26 @@
 		"deny": "Reddet"
 	},
 	"importSettings": "Ayarları İçe Aktar"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: Analitik için yapay zeka asistanınız",
+    "desc": "AI ile dokümantasyonu, gereksinimleri ve proje çıktıları çok daha hızlı oluşturun.",
+    "features": {
+      "bonus": "Hoş geldin bonusu. Kayıttan hemen sonra ücretsiz DeepSeek jetonları alın.",
+      "productionArtifacts": "Geliştirme süreçlerinize uygun gerçek çıktı üretin.",
+      "inviteFriends": "Arkadaşlarınızı davet edin. Her davet için bonus bakiyenizi artırın ve birlikte çalışın.",
+      "googleSignIn": "Google ile oturum açın. Parolasız hızlı başlangıç.",
+      "workAnywhere": "Her yerden çalışın. Bulut projeleri oluşturun ve sonuçları paylaşın."
+    },
+    "signInWithGoogle": "Google ile oturum aç",
+    "openingBrowser": "Tarayıcı açılıyor...",
+    "checkBrowserWindow": "💡 Tarayıcıda yetkilendirme penceresinin açılıp açılmadığını kontrol edin"
+  }
 }

@@ -24,4 +24,26 @@
 		"deny": "거부"
 	},
 	"importSettings": "설정 가져오기"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: 분석을 위한 AI 어시스턴트",
+    "desc": "AI를 통해 문서, 요구사항 및 프로젝트 산출물을 훨씬 빠르게 생성하세요.",
+    "features": {
+      "bonus": "웰컴 보너스. 가입 직후 무료 DeepSeek 토큰 제공.",
+      "productionArtifacts": "개발 프로세스에 맞춘 실제 산출물 생성.",
+      "inviteFriends": "친구를 초대하세요. 초대할 때마다 보너스 잔액 증가 및 협업.",
+      "googleSignIn": "Google로 로그인. 비밀번호 없이 빠른 시작.",
+      "workAnywhere": "어디서나 작업. 클라우드 프로젝트 생성 및 결과 공유."
+    },
+    "signInWithGoogle": "Google로 로그인",
+    "openingBrowser": "브라우저 여는 중...",
+    "checkBrowserWindow": "💡 브라우저에서 인증 창이 열렸는지 확인하세요"
+  }
 }

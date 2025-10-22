@@ -60,10 +60,11 @@ export function getToolDescriptionsForMode(
 	customModes?: ModeConfig[],
 	experiments?: Record<string, boolean>,
 	partialReadsEnabled?: boolean,
-	settings?: Record<string, any>,
+    settings?: Record<string, any>,
+    language?: string,
 ): string {
 	const config = getModeConfig(mode, customModes)
-	const args: ToolArgs = {
+    const args: ToolArgs = {
 		cwd,
 		supportsComputerUse,
 		diffStrategy,
@@ -72,6 +73,7 @@ export function getToolDescriptionsForMode(
 		partialReadsEnabled,
 		settings,
 		experiments,
+        language,
 	}
 
 	const tools = new Set<string>()
@@ -115,7 +117,7 @@ export function getToolDescriptionsForMode(
 	}
 
 	// Map tool descriptions for allowed tools
-	const descriptions = Array.from(tools).map((toolName) => {
+    const descriptions = Array.from(tools).map((toolName) => {
 		const descriptionFn = toolDescriptionMap[toolName]
 		if (!descriptionFn) {
 			return undefined
@@ -127,7 +129,11 @@ export function getToolDescriptionsForMode(
 		})
 	})
 
-	return `# Tools\n\n${descriptions.filter(Boolean).join("\n\n")}`
+    const languageHeader = language
+        ? `All tool-related outputs, explanations, and any generated non-code text must be in "${language}" unless the content is source code.\n\n`
+        : ""
+
+    return `# Tools\n\n${languageHeader}${descriptions.filter(Boolean).join("\n\n")}`
 }
 
 // Export individual description functions for backward compatibility

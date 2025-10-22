@@ -57,24 +57,24 @@ export function getSystemPromptFilePath(cwd: string, mode: Mode, language?: stri
 
 // Map mode slugs to built-in prompt filenames
 function getBuiltinPromptFilename(mode: Mode): string | undefined {
-	switch (mode) {
-		case "code":
-			return "ba.txt"
-		case "architect":
-			return "architect.txt"
-		case "ask":
-			return "sa.txt"
-		case "debug":
-			return "reviewer.txt"
-		case "designer":
-			return "designer.txt"
-		case "helper":
-			return "helper.txt"
-		case "pm":
-			return "pm.txt"
-		default:
-			return undefined
-	}
+    switch (mode) {
+        case "code":
+            return "ba.txt"
+        case "architect":
+            return "architect.txt"
+        case "ask":
+            return "sa.txt"
+        case "debug":
+            return "reviewer.txt"
+        case "designer":
+            return "designer.txt"
+        case "helper":
+            return "helper.txt"
+        case "pm":
+            return "pm.txt"
+        default:
+            return undefined
+    }
 }
 
 /**
@@ -124,7 +124,6 @@ export async function loadSystemPromptFile(cwd: string, mode: Mode, variables: P
             }
         }
     }
-
     return ""
 }
 

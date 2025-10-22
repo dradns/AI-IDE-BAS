@@ -27,5 +27,26 @@
 	"buttons": {
 		"aiIdeBasVideo": "AI IDE BAS - AI Agent for Analysts",
 		"setupInstructions": "Setup Instructions"
+	},
+	"cloudCta": {
+		"social": {
+			"telegram": "Telegram",
+			"youtube": "YouTube",
+			"vk": "VK",
+			"github": "GitHub",
+			"instagram": "Instagram"
+		},
+		"title": "AI IDE BAS: Your AI assistant for analytics",
+		"desc": "Generate documentation, write requirements and project artifacts much faster with AI.",
+		"features": {
+			"bonus": "Welcome bonus. Get free DeepSeek tokens right after sign up.",
+			"productionArtifacts": "Generate real artifacts tailored to your development processes.",
+			"inviteFriends": "Invite friends. Increase your bonus balance for each invite and collaborate.",
+			"googleSignIn": "Sign in with Google. Fast start without passwords.",
+			"workAnywhere": "Work from anywhere. Create cloud projects and share results with teammates."
+		},
+		"signInWithGoogle": "Sign in with Google",
+		"openingBrowser": "Opening browser...",
+		"checkBrowserWindow": "💡 Check if the authorization window opened in your browser"
 	}
 }

@@ -55,7 +55,6 @@ async function main() {
 							["../.env", ".env", { optional: true }],
 							["node_modules/vscode-material-icons/generated", "assets/vscode-material-icons"],
 							["../webview-ui/audio", "webview-ui/audio"],
-							["../roo-code/src/prompts", "prompts"],
 						],
 						srcDir,
 						buildDir,
@@ -80,9 +79,9 @@ async function main() {
 			setup(build) {
 				build.onEnd(() => {
 					// Copy built-in prompts first, then overlay optional sources
-					copyPaths(
+						copyPaths(
 						[
-							["../roo-code/src/prompts", "prompts"],
+								["../roo-code/src/prompts", "prompts"],
 							// Optionally include repository-level Modes directory with role subfolders
 							["../../Modes", "prompts", { optional: true }],
 							// Include repository-level .roo directory with rules (required for export)
@@ -97,32 +96,32 @@ async function main() {
 						srcDir,
 						distDir,
 					)
-					
-					// Manually copy .txt prompts to root and en/ subfolder
-					const promptsSourceDir = path.join(srcDir, "../roo-code/src/prompts")
-					const promptFiles = fs.readdirSync(promptsSourceDir).filter(f => f.endsWith('.txt'))
-					
-					// Copy to root (legacy)
-					const promptsRootDir = path.join(distDir, "prompts")
-					for (const file of promptFiles) {
-						fs.copyFileSync(
-							path.join(promptsSourceDir, file),
-							path.join(promptsRootDir, file)
-						)
-					}
-					
-					// Copy to en/ subfolder (language fallback - ALWAYS available)
-					const promptsEnDir = path.join(distDir, "prompts", "en")
-					if (!fs.existsSync(promptsEnDir)) {
-						fs.mkdirSync(promptsEnDir, { recursive: true })
-					}
-					for (const file of promptFiles) {
-						fs.copyFileSync(
-							path.join(promptsSourceDir, file),
-							path.join(promptsEnDir, file)
-						)
-					}
-					console.log(`[copyPrompts] Copied ${promptFiles.length} .txt files to prompts/ and prompts/en/ (always available)`)
+
+						// Manually copy .txt prompts to root and en/ subfolder
+						const promptsSourceDir = path.join(srcDir, "../roo-code/src/prompts")
+						const promptFiles = fs.readdirSync(promptsSourceDir).filter(f => f.endsWith('.txt'))
+						
+						// Copy to root (legacy)
+						const promptsRootDir = path.join(distDir, "prompts")
+						for (const file of promptFiles) {
+							fs.copyFileSync(
+								path.join(promptsSourceDir, file),
+								path.join(promptsRootDir, file)
+							)
+						}
+						
+						// Copy to en/ subfolder (language fallback - ALWAYS available)
+						const promptsEnDir = path.join(distDir, "prompts", "en")
+						if (!fs.existsSync(promptsEnDir)) {
+							fs.mkdirSync(promptsEnDir, { recursive: true })
+						}
+						for (const file of promptFiles) {
+							fs.copyFileSync(
+								path.join(promptsSourceDir, file),
+								path.join(promptsEnDir, file)
+							)
+						}
+						console.log(`[copyPrompts] Copied ${promptFiles.length} .txt files to prompts/ and prompts/en/ (always available)`) 
 				})
 			},
 		},

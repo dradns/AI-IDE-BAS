@@ -24,4 +24,26 @@
 		"deny": "Ablehnen"
 	},
 	"importSettings": "Einstellungen importieren"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: Ihr KI‑Assistent für Analytik",
+    "desc": "Erstellen Sie Dokumentation, Anforderungen und Projektartefakte deutlich schneller mit KI.",
+    "features": {
+      "bonus": "Willkommensbonus. Erhalten Sie kostenlose DeepSeek‑Tokens direkt nach der Registrierung.",
+      "productionArtifacts": "Erzeugen Sie reale Artefakte passend zu Ihren Entwicklungsprozessen.",
+      "inviteFriends": "Freunde einladen. Erhöhen Sie Ihr Bonusguthaben für jede Einladung und arbeiten Sie zusammen.",
+      "googleSignIn": "Anmeldung mit Google. Schneller Start ohne Passwörter.",
+      "workAnywhere": "Arbeiten Sie von überall. Erstellen Sie Cloud‑Projekte und teilen Sie Ergebnisse."
+    },
+    "signInWithGoogle": "Mit Google anmelden",
+    "openingBrowser": "Browser wird geöffnet...",
+    "checkBrowserWindow": "💡 Prüfen Sie, ob sich das Anmeldefenster im Browser geöffnet hat"
+  }
 }

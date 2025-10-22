@@ -264,11 +264,11 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				}
 			}
 
-			// Target: workspace .roo/<lang> directory
-			const dstRooLangDir = path.join(workspaceRoot, ".roo", language)
-			await fs.mkdir(dstRooLangDir, { recursive: true })
+			// Target: workspace .roo directory (flattened, without language subfolder)
+			const dstRooDir = path.join(workspaceRoot, ".roo")
+			await fs.mkdir(dstRooDir, { recursive: true })
 
-			// Copy only rules-* directories from prompts/<lang> to .roo/<lang>
+			// Copy only rules-* directories from prompts/<lang> to .roo/
 			const entries = await fs.readdir(srcPromptsLangUri.fsPath, { withFileTypes: true })
 			const rulesDirs = entries.filter(entry => entry.isDirectory() && entry.name.startsWith("rules-"))
 			
@@ -295,12 +295,12 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			// Copy each rules-* directory
 			for (const rulesDir of rulesDirs) {
 				const srcRulesPath = path.join(srcPromptsLangUri.fsPath, rulesDir.name)
-				const dstRulesPath = path.join(dstRooLangDir, rulesDir.name)
+				const dstRulesPath = path.join(dstRooDir, rulesDir.name)
 				await fs.mkdir(dstRulesPath, { recursive: true })
 				await copyRecursive(srcRulesPath, dstRulesPath)
 			}
 
-			vscode.window.showInformationMessage(`Экспортировано ${rulesDirs.length} папок с правилами ролей (${language}) в .roo/${language} папку проекта`) 
+			vscode.window.showInformationMessage(`Экспортировано ${rulesDirs.length} папок с правилами ролей (${language}) в .roo папку проекта`) 
 		} catch (error) {
 			vscode.window.showErrorMessage(`Не удалось экспортировать правила ролей: ${error instanceof Error ? error.message : String(error)}`)
 		}
@@ -314,7 +314,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			
 			const modeInfo = await loadModeInfo(modeSlug, {
 				cwd: workspaceRoot,
-				customModes: visibleProvider.customModes,
+				customModes: await visibleProvider.customModesManager.getCustomModes(),
 				builtInMode: (await import("../shared/modes")).modes.find(m => m.slug === modeSlug)
 			})
 

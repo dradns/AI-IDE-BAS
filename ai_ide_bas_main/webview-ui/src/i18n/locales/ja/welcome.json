@@ -24,4 +24,26 @@
 		"deny": "拒否"
 	},
 	"importSettings": "設定をインポート"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS：アナリティクスのためのAIアシスタント",
+    "desc": "ドキュメント、要件、プロジェクト成果物をAIでより速く生成します。",
+    "features": {
+      "bonus": "ウェルカムボーナス。登録後すぐにDeepSeekトークンを獲得。",
+      "productionArtifacts": "開発プロセスに合わせた実用的な成果物を生成。",
+      "inviteFriends": "友達を招待。招待ごとにボーナス残高が増え、共同作業が可能に。",
+      "googleSignIn": "Googleでログイン。パスワード不要の素早い開始。",
+      "workAnywhere": "どこからでも作業。クラウドプロジェクトを作成し結果を共有。"
+    },
+    "signInWithGoogle": "Googleでログイン",
+    "openingBrowser": "ブラウザを開いています...",
+    "checkBrowserWindow": "💡 ブラウザで認可ウィンドウが開いたか確認してください"
+  }
 }

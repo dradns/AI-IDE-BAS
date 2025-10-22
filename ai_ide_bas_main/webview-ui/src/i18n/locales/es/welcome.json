@@ -23,5 +23,26 @@
 		"allow": "Permitir",
 		"deny": "Denegar"
 	},
-	"importSettings": "Importar configuración"
+	"importSettings": "Importar configuración",
+	"cloudCta": {
+		"social": {
+			"telegram": "Telegram",
+			"youtube": "YouTube",
+			"vk": "VK",
+			"github": "GitHub",
+			"instagram": "Instagram"
+		},
+		"title": "AI IDE BAS: Tu asistente de IA para analítica",
+		"desc": "Genera documentación, escribe requisitos y artefactos del proyecto mucho más rápido con IA.",
+		"features": {
+			"bonus": "Bono de bienvenida. Obtén tokens DeepSeek gratis después de registrarte.",
+			"productionArtifacts": "Genera artefactos reales adaptados a tus procesos de desarrollo.",
+			"inviteFriends": "Invita amigos. Aumenta tu saldo de bonificación por cada invitación y colabora.",
+			"googleSignIn": "Inicia sesión con Google. Inicio rápido sin contraseñas.",
+			"workAnywhere": "Trabaja desde cualquier lugar. Crea proyectos en la nube y comparte resultados."
+		},
+		"signInWithGoogle": "Iniciar sesión con Google",
+		"openingBrowser": "Abriendo navegador...",
+		"checkBrowserWindow": "💡 Verifica si se abrió la ventana de autorización en tu navegador"
+	}
 }
