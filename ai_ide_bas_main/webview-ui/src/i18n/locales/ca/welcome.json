@@ -24,4 +24,26 @@
 		"deny": "Denegar"
 	},
 	"importSettings": "Importar configuració"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: el teu assistent d’IA per a l’analítica",
+    "desc": "Genera documentació, requisits i artefactes de projecte molt més ràpid amb IA.",
+    "features": {
+      "bonus": "Bo de benvinguda. Rep tokens DeepSeek gratuïts després de registrar‑te.",
+      "productionArtifacts": "Genera artefactes reals adaptats als teus processos de desenvolupament.",
+      "inviteFriends": "Convida amics. Augmenta el teu saldo de bonificació per cada invitació i col·labora.",
+      "googleSignIn": "Inicia sessió amb Google. Inici ràpid sense contrasenyes.",
+      "workAnywhere": "Treballa des de qualsevol lloc. Crea projectes al núvol i comparteix resultats."
+    },
+    "signInWithGoogle": "Inicia sessió amb Google",
+    "openingBrowser": "S’està obrint el navegador...",
+    "checkBrowserWindow": "💡 Comprova si s’ha obert la finestra d’autorització al navegador"
+  }
 }

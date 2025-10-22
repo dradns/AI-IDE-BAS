@@ -24,4 +24,26 @@
 		"deny": "Từ chối"
 	},
 	"importSettings": "Nhập cài đặt"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: trợ lý AI cho phân tích",
+    "desc": "Tạo tài liệu, yêu cầu và hiện vật dự án nhanh hơn nhiều với AI.",
+    "features": {
+      "bonus": "Tiền thưởng chào mừng. Nhận token DeepSeek miễn phí ngay sau khi đăng ký.",
+      "productionArtifacts": "Tạo hiện vật thực tế phù hợp với quy trình phát triển của bạn.",
+      "inviteFriends": "Mời bạn bè. Tăng số dư tiền thưởng cho mỗi lời mời và cộng tác.",
+      "googleSignIn": "Đăng nhập bằng Google. Bắt đầu nhanh không cần mật khẩu.",
+      "workAnywhere": "Làm việc từ bất cứ đâu. Tạo dự án trên đám mây và chia sẻ kết quả."
+    },
+    "signInWithGoogle": "Đăng nhập bằng Google",
+    "openingBrowser": "Đang mở trình duyệt...",
+    "checkBrowserWindow": "💡 Kiểm tra xem cửa sổ ủy quyền có mở trong trình duyệt không"
+  }
 }

@@ -24,4 +24,26 @@
 		"deny": "拒絕"
 	},
 	"importSettings": "匯入設定"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS：分析專用的 AI 助手",
+    "desc": "透過 AI 更快速產出文件、需求與專案產物。",
+    "features": {
+      "bonus": "歡迎獎勵。註冊後即可獲得免費 DeepSeek 代幣。",
+      "productionArtifacts": "依你的開發流程產出真實產物。",
+      "inviteFriends": "邀請好友。每次邀請都能增加獎勵餘額並便於協作。",
+      "googleSignIn": "使用 Google 登入。免密碼快速開始。",
+      "workAnywhere": "隨處工作。建立雲端專案並分享成果。"
+    },
+    "signInWithGoogle": "使用 Google 登入",
+    "openingBrowser": "正在開啟瀏覽器...",
+    "checkBrowserWindow": "💡 請檢查瀏覽器中是否已開啟授權視窗"
+  }
 }

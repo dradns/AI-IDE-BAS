@@ -44,6 +44,14 @@ export function getPromptComponent(
 	return component
 }
 
+function languagePolicySection(lang: string): string {
+    return `====
+
+LANGUAGE POLICY
+
+Always respond and generate all natural-language content and any non-code file text in "${lang}". The language of the instructions below is meta; do not switch your output language unless the user explicitly requests it.`
+}
+
 async function generatePrompt(
 	context: vscode.ExtensionContext,
 	cwd: string,
@@ -70,6 +78,9 @@ async function generatePrompt(
 
 	// If diff is disabled, don't pass the diffStrategy
 	const effectiveDiffStrategy = diffEnabled ? diffStrategy : undefined
+
+	// Resolve effective language once
+	const effectiveLanguage = language ?? formatLanguage(vscode.env.language)
 
 	// Get the full mode config to ensure we have the role definition (used for groups, etc.)
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
@@ -145,7 +156,7 @@ async function generatePrompt(
 		return ""
 	}
 
-    const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode, language)
+	const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode, language)
 	const effectiveBaseInstructions = builtInModeInstructions
 
 	// Check if MCP functionality should be included
@@ -162,7 +173,9 @@ async function generatePrompt(
 
 	const codeIndexManager = CodeIndexManager.getInstance(context)
 
-	const basePrompt = `${roleDefinition}
+	const basePrompt = `${languagePolicySection(effectiveLanguage)}
+
+${roleDefinition}
 
 ${markdownFormattingSection()}
 
@@ -180,6 +193,7 @@ ${getToolDescriptionsForMode(
 		experiments,
 		partialReadsEnabled,
 		settings,
+		effectiveLanguage,
 	)}
 
 ${getToolUseGuidelinesSection(codeIndexManager)}
@@ -197,7 +211,7 @@ ${getSystemInfoSection(cwd)}
 ${getObjectiveSection(codeIndexManager, experiments)}
 
 ${await addCustomInstructions(effectiveBaseInstructions, globalCustomInstructions || "", cwd, mode, {
-		language: language ?? formatLanguage(vscode.env.language),
+		language: effectiveLanguage,
 		rooIgnoreInstructions,
 		settings,
 		loadBuiltInModeRules,

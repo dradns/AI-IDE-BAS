@@ -24,4 +24,26 @@
 		"deny": "Weigeren"
 	},
 	"importSettings": "Instellingen importeren"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: je AI‑assistent voor analytics",
+    "desc": "Genereer documentatie, stel eisen op en maak projectartefacten veel sneller met AI.",
+    "features": {
+      "bonus": "Welkomstbonus. Ontvang gratis DeepSeek‑tokens direct na registratie.",
+      "productionArtifacts": "Genereer echte artefacten afgestemd op je ontwikkelprocessen.",
+      "inviteFriends": "Nodig vrienden uit. Vergroot je bonusbalans per uitnodiging en werk samen.",
+      "googleSignIn": "Inloggen met Google. Snel starten zonder wachtwoorden.",
+      "workAnywhere": "Werk overal. Maak cloudprojecten en deel resultaten."
+    },
+    "signInWithGoogle": "Inloggen met Google",
+    "openingBrowser": "Browser openen...",
+    "checkBrowserWindow": "💡 Controleer of het autorisatievenster in je browser is geopend"
+  }
 }

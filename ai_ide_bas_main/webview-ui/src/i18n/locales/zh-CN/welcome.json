@@ -24,4 +24,26 @@
 		"deny": "拒绝"
 	},
 	"importSettings": "导入设置"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS：面向分析的 AI 助手",
+    "desc": "借助 AI，更快地生成文档、需求和项目产物。",
+    "features": {
+      "bonus": "欢迎奖励。注册后即可获得免费的 DeepSeek 代币。",
+      "productionArtifacts": "根据你的开发流程生成真实产物。",
+      "inviteFriends": "邀请好友。每次邀请都会增加奖励余额并便于协作。",
+      "googleSignIn": "使用 Google 登录。无需密码即可快速开始。",
+      "workAnywhere": "随时随地工作。创建云端项目并分享成果。"
+    },
+    "signInWithGoogle": "使用 Google 登录",
+    "openingBrowser": "正在打开浏览器...",
+    "checkBrowserWindow": "💡 请检查浏览器中是否已打开授权窗口"
+  }
 }

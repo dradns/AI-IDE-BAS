@@ -24,4 +24,26 @@
 		"deny": "Odmów"
 	},
 	"importSettings": "Importuj ustawienia"
+,
+  "cloudCta": {
+    "social": {
+      "telegram": "Telegram",
+      "youtube": "YouTube",
+      "vk": "VK",
+      "github": "GitHub",
+      "instagram": "Instagram"
+    },
+    "title": "AI IDE BAS: Twój asystent AI do analityki",
+    "desc": "Generuj dokumentację, wymagania i artefakty projektowe znacznie szybciej dzięki AI.",
+    "features": {
+      "bonus": "Bonus powitalny. Otrzymaj darmowe tokeny DeepSeek zaraz po rejestracji.",
+      "productionArtifacts": "Generuj rzeczywiste artefakty dopasowane do twoich procesów wytwórczych.",
+      "inviteFriends": "Zaproś znajomych. Zwiększ saldo bonusowe za każde zaproszenie i współpracuj.",
+      "googleSignIn": "Zaloguj się przez Google. Szybki start bez haseł.",
+      "workAnywhere": "Pracuj z dowolnego miejsca. Twórz projekty w chmurze i udostępniaj wyniki."
+    },
+    "signInWithGoogle": "Zaloguj się przez Google",
+    "openingBrowser": "Otwieranie przeglądarki...",
+    "checkBrowserWindow": "💡 Sprawdź, czy w przeglądarce otworzyło się okno autoryzacji"
+  }
 }
