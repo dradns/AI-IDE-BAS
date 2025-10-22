@@ -45,11 +45,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						? (me as any)?.credits
 						: (userInfo as any)?.tokens
 
-<<<<<<< HEAD
-	// const _rooLogoUri = (window as any).IMAGES_BASE_URI + "/roo-logo.svg" // unused after design change
-=======
 	// const _productLogoUri = (window as any).IMAGES_BASE_URI + "/product-logo.svg" // unused after design change
->>>>>>> 4b1144000 (feat: Complete rebranding from Roo to AI IDE BAS)
 
 	// Backend auth state + profile fetch
 	useEffect(() => {
@@ -97,12 +93,12 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		vscode.postMessage({ type: "files:logout" })
 	}
 
-// const handleVisitCloudWebsite = () => {
-//     // Send telemetry for cloud website visit
-//     telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
-//     const cloudUrl = cloudApiUrl || "https://app.roocode.com"
-//     vscode.postMessage({ type: "openExternal", url: cloudUrl })
-// }
+	// const handleVisitCloudWebsite = () => {
+	//     // Send telemetry for cloud website visit
+	//     telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
+	//     const cloudUrl = cloudApiUrl || "https://app.roocode.com"
+	//     vscode.postMessage({ type: "openExternal", url: cloudUrl })
+	// }
 
 	const authenticated = isAuthorized || isAuthenticated
 
@@ -122,7 +118,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 							<div className="h-4 w-40 bg-vscode-editorWidget-background rounded mb-2" />
 							<div className="h-3 w-56 bg-vscode-editorWidget-background rounded" />
 						</div>
-                    ) : (me || userInfo) && (
+					) : (me || userInfo) && (
 						<div className="flex flex-col items-center mb-6">
 							<div className="w-16 h-16 mb-3 rounded-full overflow-hidden">
 								<img
@@ -150,11 +146,11 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 								<p className="text-sm text-vscode-descriptionForeground">{email}</p>
 							)}
 							{typeof tokensValue !== "undefined" && (
-                                <div className="mt-2 text-sm">
-                                    <span className="text-vscode-descriptionForeground">Tokens:</span>{" "}
-										<span className="font-medium">{tokensValue}</span>
-                                </div>
-                            )}
+								<div className="mt-2 text-sm">
+									<span className="text-vscode-descriptionForeground">Tokens:</span>{" "}
+									<span className="font-medium">{tokensValue}</span>
+								</div>
+							)}
 							{(me?.organization?.name || userInfo?.organizationName) && (
 								<div className="flex items-center gap-2 text-sm text-vscode-descriptionForeground">
 									{(me?.organization?.image_url || userInfo?.organizationImageUrl) && (
