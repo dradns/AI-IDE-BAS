@@ -314,7 +314,6 @@
 				"description": "Позволяет Gemini искать актуальную информацию в Google и основывать ответы на данных в реальном времени. Полезно для запросов, требующих актуальной информации."
 			}
 		},
-
 		"googleCloudSetup": {
 			"title": "Для использования Google Cloud Vertex AI необходимо:",
 			"step1": "1. Создайте аккаунт Google Cloud, включите Vertex AI API и нужные модели Claude.",
@@ -716,7 +715,7 @@
 		"useCustomModel": "Использовать пользовательскую: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "Если у вас есть вопросы или предложения, откройте issue на <githubLink>github.com/RooCodeInc/Roo-Code</githubLink> или присоединяйтесь к <redditLink>reddit.com/r/RooCode</redditLink> или <discordLink>discord.gg/roocode</discordLink>",
+		"feedback": "Если у вас есть вопросы или предложения, откройте issue на <githubLink>github.com/RooCodeInc/AI IDE BAS-Code</githubLink> или присоединяйтесь к <redditLink>reddit.com/r/RooCode</redditLink> или <discordLink>discord.gg/roocode</discordLink>",
 		"telemetry": {
 			"label": "Разрешить анонимную отправку ошибок и статистики использования",
 			"description": "Помогите улучшить Roo Code, отправляя анонимные данные об ошибках и использовании. Код, подсказки и личная информация не отправляются. Подробнее — в политике конфиденциальности."
