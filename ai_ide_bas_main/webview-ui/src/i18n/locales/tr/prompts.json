@@ -9,7 +9,7 @@
 		"editModesConfig": "Mod yapılandırmasını düzenle",
 		"editGlobalModes": "Global modları düzenle",
 		"editProjectModes": "Proje modlarını düzenle (.roomodes)",
-		"createModeHelpText": "Modlar, Roo'nun davranışını uyarlayan özel kişiliklerdir. <0>Modları Kullanma Hakkında Bilgi Edinin</0> veya <1>Modları Özelleştirme.</1>",
+		"createModeHelpText": "Modlar, AI IDE BAS'ın davranışını özelleştiren uzmanlaşmış rollerdir. <0>Modları Kullanma</0> veya <1>Modları Özelleştirme</1> hakkında bilgi edinin.",
 		"selectMode": "Modları Ara"
 	},
 	"apiConfiguration": {
@@ -34,7 +34,7 @@
 	"roleDefinition": {
 		"title": "Rol Tanımı",
 		"resetToDefault": "Varsayılana sıfırla",
-		"description": "Bu mod için Roo'nun uzmanlığını ve kişiliğini tanımlayın. Bu açıklama, Roo'nun kendini nasıl sunduğunu ve görevlere nasıl yaklaştığını şekillendirir."
+		"description": "AI IDE BAS'ın bu mod için uzmanlığını ve kişiliğini tanımlayın. Bu açıklama, AI IDE BAS'ın kendini nasıl tanıttığını ve görevlere nasıl yaklaştığını şekillendirir."
 	},
 	"description": {
 		"title": "Kısa açıklama (insanlar için)",
@@ -101,7 +101,7 @@
 		"types": {
 			"ENHANCE": {
 				"label": "Promptu Geliştir",
-				"description": "Girdileriniz için özel öneriler veya iyileştirmeler almak için prompt geliştirmeyi kullanın. Bu, Roo'nun niyetinizi anlamasını ve mümkün olan en iyi yanıtları sağlamasını garanti eder. Sohbetteki ✨ simgesi aracılığıyla kullanılabilir."
+				"description": "Girişiniz için özel öneriler veya iyileştirmeler almak için istem geliştirmeyi kullanın. Bu, AI IDE BAS'ın amacınızı anlamasını ve mümkün olan en iyi yanıtı vermesini sağlar. Sohbet içindeki ✨ simgesi aracılığıyla kullanılabilir."
 			},
 			"CONDENSE": {
 				"label": "Bağlam Yoğunlaştırma",
@@ -170,7 +170,7 @@
 		},
 		"roleDefinition": {
 			"label": "Rol Tanımı",
-			"description": "Bu mod için Roo'nun uzmanlığını ve kişiliğini tanımlayın."
+			"description": "AI IDE BAS'ın bu mod için uzmanlığını ve kişiliğini tanımlayın."
 		},
 		"whenToUse": {
 			"label": "Ne zaman kullanılmalı (isteğe bağlı)",
