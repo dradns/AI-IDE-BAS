@@ -263,13 +263,15 @@
 	},
 	"announcement": {
 		"title": "🎉 AI IDE BAS {{version}} 已发布",
-		"description": "AI IDE BAS {{version}} 带来强大的新功能和重大改进，提升您的开发工作流程。",
+		"description": "AI IDE BAS {{version}} 支持 4 种语言：用您的语言思考和创作",
 		"whatsNew": "新特性",
-		"feature1": "<bold>消息队列</bold>: 在 AI IDE BAS 工作时将多个消息排队，让你可以不间断地继续规划工作流程。",
-		"feature2": "<bold>自定义斜杠命令</bold>: 创建个性化斜杠命令，快速访问常用提示词和工作流程，具备完整的 UI 管理功能。",
-		"feature3": "<bold>增强的 Gemini 工具</bold>: 新的 URL 上下文和 Google 搜索基础功能为 Gemini 模型提供实时网络信息和增强的研究能力。",
+		"feature1": "AI IDE BAS 现在支持俄语、英语、西班牙语和中文，不仅仅是翻译，而是用所选语言思考！",
+		"feature2": "界面已完全本地化，无论使用哪种语言，都能舒适地工作。",
+		"feature3": "提示词适配每种语言文化，LLM 会考虑上下文、风格和措辞特点。",
+		"feature4": "产物从一开始就用所选语言生成，无需事后翻译。这意味着逻辑、结构和语调都符合语言环境。",
+		"feature5": "🎯 为什么需要这个？让每位开发者、分析师或设计师能够自然地与 AI 交互——没有语言障碍，也不会丢失语义。",
 		"hideButton": "隐藏公告",
-		"detailsDiscussLinks": "在 <discordLink>Discord</discordLink> 和 <redditLink>Reddit</redditLink> 获取更多详情并参与讨论 🚀"
+		"detailsDiscussLinks": "在 <vkLink>VK</vkLink> 和 <telegramLink>Telegram</telegramLink> 获取更多详情并参与讨论 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS想使用浏览器:",
