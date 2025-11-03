@@ -263,13 +263,15 @@
 	},
 	"announcement": {
 		"title": "🎉 AI IDE BAS {{version}} publicado",
-		"description": "AI IDE BAS {{version}} trae poderosas nuevas funcionalidades y mejoras significativas para mejorar tu flujo de trabajo de desarrollo.",
+		"description": "AI IDE BAS {{version}} Soporte para 4 idiomas: piensa y crea en tu idioma",
 		"whatsNew": "Novedades",
-		"feature1": "<bold>Cola de Mensajes</bold>: Pon en cola múltiples mensajes mientras AI IDE BAS está trabajando, permitiéndote continuar planificando tu flujo de trabajo sin interrupciones.",
-		"feature2": "<bold>Comandos de Barra Personalizados</bold>: Crea comandos de barra personalizados para acceso rápido a prompts y flujos de trabajo utilizados frecuentemente, con gestión completa de la interfaz de usuario.",
-		"feature3": "<bold>Herramientas Gemini Mejoradas</bold>: Nuevas capacidades de contexto de URL y fundamentación de búsqueda de Google proporcionan a los modelos Gemini información web en tiempo real y capacidades de investigación mejoradas.",
+		"feature1": "¡AI IDE BAS ahora habla ruso, inglés, español y chino, no solo traduce, sino que piensa en el idioma seleccionado!",
+		"feature2": "La interfaz está completamente localizada para un trabajo cómodo independientemente del idioma.",
+		"feature3": "Los prompts están adaptados a cada cultura lingüística, LLM considera el contexto, el estilo y los matices de formulación.",
+		"feature4": "Los artefactos se generan en el idioma seleccionado desde el principio, sin traducción posterior. Esto significa que la lógica, estructura y tono coinciden con el entorno lingüístico.",
+		"feature5": "🎯 ¿Por qué es necesario? Para que cada desarrollador, analista o diseñador pueda interactuar con la IA de forma natural, sin barreras lingüísticas ni pérdida de significado.",
 		"hideButton": "Ocultar anuncio",
-		"detailsDiscussLinks": "Obtén más detalles y participa en <discordLink>Discord</discordLink> y <redditLink>Reddit</redditLink> 🚀"
+		"detailsDiscussLinks": "Obtén más detalles y participa en <vkLink>VK</vkLink> y <telegramLink>Telegram</telegramLink> 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS quiere usar el navegador:",
