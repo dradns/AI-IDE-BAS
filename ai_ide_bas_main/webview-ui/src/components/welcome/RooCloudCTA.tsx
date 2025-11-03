@@ -1,23 +1,32 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { vscode } from "@src/utils/vscode"
+import { useExtensionState } from "@src/context/ExtensionStateContext"
+import { Avatar } from "@src/components/common/Avatar"
 
 export function RooCloudCTA() {
 	// i18n for Welcome page
 	const { t } = useTranslation("welcome")
+	const { cloudUserInfo } = useExtensionState()
 	const [isAuthorized, setIsAuthorized] = useState<boolean>(false)
 	const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false)
+	const [me, setMe] = useState<any | null>(null)
 
 	// Track backend auth state for Files API
 	useEffect(() => {
 		const handler = (e: MessageEvent<any>) => {
 			const message = e.data
 			if (message?.type === "files:authChanged") {
-				setIsAuthorized(Boolean(message.isAuthorized))
-				// Сбросить состояние загрузки при успешной авторизации
-				if (message.isAuthorized) {
+				const authorized = Boolean(message.isAuthorized)
+				setIsAuthorized(authorized)
+				if (authorized) {
 					setIsLoggingIn(false)
+					vscode.postMessage({ type: "files:me" })
+				} else {
+					setMe(null)
 				}
+			} else if (message?.type === "files:me:result") {
+				setMe(message.me || null)
 			}
 		}
 
@@ -100,6 +109,37 @@ export function RooCloudCTA() {
 					<li>{t("cloudCta.features.workAnywhere")}</li>
 				</ul>
 			</div>
+
+			{/* Show avatar when authorized */}
+			{isAuthorized && (me || cloudUserInfo) && (
+				<div className="flex flex-col items-center gap-2 py-2">
+					<Avatar
+						avatarUrl={
+							me?.avatar_url ||
+							me?.avatarUrl ||
+							me?.avatar ||
+							me?.picture ||
+							cloudUserInfo?.picture ||
+							""
+						}
+						displayName={
+							me?.name ||
+							(me as any)?.full_name ||
+							(me as any)?.fullName ||
+							(me as any)?.user?.name ||
+							cloudUserInfo?.name
+						}
+						email={
+							me?.email ||
+							(me as any)?.email_address ||
+							(me as any)?.emailAddress ||
+							(me as any)?.user?.email ||
+							cloudUserInfo?.email
+						}
+						size={48}
+					/>
+				</div>
+			)}
 
 			{/* Google sign-in */}
 			{!isAuthorized && (
