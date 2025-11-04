@@ -65,7 +65,7 @@ export const MyDeepSeek = ({ apiConfiguration, setApiConfigurationField }: MyDee
 				<label className="block font-medium mb-1">{t("settings:providers.myDeepSeekBaseUrl")}</label>
 			</VSCodeTextField>
 			<div className="text-sm text-vscode-descriptionForeground -mt-2">
-				Base URL for your DeepSeek proxy server
+				{t("settings:providers.myDeepSeekBaseUrlDescription")}
 			</div>
 			{!apiConfiguration?.myDeepSeekApiKey && (
 				<VSCodeButtonLink href="https://platform.deepseek.com/" appearance="secondary">
