@@ -269,7 +269,7 @@
 		"feature2": "<bold>自訂斜線命令</bold>：建立個人化斜線命令，快速存取常用提示和工作流程，具備完整的 UI 管理功能。",
 		"feature3": "<bold>增強的 Gemini 工具</bold>：新的 URL 上下文和 Google 搜尋基礎功能為 Gemini 模型提供即時網路資訊和增強的研究能力。",
 		"hideButton": "隱藏公告",
-		"detailsDiscussLinks": "在 <discordLink>Discord</discordLink> 和 <redditLink>Reddit</redditLink> 取得更多詳細資訊並參與討論 🚀"
+		"detailsDiscussLinks": "在 <vkLink>VK</vkLink> 和 <telegramLink>Telegram</telegramLink> 取得更多詳細資訊並參與討論 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS 想要使用瀏覽器：",

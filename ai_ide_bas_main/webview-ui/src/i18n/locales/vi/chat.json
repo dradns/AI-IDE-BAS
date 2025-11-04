@@ -269,7 +269,7 @@
 		"feature2": "<bold>Lệnh Slash Tùy chỉnh</bold>: Tạo các lệnh slash được cá nhân hóa để truy cập nhanh vào các prompt và quy trình làm việc thường dùng, với quản lý UI đầy đủ.",
 		"feature3": "<bold>Công cụ Gemini Nâng cao</bold>: Khả năng ngữ cảnh URL mới và nền tảng tìm kiếm Google cung cấp cho các mô hình Gemini thông tin web thời gian thực và khả năng nghiên cứu nâng cao.",
 		"hideButton": "Ẩn thông báo",
-		"detailsDiscussLinks": "Nhận thêm chi tiết và thảo luận tại <discordLink>Discord</discordLink> và <redditLink>Reddit</redditLink> 🚀"
+		"detailsDiscussLinks": "Nhận thêm chi tiết và thảo luận tại <vkLink>VK</vkLink> và <telegramLink>Telegram</telegramLink> 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS muốn sử dụng trình duyệt:",

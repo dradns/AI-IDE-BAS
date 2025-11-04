@@ -269,7 +269,7 @@
 		"feature2": "<bold>사용자 정의 슬래시 명령</bold>: 자주 사용하는 프롬프트와 워크플로우에 빠르게 액세스할 수 있는 개인화된 슬래시 명령을 생성하고, 완전한 UI 관리를 제공합니다.",
 		"feature3": "<bold>향상된 Gemini 도구</bold>: 새로운 URL 컨텍스트 및 Google 검색 기반 기능으로 Gemini 모델에 실시간 웹 정보와 향상된 연구 기능을 제공합니다.",
 		"hideButton": "공지 숨기기",
-		"detailsDiscussLinks": "<discordLink>Discord</discordLink>와 <redditLink>Reddit</redditLink>에서 자세한 내용을 확인하고 토론에 참여하세요 🚀"
+		"detailsDiscussLinks": "<vkLink>VK</vkLink>와 <telegramLink>Telegram</telegramLink>에서 자세한 내용을 확인하고 토론에 참여하세요 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS가 브라우저를 사용하고 싶어합니다:",
