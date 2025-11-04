@@ -51,7 +51,7 @@ export const About = ({ telemetrySetting, setTelemetrySetting, className, ...pro
 						<Trans
 							i18nKey="settings:footer.telemetry.description"
 							components={{
-								privacyLink: <VSCodeLink href="https://roocode.com/privacy" />,
+								privacyLink: <VSCodeLink href="https://aiidebas.com/" />,
 							}}
 						/>
 					</p>
@@ -61,11 +61,11 @@ export const About = ({ telemetrySetting, setTelemetrySetting, className, ...pro
 					<Trans
 						i18nKey="settings:footer.feedback"
 						components={{
-							githubLink: <VSCodeLink href="https://github.com/RooCodeInc/Roo-Code" />,
+							telegramLink: <VSCodeLink href="https://t.me/AI_IDE_BAS" />,
+							instagramLink: <VSCodeLink href="https://instagram.com/ai_ide_bas" />,
 							vkLink: <VSCodeLink href="https://m.vk.com/ai_ide_bas" />,
-							instagramLink: (
-								<VSCodeLink href="https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" />
-							),
+							youtubeLink: <VSCodeLink href="https://youtube.com/@AI_IDE_BAS" />,
+							githubLink: <VSCodeLink href="https://github.com/dradns/AI-IDE-BAS" />,
 						}}
 					/>
 				</div>

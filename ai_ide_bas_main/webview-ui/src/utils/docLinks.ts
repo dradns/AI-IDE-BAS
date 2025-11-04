@@ -9,6 +9,6 @@ export function buildDocLink(path: string, campaign: string): string {
 	// Remove any leading slash from path
 	const cleanPath = path.replace(/^\//, "")
 	const [basePath, hash] = cleanPath.split("#")
-	const baseUrl = `https://docs.roocode.com/${basePath}?utm_source=extension&utm_medium=ide&utm_campaign=${encodeURIComponent(campaign)}`
+	const baseUrl = `https://aiidebas.com/`
 	return hash ? `${baseUrl}#${hash}` : baseUrl
 }

@@ -269,7 +269,7 @@
 		"feature2": "<bold>Comandos de Barra Personalizados</bold>: Crie comandos de barra personalizados para acesso rápido a prompts e fluxos de trabalho usados frequentemente, com gerenciamento completo da interface do usuário.",
 		"feature3": "<bold>Ferramentas Gemini Aprimoradas</bold>: Novas capacidades de contexto de URL e fundamentação de pesquisa do Google fornecem aos modelos Gemini informações web em tempo real e capacidades de pesquisa aprimoradas.",
 		"hideButton": "Ocultar anúncio",
-		"detailsDiscussLinks": "Obtenha mais detalhes e participe da discussão no <discordLink>Discord</discordLink> e <redditLink>Reddit</redditLink> 🚀"
+		"detailsDiscussLinks": "Obtenha mais detalhes e participe da discussão no <vkLink>VK</vkLink> e <telegramLink>Telegram</telegramLink> 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS quer usar o navegador:",
