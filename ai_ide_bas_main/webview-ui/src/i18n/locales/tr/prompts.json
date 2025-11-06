@@ -50,7 +50,7 @@
 		"title": "Moda özgü özel talimatlar (isteğe bağlı)",
 		"resetToDefault": "Varsayılana sıfırla",
 		"description": "{{modeName}} modu için özel davranış yönergeleri ekleyin.",
-		"loadFromFile": "{{mode}} moduna özgü özel talimatlar ayrıca çalışma alanınızdaki <span>.roo/rules-{{slug}}/</span> klasöründen yüklenebilir (.roorules-{{slug}} ve .clinerules-{{slug}} kullanımdan kaldırılmıştır ve yakında çalışmayı durduracaklardır)."
+		"loadFromFile": "Talimatlar ayrıca çalışma alanınızdaki kurallar klasöründen de yüklenebilir (kullanımdan kaldırılmış kurallar yakında çalışmayı durduracaktır)."
 	},
 	"exportMode": {
 		"title": "Modu Dışa Aktar",
