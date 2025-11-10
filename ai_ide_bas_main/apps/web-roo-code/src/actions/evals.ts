@@ -9,12 +9,14 @@ export async function getEvalRuns() {
 	try {
 		const languageScores = await getLanguageScores()
 
-	const runs = (await getRuns())
-		.filter((run) => !!run.taskMetrics)
-		.filter(({ settings }) => rooCodeSettingsSchema.safeParse(settings).success)
-		.sort((a, b) => b.passed - a.passed)
-		.map((run) => {
-			const settings = rooCodeSettingsSchema.parse(run.settings)
+		const runs = (await getRuns()) || []
+		
+		return runs
+			.filter((run) => !!run.taskMetrics)
+			.filter(({ settings }) => rooCodeSettingsSchema.safeParse(settings).success)
+			.sort((a, b) => b.passed - a.passed)
+			.map((run) => {
+				const settings = rooCodeSettingsSchema.parse(run.settings)
 
 				return {
 					...run,
