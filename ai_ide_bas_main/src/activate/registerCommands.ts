@@ -76,7 +76,7 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 	}
 }
 
-const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<CommandId, any> => ({
+const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<string, any> => ({
 	activationCompleted: () => {},
 	accountButtonClicked: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -181,6 +181,17 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		TelemetryService.instance.captureTitleButtonClicked("files")
 
 		visibleProvider.postMessageToWebview({ type: "action", action: "filesButtonClicked" })
+	},
+	inviteFriendButtonClicked: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		TelemetryService.instance.captureTitleButtonClicked("inviteFriend")
+
+		visibleProvider.postMessageToWebview({ type: "action", action: "inviteFriendButtonClicked" as any })
 	},
 	exportRoleInstructions: async () => {
 		try {

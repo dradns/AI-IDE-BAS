@@ -138,6 +138,14 @@ const App = () => {
 					setCurrentSection(undefined)
 					setCurrentMarketplaceTab(undefined)
 				} else {
+					// Handle inviteFriendButtonClicked - switch to account tab
+					if ((message.action as string) === "inviteFriendButtonClicked") {
+						switchTab("account")
+						setCurrentSection(undefined)
+						setCurrentMarketplaceTab(undefined)
+						return
+					}
+
 					// Handle other actions using the mapping
 					const newTab = tabsByMessageAction[message.action]
 					const section = message.values?.section as string | undefined

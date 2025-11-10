@@ -150,6 +150,11 @@
 				"icon": "$(account)"
 			},
 			{
+				"command": "ai-ide-bas.inviteFriendButtonClicked",
+				"title": "%command.inviteFriend.title%",
+				"icon": "$(person-add)"
+			},
+			{
 				"command": "ai-ide-bas.settingsButtonClicked",
 				"title": "%command.settings.title%",
 				"icon": "$(settings-gear)"
@@ -299,6 +304,11 @@
 					"when": "view == ai-ide-bas.SidebarProvider"
 				},
 				{
+					"command": "ai-ide-bas.inviteFriendButtonClicked",
+					"group": "navigation@5",
+					"when": "view == ai-ide-bas.SidebarProvider"
+				},
+				{
 					"command": "ai-ide-bas.historyButtonClicked",
 					"group": "overflow@1",
 					"when": "view == ai-ide-bas.SidebarProvider"
@@ -343,6 +353,11 @@
 				{
 					"command": "ai-ide-bas.accountButtonClicked",
 					"group": "navigation@4",
+					"when": "activeWebviewPanelId == ai-ide-bas.TabPanelProvider"
+				},
+				{
+					"command": "ai-ide-bas.inviteFriendButtonClicked",
+					"group": "navigation@5",
 					"when": "activeWebviewPanelId == ai-ide-bas.TabPanelProvider"
 				},
 				{
