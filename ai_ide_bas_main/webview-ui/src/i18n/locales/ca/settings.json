@@ -31,10 +31,10 @@
 		"prompts": "Indicacions",
 		"experimental": "Experimental",
 		"language": "Idioma",
-		"about": "Sobre Roo Code"
+		"about": "Sobre AI IDE BAS"
 	},
 	"prompts": {
-		"description": "Configura les indicacions de suport utilitzades per a accions ràpides com millorar indicacions, explicar codi i solucionar problemes. Aquestes indicacions ajuden Roo a proporcionar millor assistència per a tasques comunes de desenvolupament."
+		"description": "Configura les indicacions de suport utilitzades per a accions ràpides com millorar indicacions, explicar codi i solucionar problemes. Aquestes indicacions ajuden AI IDE BAS a proporcionar millor assistència per a tasques comunes de desenvolupament."
 	},
 	"codeIndex": {
 		"title": "Indexació de codi",
@@ -126,15 +126,15 @@
 		"resetToDefault": "Restablir al valor per defecte"
 	},
 	"autoApprove": {
-		"description": "Permet que Roo realitzi operacions automàticament sense requerir aprovació. Activeu aquesta configuració només si confieu plenament en la IA i enteneu els riscos de seguretat associats.",
+		"description": "Permet que AI IDE BAS realitzi operacions automàticament sense requerir aprovació. Activeu aquesta configuració només si confieu plenament en la IA i enteneu els riscos de seguretat associats.",
 		"toggleAriaLabel": "Commuta l'aprovació automàtica",
 		"disabledAriaLabel": "Aprovació automàtica desactivada: seleccioneu primer les opcions",
 		"readOnly": {
 			"label": "Llegir",
-			"description": "Quan està activat, Roo veurà automàticament el contingut del directori i llegirà fitxers sense que calgui fer clic al botó Aprovar.",
+			"description": "Quan està activat, AI IDE BAS veurà automàticament el contingut del directori i llegirà fitxers sense que calgui fer clic al botó Aprovar.",
 			"outsideWorkspace": {
 				"label": "Incloure fitxers fora de l'espai de treball",
-				"description": "Permetre a Roo llegir fitxers fora de l'espai de treball actual sense requerir aprovació."
+				"description": "Permetre a AI IDE BAS llegir fitxers fora de l'espai de treball actual sense requerir aprovació."
 			}
 		},
 		"write": {
@@ -143,11 +143,11 @@
 			"delayLabel": "Retard després d'escriptura per permetre que els diagnòstics detectin possibles problemes",
 			"outsideWorkspace": {
 				"label": "Incloure fitxers fora de l'espai de treball",
-				"description": "Permetre a Roo crear i editar fitxers fora de l'espai de treball actual sense requerir aprovació."
+				"description": "Permetre a AI IDE BAS crear i editar fitxers fora de l'espai de treball actual sense requerir aprovació."
 			},
 			"protected": {
 				"label": "Incloure fitxers protegits",
-				"description": "Permetre a Roo crear i editar fitxers protegits (com .rooignore i fitxers de configuració .roo/) sense requerir aprovació."
+				"description": "Permetre a AI IDE BAS crear i editar fitxers protegits (com .rooignore i fitxers de configuració .roo/) sense requerir aprovació."
 			}
 		},
 		"browser": {
@@ -253,6 +253,9 @@
 		"getChutesApiKey": "Obtenir clau API de Chutes",
 		"deepSeekApiKey": "Clau API de DeepSeek",
 		"getDeepSeekApiKey": "Obtenir clau API de DeepSeek",
+		"myDeepSeekApiKey": "Clau API d'AI IDE BAS",
+		"myDeepSeekBaseUrl": "URL base d'AI IDE BAS",
+		"myDeepSeekBaseUrlDescription": "URL base per al teu servidor proxy AI IDE BAS",
 		"moonshotApiKey": "Clau API de Moonshot",
 		"getMoonshotApiKey": "Obtenir clau API de Moonshot",
 		"moonshotBaseUrl": "Punt d'entrada de Moonshot",
@@ -304,7 +307,6 @@
 		"cacheUsageNote": "Nota: Si no veieu l'ús de la caché, proveu de seleccionar un model diferent i després tornar a seleccionar el model desitjat.",
 		"vscodeLmModel": "Model de llenguatge",
 		"vscodeLmWarning": "Nota: Aquesta és una integració molt experimental i el suport del proveïdor variarà. Si rebeu un error sobre un model no compatible, és un problema del proveïdor.",
-
 		"geminiParameters": {
 			"urlContext": {
 				"title": "Activa el context d'URL",
@@ -333,13 +335,13 @@
 			"draftModelDesc": "El model d'esborrany ha de ser de la mateixa família de models perquè la descodificació especulativa funcioni correctament.",
 			"selectDraftModel": "Seleccionar model d'esborrany",
 			"noModelsFound": "No s'han trobat models d'esborrany. Assegureu-vos que LM Studio s'està executant amb el mode servidor habilitat.",
-			"description": "LM Studio permet executar models localment al vostre ordinador. Per a instruccions sobre com començar, consulteu la seva <a>Guia d'inici ràpid</a>. També necessitareu iniciar la funció de <b>Servidor Local</b> de LM Studio per utilitzar-la amb aquesta extensió. <span>Nota:</span> Roo Code utilitza prompts complexos i funciona millor amb models Claude. Els models menys capaços poden no funcionar com s'espera."
+			"description": "LM Studio permet executar models localment al vostre ordinador. Per a instruccions sobre com començar, consulteu la seva <a>Guia d'inici ràpid</a>. També necessitareu iniciar la funció de <b>Servidor Local</b> de LM Studio per utilitzar-la amb aquesta extensió. <span>Nota:</span> AI IDE BAS utilitza prompts complexos i funciona millor amb models Claude. Els models menys capaços poden no funcionar com s'espera."
 		},
 		"ollama": {
 			"baseUrl": "URL base (opcional)",
 			"modelId": "ID del model",
 			"description": "Ollama permet executar models localment al vostre ordinador. Per a instruccions sobre com començar, consulteu la Guia d'inici ràpid.",
-			"warning": "Nota: Roo Code utilitza prompts complexos i funciona millor amb models Claude. Els models menys capaços poden no funcionar com s'espera."
+			"warning": "Nota: AI IDE BAS utilitza prompts complexos i funciona millor amb models Claude. Els models menys capaços poden no funcionar com s'espera."
 		},
 		"unboundApiKey": "Clau API d'Unbound",
 		"getUnboundApiKey": "Obtenir clau API d'Unbound",
@@ -357,7 +359,7 @@
 			}
 		},
 		"customModel": {
-			"capabilities": "Configureu les capacitats i preus per al vostre model personalitzat compatible amb OpenAI. Tingueu cura en especificar les capacitats del model, ja que poden afectar com funciona Roo Code.",
+			"capabilities": "Configureu les capacitats i preus per al vostre model personalitzat compatible amb OpenAI. Tingueu cura en especificar les capacitats del model, ja que poden afectar com funciona AI IDE BAS.",
 			"maxTokens": {
 				"label": "Màxim de tokens de sortida",
 				"description": "El nombre màxim de tokens que el model pot generar en una resposta. (Establiu -1 per permetre que el servidor estableixi el màxim de tokens.)"
@@ -404,7 +406,7 @@
 		},
 		"consecutiveMistakeLimit": {
 			"label": "Límit d'errors i repeticions",
-			"description": "Nombre d'errors consecutius o accions repetides abans de mostrar el diàleg 'En Roo està tenint problemes'",
+			"description": "Nombre d'errors consecutius o accions repetides abans de mostrar el diàleg 'En AI IDE BAS està tenint problemes'",
 			"unlimitedDescription": "Reintents il·limitats habilitats (procediment automàtic). El diàleg no apareixerà mai.",
 			"warning": "⚠️ Establir a 0 permet reintents il·limitats que poden consumir un ús significatiu de l'API"
 		},
@@ -426,7 +428,7 @@
 	"browser": {
 		"enable": {
 			"label": "Habilitar eina de navegador",
-			"description": "Quan està habilitat, Roo pot utilitzar un navegador per interactuar amb llocs web quan s'utilitzen models que admeten l'ús de l'ordinador. <0>Més informació</0>"
+			"description": "Quan està habilitat, AI IDE BAS pot utilitzar un navegador per interactuar amb llocs web quan s'utilitzen models que admeten l'ús de l'ordinador. <0>Més informació</0>"
 		},
 		"viewport": {
 			"label": "Mida del viewport",
@@ -454,18 +456,18 @@
 	"checkpoints": {
 		"enable": {
 			"label": "Habilitar punts de control automàtics",
-			"description": "Quan està habilitat, Roo crearà automàticament punts de control durant l'execució de tasques, facilitant la revisió de canvis o la reversió a estats anteriors. <0>Més informació</0>"
+			"description": "Quan està habilitat, AI IDE BAS crearà automàticament punts de control durant l'execució de tasques, facilitant la revisió de canvis o la reversió a estats anteriors. <0>Més informació</0>"
 		}
 	},
 	"notifications": {
 		"sound": {
 			"label": "Habilitar efectes de so",
-			"description": "Quan està habilitat, Roo reproduirà efectes de so per a notificacions i esdeveniments.",
+			"description": "Quan està habilitat, AI IDE BAS reproduirà efectes de so per a notificacions i esdeveniments.",
 			"volumeLabel": "Volum"
 		},
 		"tts": {
 			"label": "Habilitar text a veu",
-			"description": "Quan està habilitat, Roo llegirà en veu alta les seves respostes utilitzant text a veu.",
+			"description": "Quan està habilitat, AI IDE BAS llegirà en veu alta les seves respostes utilitzant text a veu.",
 			"speedLabel": "Velocitat"
 		}
 	},
@@ -473,7 +475,7 @@
 		"description": "Controleu quina informació s'inclou a la finestra de context de la IA, afectant l'ús de token i la qualitat de resposta",
 		"autoCondenseContextPercent": {
 			"label": "Llindar per activar la condensació intel·ligent de context",
-			"description": "Quan la finestra de context assoleix aquest llindar, Roo la condensarà automàticament."
+			"description": "Quan la finestra de context assoleix aquest llindar, AI IDE BAS la condensarà automàticament."
 		},
 		"condensingApiConfiguration": {
 			"label": "Configuració d'API per a la condensació de context",
@@ -489,7 +491,7 @@
 		},
 		"autoCondenseContext": {
 			"name": "Activar automàticament la condensació intel·ligent de context",
-			"description": "Quan està activat, Roo condensarà automàticament el context quan s'assoleixi el llindar. Quan està desactivat, encara pots activar manualment la condensació de context."
+			"description": "Quan està activat, AI IDE BAS condensarà automàticament el context quan s'assoleixi el llindar. Quan està desactivat, encara pots activar manualment la condensació de context."
 		},
 		"openTabs": {
 			"label": "Límit de context de pestanyes obertes",
@@ -505,7 +507,7 @@
 		},
 		"maxReadFile": {
 			"label": "Llindar d'auto-truncament de lectura de fitxers",
-			"description": "Roo llegeix aquest nombre de línies quan el model omet els valors d'inici/final. Si aquest nombre és menor que el total del fitxer, Roo genera un índex de números de línia de les definicions de codi. Casos especials: -1 indica a Roo que llegeixi tot el fitxer (sense indexació), i 0 indica que no llegeixi cap línia i proporcioni només índexs de línia per a un context mínim. Valors més baixos minimitzen l'ús inicial de context, permetent lectures posteriors de rangs de línies precisos. Les sol·licituds amb inici/final explícits no estan limitades per aquesta configuració.",
+			"description": "AI IDE BAS llegeix aquest nombre de línies quan el model omet els valors d'inici/final. Si aquest nombre és menor que el total del fitxer, AI IDE BAS genera un índex de números de línia de les definicions de codi. Casos especials: -1 indica a AI IDE BAS que llegeixi tot el fitxer (sense indexació), i 0 indica que no llegeixi cap línia i proporcioni només índexs de línia per a un context mínim. Valors més baixos minimitzen l'ús inicial de context, permetent lectures posteriors de rangs de línies precisos. Les sol·licituds amb inici/final explícits no estan limitades per aquesta configuració.",
 			"lines": "línies",
 			"always_full_read": "Llegeix sempre el fitxer sencer"
 		},
@@ -613,7 +615,7 @@
 	"advanced": {
 		"diff": {
 			"label": "Habilitar edició mitjançant diffs",
-			"description": "Quan està habilitat, Roo podrà editar fitxers més ràpidament i rebutjarà automàticament escriptures completes de fitxers truncats. Funciona millor amb l'últim model Claude 3.7 Sonnet.",
+			"description": "Quan està habilitat, AI IDE BAS podrà editar fitxers més ràpidament i rebutjarà automàticament escriptures completes de fitxers truncats. Funciona millor amb l'últim model Claude 3.7 Sonnet.",
 			"strategy": {
 				"label": "Estratègia de diff",
 				"options": {
@@ -634,7 +636,7 @@
 		},
 		"todoList": {
 			"label": "Habilitar eina de llista de tasques",
-			"description": "Quan està habilitat, Roo pot crear i gestionar llistes de tasques per fer el seguiment del progrés de les tasques. Això ajuda a organitzar tasques complexes en passos manejables."
+			"description": "Quan està habilitat, AI IDE BAS pot crear i gestionar llistes de tasques per fer el seguiment del progrés de les tasques. Això ajuda a organitzar tasques complexes en passos manejables."
 		}
 	},
 	"experimental": {
@@ -644,23 +646,23 @@
 		},
 		"SEARCH_AND_REPLACE": {
 			"name": "Utilitzar eina de cerca i reemplaçament experimental",
-			"description": "Activar l'eina de cerca i reemplaçament experimental, permetent a Roo reemplaçar múltiples instàncies d'un terme de cerca en una sola petició."
+			"description": "Activar l'eina de cerca i reemplaçament experimental, permetent a AI IDE BAS reemplaçar múltiples instàncies d'un terme de cerca en una sola petició."
 		},
 		"INSERT_BLOCK": {
 			"name": "Utilitzar eina d'inserció de contingut experimental",
-			"description": "Activar l'eina d'inserció de contingut experimental, permetent a Roo inserir contingut a números de línia específics sense necessitat de crear un diff."
+			"description": "Activar l'eina d'inserció de contingut experimental, permetent a AI IDE BAS inserir contingut a números de línia específics sense necessitat de crear un diff."
 		},
 		"POWER_STEERING": {
 			"name": "Utilitzar mode \"direcció assistida\" experimental",
-			"description": "Quan està activat, Roo recordarà al model els detalls de la seva definició de mode actual amb més freqüència. Això portarà a una adherència més forta a les definicions de rol i instruccions personalitzades, però utilitzarà més tokens per missatge."
+			"description": "Quan està activat, AI IDE BAS recordarà al model els detalls de la seva definició de mode actual amb més freqüència. Això portarà a una adherència més forta a les definicions de rol i instruccions personalitzades, però utilitzarà més tokens per missatge."
 		},
 		"MULTI_SEARCH_AND_REPLACE": {
 			"name": "Utilitzar eina diff de blocs múltiples experimental",
-			"description": "Quan està activat, Roo utilitzarà l'eina diff de blocs múltiples. Això intentarà actualitzar múltiples blocs de codi a l'arxiu en una sola petició."
+			"description": "Quan està activat, AI IDE BAS utilitzarà l'eina diff de blocs múltiples. Això intentarà actualitzar múltiples blocs de codi a l'arxiu en una sola petició."
 		},
 		"CONCURRENT_FILE_READS": {
 			"name": "Habilitar lectura concurrent de fitxers",
-			"description": "Quan està habilitat, Roo pot llegir múltiples fitxers en una sola sol·licitud. Quan està deshabilitat, Roo ha de llegir fitxers un per un. Deshabilitar-ho pot ajudar quan es treballa amb models menys capaços o quan voleu més control sobre l'accés als fitxers."
+			"description": "Quan està habilitat, AI IDE BAS pot llegir múltiples fitxers en una sola sol·licitud. Quan està deshabilitat, AI IDE BAS ha de llegir fitxers un per un. Deshabilitar-ho pot ajudar quan es treballa amb models menys capaços o quan voleu més control sobre l'accés als fitxers."
 		},
 		"MARKETPLACE": {
 			"name": "Habilitar Marketplace",
@@ -668,16 +670,16 @@
 		},
 		"MULTI_FILE_APPLY_DIFF": {
 			"name": "Habilita edicions de fitxers concurrents",
-			"description": "Quan està activat, Roo pot editar múltiples fitxers en una sola petició. Quan està desactivat, Roo ha d'editar fitxers d'un en un. Desactivar això pot ajudar quan es treballa amb models menys capaços o quan vols més control sobre les modificacions de fitxers."
+			"description": "Quan està activat, AI IDE BAS pot editar múltiples fitxers en una sola petició. Quan està desactivat, AI IDE BAS ha d'editar fitxers d'un en un. Desactivar això pot ajudar quan es treballa amb models menys capaços o quan vols més control sobre les modificacions de fitxers."
 		},
 		"PREVENT_FOCUS_DISRUPTION": {
 			"name": "Edició en segon pla",
-			"description": "Quan s'activa, evita la interrupció del focus de l'editor. Les edicions de fitxers es produeixen en segon pla sense obrir la vista diff o robar el focus. Pots continuar treballant sense interrupcions mentre Roo fa canvis. Els fitxers poden obrir-se sense focus per capturar diagnòstics o romandre completament tancats."
+			"description": "Quan s'activa, evita la interrupció del focus de l'editor. Les edicions de fitxers es produeixen en segon pla sense obrir la vista diff o robar el focus. Pots continuar treballant sense interrupcions mentre AI IDE BAS fa canvis. Els fitxers poden obrir-se sense focus per capturar diagnòstics o romandre completament tancats."
 		}
 	},
 	"promptCaching": {
 		"label": "Desactivar la memòria cau de prompts",
-		"description": "Quan està marcat, Roo no utilitzarà la memòria cau de prompts per a aquest model."
+		"description": "Quan està marcat, AI IDE BAS no utilitzarà la memòria cau de prompts per a aquest model."
 	},
 	"temperature": {
 		"useCustom": "Utilitzar temperatura personalitzada",
@@ -708,17 +710,17 @@
 		}
 	},
 	"modelPicker": {
-		"automaticFetch": "L'extensió obté automàticament la llista més recent de models disponibles a <serviceLink>{{serviceName}}</serviceLink>. Si no esteu segur de quin model triar, Roo Code funciona millor amb <defaultModelLink>{{defaultModelId}}</defaultModelLink>. També podeu cercar \"free\" per a opcions gratuïtes actualment disponibles.",
+		"automaticFetch": "L'extensió obté automàticament la llista més recent de models disponibles a <serviceLink>{{serviceName}}</serviceLink>. Si no esteu segur de quin model triar, AI IDE BAS funciona millor amb <defaultModelLink>{{defaultModelId}}</defaultModelLink>. També podeu cercar \"free\" per a opcions gratuïtes actualment disponibles.",
 		"label": "Model",
 		"searchPlaceholder": "Cerca",
 		"noMatchFound": "No s'ha trobat cap coincidència",
 		"useCustomModel": "Utilitzar personalitzat: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "Si teniu qualsevol pregunta o comentari, no dubteu a obrir un issue a <githubLink>github.com/RooCodeInc/Roo-Code</githubLink> o unir-vos a <redditLink>reddit.com/r/RooCode</redditLink> o <discordLink>discord.gg/roocode</discordLink>",
+		"feedback": "💬 Uneix-te a nosaltres: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Permetre informes anònims d'errors i ús",
-			"description": "Ajudeu a millorar Roo Code enviant dades d'ús anònimes i informes d'errors. Mai s'envia codi, prompts o informació personal. Vegeu la nostra política de privacitat per a més detalls."
+			"description": "Ajudeu a millorar AI IDE BAS enviant dades d'ús anònimes i informes d'errors. Mai s'envia codi, prompts o informació personal. Vegeu la nostra política de privacitat per a més detalls."
 		},
 		"settings": {
 			"import": "Importar",

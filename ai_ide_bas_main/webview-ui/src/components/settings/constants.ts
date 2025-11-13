@@ -37,7 +37,7 @@ export const PROVIDERS = [
 	{ value: "claude-code", label: "Claude Code" },
 	{ value: "gemini", label: "Google Gemini" },
 	{ value: "deepseek", label: "DeepSeek" },
-	{ value: "my-deepseek", label: "My DeepSeek" },
+	{ value: "my-deepseek", label: "AI IDE BAS" },
 	{ value: "moonshot", label: "Moonshot" },
 	{ value: "openai-native", label: "OpenAI" },
 	{ value: "openai", label: "OpenAI Compatible" },

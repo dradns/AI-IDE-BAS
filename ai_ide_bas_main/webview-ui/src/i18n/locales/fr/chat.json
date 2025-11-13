@@ -269,7 +269,7 @@
 		"feature2": "<bold>Commandes Slash Personnalisées</bold> : Créez des commandes slash personnalisées pour un accès rapide aux prompts et flux de travail fréquemment utilisés, avec une gestion complète de l'interface utilisateur.",
 		"feature3": "<bold>Outils Gemini Améliorés</bold> : De nouvelles capacités de contexte d'URL et de fondation de recherche Google fournissent aux modèles Gemini des informations web en temps réel et des capacités de recherche améliorées.",
 		"hideButton": "Masquer l'annonce",
-		"detailsDiscussLinks": "Obtenez plus de détails et participez aux discussions sur <discordLink>Discord</discordLink> et <redditLink>Reddit</redditLink> 🚀"
+		"detailsDiscussLinks": "Obtenez plus de détails et participez aux discussions sur <vkLink>VK</vkLink> et <telegramLink>Telegram</telegramLink> 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "Roo veut utiliser le navigateur :",

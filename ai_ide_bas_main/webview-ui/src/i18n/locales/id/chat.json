@@ -1,5 +1,5 @@
 {
-	"greeting": "Selamat datang di Roo Code",
+	"greeting": "Selamat datang di AI IDE BAS",
 	"task": {
 		"title": "Tugas",
 		"seeMore": "Lihat lebih banyak",
@@ -122,7 +122,7 @@
 		"title": "Mode",
 		"marketplace": "Marketplace Mode",
 		"settings": "Pengaturan Mode",
-		"description": "Persona khusus yang menyesuaikan perilaku Roo.",
+		"description": "Persona khusus yang menyesuaikan perilaku AI IDE BAS.",
 		"searchPlaceholder": "Cari mode...",
 		"noResults": "Tidak ada hasil yang ditemukan"
 	},
@@ -171,46 +171,46 @@
 		"tokens": "token"
 	},
 	"instructions": {
-		"wantsToFetch": "Roo ingin mengambil instruksi detail untuk membantu tugas saat ini"
+		"wantsToFetch": "AI IDE BAS ingin mengambil instruksi detail untuk membantu tugas saat ini"
 	},
 	"fileOperations": {
-		"wantsToRead": "Roo ingin membaca file ini:",
-		"wantsToReadMultiple": "Roo ingin membaca beberapa file:",
-		"wantsToReadAndXMore": "Roo ingin membaca file ini dan {{count}} lainnya:",
-		"wantsToReadOutsideWorkspace": "Roo ingin membaca file ini di luar workspace:",
-		"didRead": "Roo membaca file ini:",
-		"wantsToEdit": "Roo ingin mengedit file ini:",
-		"wantsToEditOutsideWorkspace": "Roo ingin mengedit file ini di luar workspace:",
-		"wantsToEditProtected": "Roo ingin mengedit file konfigurasi yang dilindungi:",
-		"wantsToApplyBatchChanges": "Roo ingin menerapkan perubahan ke beberapa file:",
-		"wantsToCreate": "Roo ingin membuat file baru:",
-		"wantsToSearchReplace": "Roo ingin mencari dan mengganti di file ini:",
-		"didSearchReplace": "Roo melakukan pencarian dan penggantian pada file ini:",
-		"wantsToInsert": "Roo ingin menyisipkan konten ke file ini:",
-		"wantsToInsertWithLineNumber": "Roo ingin menyisipkan konten ke file ini di baris {{lineNumber}}:",
-		"wantsToInsertAtEnd": "Roo ingin menambahkan konten ke akhir file ini:"
+		"wantsToRead": "AI IDE BAS ingin membaca file ini:",
+		"wantsToReadMultiple": "AI IDE BAS ingin membaca beberapa file:",
+		"wantsToReadAndXMore": "AI IDE BAS ingin membaca file ini dan {{count}} lainnya:",
+		"wantsToReadOutsideWorkspace": "AI IDE BAS ingin membaca file ini di luar workspace:",
+		"didRead": "AI IDE BAS membaca file ini:",
+		"wantsToEdit": "AI IDE BAS ingin mengedit file ini:",
+		"wantsToEditOutsideWorkspace": "AI IDE BAS ingin mengedit file ini di luar workspace:",
+		"wantsToEditProtected": "AI IDE BAS ingin mengedit file konfigurasi yang dilindungi:",
+		"wantsToApplyBatchChanges": "AI IDE BAS ingin menerapkan perubahan ke beberapa file:",
+		"wantsToCreate": "AI IDE BAS ingin membuat file baru:",
+		"wantsToSearchReplace": "AI IDE BAS ingin mencari dan mengganti di file ini:",
+		"didSearchReplace": "AI IDE BAS melakukan pencarian dan penggantian pada file ini:",
+		"wantsToInsert": "AI IDE BAS ingin menyisipkan konten ke file ini:",
+		"wantsToInsertWithLineNumber": "AI IDE BAS ingin menyisipkan konten ke file ini di baris {{lineNumber}}:",
+		"wantsToInsertAtEnd": "AI IDE BAS ingin menambahkan konten ke akhir file ini:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Roo ingin melihat file tingkat atas di direktori ini:",
-		"didViewTopLevel": "Roo melihat file tingkat atas di direktori ini:",
-		"wantsToViewRecursive": "Roo ingin melihat semua file secara rekursif di direktori ini:",
-		"didViewRecursive": "Roo melihat semua file secara rekursif di direktori ini:",
-		"wantsToViewDefinitions": "Roo ingin melihat nama definisi source code yang digunakan di direktori ini:",
-		"didViewDefinitions": "Roo melihat nama definisi source code yang digunakan di direktori ini:",
-		"wantsToSearch": "Roo ingin mencari direktori ini untuk <code>{{regex}}</code>:",
-		"didSearch": "Roo mencari direktori ini untuk <code>{{regex}}</code>:",
-		"wantsToSearchOutsideWorkspace": "Roo ingin mencari direktori ini (di luar workspace) untuk <code>{{regex}}</code>:",
-		"didSearchOutsideWorkspace": "Roo mencari direktori ini (di luar workspace) untuk <code>{{regex}}</code>:",
-		"wantsToViewTopLevelOutsideWorkspace": "Roo ingin melihat file tingkat atas di direktori ini (di luar workspace):",
-		"didViewTopLevelOutsideWorkspace": "Roo melihat file tingkat atas di direktori ini (di luar workspace):",
-		"wantsToViewRecursiveOutsideWorkspace": "Roo ingin melihat semua file secara rekursif di direktori ini (di luar workspace):",
-		"didViewRecursiveOutsideWorkspace": "Roo melihat semua file secara rekursif di direktori ini (di luar workspace):",
-		"wantsToViewDefinitionsOutsideWorkspace": "Roo ingin melihat nama definisi source code yang digunakan di direktori ini (di luar workspace):",
-		"didViewDefinitionsOutsideWorkspace": "Roo melihat nama definisi source code yang digunakan di direktori ini (di luar workspace):"
+		"wantsToViewTopLevel": "AI IDE BAS ingin melihat file tingkat atas di direktori ini:",
+		"didViewTopLevel": "AI IDE BAS melihat file tingkat atas di direktori ini:",
+		"wantsToViewRecursive": "AI IDE BAS ingin melihat semua file secara rekursif di direktori ini:",
+		"didViewRecursive": "AI IDE BAS melihat semua file secara rekursif di direktori ini:",
+		"wantsToViewDefinitions": "AI IDE BAS ingin melihat nama definisi source code yang digunakan di direktori ini:",
+		"didViewDefinitions": "AI IDE BAS melihat nama definisi source code yang digunakan di direktori ini:",
+		"wantsToSearch": "AI IDE BAS ingin mencari direktori ini untuk <code>{{regex}}</code>:",
+		"didSearch": "AI IDE BAS mencari direktori ini untuk <code>{{regex}}</code>:",
+		"wantsToSearchOutsideWorkspace": "AI IDE BAS ingin mencari direktori ini (di luar workspace) untuk <code>{{regex}}</code>:",
+		"didSearchOutsideWorkspace": "AI IDE BAS mencari direktori ini (di luar workspace) untuk <code>{{regex}}</code>:",
+		"wantsToViewTopLevelOutsideWorkspace": "AI IDE BAS ingin melihat file tingkat atas di direktori ini (di luar workspace):",
+		"didViewTopLevelOutsideWorkspace": "AI IDE BAS melihat file tingkat atas di direktori ini (di luar workspace):",
+		"wantsToViewRecursiveOutsideWorkspace": "AI IDE BAS ingin melihat semua file secara rekursif di direktori ini (di luar workspace):",
+		"didViewRecursiveOutsideWorkspace": "AI IDE BAS melihat semua file secara rekursif di direktori ini (di luar workspace):",
+		"wantsToViewDefinitionsOutsideWorkspace": "AI IDE BAS ingin melihat nama definisi source code yang digunakan di direktori ini (di luar workspace):",
+		"didViewDefinitionsOutsideWorkspace": "AI IDE BAS melihat nama definisi source code yang digunakan di direktori ini (di luar workspace):"
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "Roo ingin mencari codebase untuk <code>{{query}}</code>:",
-		"wantsToSearchWithPath": "Roo ingin mencari codebase untuk <code>{{query}}</code> di <code>{{path}}</code>:",
+		"wantsToSearch": "AI IDE BAS ingin mencari codebase untuk <code>{{query}}</code>:",
+		"wantsToSearchWithPath": "AI IDE BAS ingin mencari codebase untuk <code>{{query}}</code> di <code>{{path}}</code>:",
 		"didSearch_one": "Ditemukan 1 hasil",
 		"didSearch_other": "Ditemukan {{count}} hasil",
 		"resultTooltip": "Skor kemiripan: {{score}} (klik untuk membuka file)"
@@ -235,18 +235,18 @@
 	"response": "Respons",
 	"arguments": "Argumen",
 	"mcp": {
-		"wantsToUseTool": "Roo ingin menggunakan tool di server MCP {{serverName}}:",
-		"wantsToAccessResource": "Roo ingin mengakses resource di server MCP {{serverName}}:"
+		"wantsToUseTool": "AI IDE BAS ingin menggunakan tool di server MCP {{serverName}}:",
+		"wantsToAccessResource": "AI IDE BAS ingin mengakses resource di server MCP {{serverName}}:"
 	},
 	"modes": {
-		"wantsToSwitch": "Roo ingin beralih ke mode {{mode}}",
-		"wantsToSwitchWithReason": "Roo ingin beralih ke mode {{mode}} karena: {{reason}}",
-		"didSwitch": "Roo beralih ke mode {{mode}}",
-		"didSwitchWithReason": "Roo beralih ke mode {{mode}} karena: {{reason}}"
+		"wantsToSwitch": "AI IDE BAS ingin beralih ke mode {{mode}}",
+		"wantsToSwitchWithReason": "AI IDE BAS ingin beralih ke mode {{mode}} karena: {{reason}}",
+		"didSwitch": "AI IDE BAS beralih ke mode {{mode}}",
+		"didSwitchWithReason": "AI IDE BAS beralih ke mode {{mode}} karena: {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Roo ingin membuat subtugas baru dalam mode {{mode}}:",
-		"wantsToFinish": "Roo ingin menyelesaikan subtugas ini",
+		"wantsToCreate": "AI IDE BAS ingin membuat subtugas baru dalam mode {{mode}}:",
+		"wantsToFinish": "AI IDE BAS ingin menyelesaikan subtugas ini",
 		"newTaskContent": "Instruksi Subtugas",
 		"completionContent": "Subtugas Selesai",
 		"resultContent": "Hasil Subtugas",
@@ -254,34 +254,34 @@
 		"completionInstructions": "Subtugas selesai! Kamu bisa meninjau hasilnya dan menyarankan koreksi atau langkah selanjutnya. Jika semuanya terlihat baik, konfirmasi untuk mengembalikan hasil ke tugas induk."
 	},
 	"questions": {
-		"hasQuestion": "Roo punya pertanyaan:"
+		"hasQuestion": "AI IDE BAS punya pertanyaan:"
 	},
 	"taskCompleted": "Tugas Selesai",
 	"error": "Error",
 	"diffError": {
 		"title": "Edit Tidak Berhasil"
 	},
-	"troubleMessage": "Roo mengalami masalah...",
+	"troubleMessage": "AI IDE BAS mengalami masalah...",
 	"powershell": {
 		"issues": "Sepertinya kamu mengalami masalah Windows PowerShell, silakan lihat ini"
 	},
 	"autoApprove": {
 		"title": "Auto-approve:",
 		"none": "Tidak Ada",
-		"description": "Auto-approve memungkinkan Roo Code melakukan aksi tanpa meminta izin. Hanya aktifkan untuk aksi yang benar-benar kamu percayai. Konfigurasi lebih detail tersedia di <settingsLink>Pengaturan</settingsLink>.",
+		"description": "Auto-approve memungkinkan AI IDE BAS melakukan aksi tanpa meminta izin. Hanya aktifkan untuk aksi yang benar-benar kamu percayai. Konfigurasi lebih detail tersedia di <settingsLink>Pengaturan</settingsLink>.",
 		"selectOptionsFirst": "Pilih setidaknya satu opsi di bawah untuk mengaktifkan persetujuan otomatis",
 		"toggleAriaLabel": "Beralih persetujuan otomatis",
 		"disabledAriaLabel": "Persetujuan otomatis dinonaktifkan - pilih opsi terlebih dahulu"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code {{version}} Dirilis",
-		"description": "Roo Code {{version}} menghadirkan fitur-fitur baru yang kuat dan peningkatan signifikan untuk meningkatkan alur kerja pengembangan Anda.",
+		"title": "🎉 AI IDE BAS {{version}} Dirilis",
+		"description": "AI IDE BAS {{version}} menghadirkan fitur-fitur baru yang kuat dan peningkatan signifikan untuk meningkatkan alur kerja pengembangan Anda.",
 		"whatsNew": "Yang Baru",
-		"feature1": "<bold>Antrian Pesan</bold>: Antrikan beberapa pesan saat Roo sedang bekerja, memungkinkan Anda melanjutkan perencanaan alur kerja tanpa gangguan.",
+		"feature1": "<bold>Antrian Pesan</bold>: Antrikan beberapa pesan saat AI IDE BAS sedang bekerja, memungkinkan Anda melanjutkan perencanaan alur kerja tanpa gangguan.",
 		"feature2": "<bold>Perintah Slash Kustom</bold>: Buat perintah slash yang dipersonalisasi untuk akses cepat ke prompt dan alur kerja yang sering digunakan, dengan manajemen UI lengkap.",
 		"feature3": "<bold>Alat Gemini yang Ditingkatkan</bold>: Kemampuan konteks URL baru dan dasar pencarian Google memberikan model Gemini informasi web real-time dan kemampuan penelitian yang ditingkatkan.",
 		"hideButton": "Sembunyikan pengumuman",
-		"detailsDiscussLinks": "Dapatkan detail lebih lanjut dan bergabung dalam diskusi di <discordLink>Discord</discordLink> dan <redditLink>Reddit</redditLink> 🚀"
+		"detailsDiscussLinks": "Dapatkan detail lebih lanjut dan bergabung dalam diskusi di <vkLink>VK</vkLink> dan <telegramLink>Telegram</telegramLink> 🚀"
 	},
 	"reasoning": {
 		"thinking": "Berpikir",
@@ -293,7 +293,7 @@
 		"countdownDisplay": "{{count}}dtk"
 	},
 	"browser": {
-		"rooWantsToUse": "Roo ingin menggunakan browser:",
+		"rooWantsToUse": "AI IDE BAS ingin menggunakan browser:",
 		"consoleLogs": "Log Konsol",
 		"noNewLogs": "(Tidak ada log baru)",
 		"screenshot": "Screenshot browser",
@@ -327,13 +327,13 @@
 	"profileViolationWarning": "Profil saat ini tidak kompatibel dengan pengaturan organisasi kamu",
 	"shellIntegration": {
 		"title": "Peringatan Eksekusi Perintah",
-		"description": "Perintah kamu dijalankan tanpa integrasi shell terminal VSCode. Untuk menekan peringatan ini kamu bisa menonaktifkan integrasi shell di bagian <strong>Terminal</strong> dari <settingsLink>pengaturan Roo Code</settingsLink> atau troubleshoot integrasi terminal VSCode menggunakan link di bawah.",
+		"description": "Perintah kamu dijalankan tanpa integrasi shell terminal VSCode. Untuk menekan peringatan ini kamu bisa menonaktifkan integrasi shell di bagian <strong>Terminal</strong> dari <settingsLink>pengaturan AI IDE BAS</settingsLink> atau troubleshoot integrasi terminal VSCode menggunakan link di bawah.",
 		"troubleshooting": "Klik di sini untuk dokumentasi integrasi shell."
 	},
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "Batas Permintaan yang Disetujui Otomatis Tercapai",
-			"description": "Roo telah mencapai batas {{count}} permintaan API yang disetujui otomatis. Apakah kamu ingin mengatur ulang hitungan dan melanjutkan tugas?",
+			"description": "AI IDE BAS telah mencapai batas {{count}} permintaan API yang disetujui otomatis. Apakah kamu ingin mengatur ulang hitungan dan melanjutkan tugas?",
 			"button": "Atur Ulang dan Lanjutkan"
 		}
 	},

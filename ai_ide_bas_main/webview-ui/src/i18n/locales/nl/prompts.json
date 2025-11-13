@@ -9,7 +9,7 @@
 		"editModesConfig": "Modusconfiguratie bewerken",
 		"editGlobalModes": "Globale modi bewerken",
 		"editProjectModes": "Projectmodi bewerken (.roomodes)",
-		"createModeHelpText": "Modi zijn gespecialiseerde persona's die het gedrag van Roo aanpassen. <0>Meer informatie over het gebruik van modi</0> of <1>het aanpassen van modi.</1>",
+		"createModeHelpText": "Modi zijn gespecialiseerde persona's die het gedrag van AI IDE BAS aanpassen. <0>Meer informatie over het gebruik van modi</0> of <1>het aanpassen van modi.</1>",
 		"selectMode": "Modus zoeken"
 	},
 	"apiConfiguration": {
@@ -34,7 +34,7 @@
 	"roleDefinition": {
 		"title": "Roldefinitie",
 		"resetToDefault": "Terugzetten naar standaard",
-		"description": "Definieer Roo's expertise en persoonlijkheid voor deze modus. Deze beschrijving bepaalt hoe Roo zich presenteert en taken benadert."
+		"description": "Definieer AI IDE BAS' expertise en persoonlijkheid voor deze modus. Deze beschrijving bepaalt hoe AI IDE BAS zich presenteert en taken benadert."
 	},
 	"description": {
 		"title": "Korte beschrijving (voor mensen)",
@@ -50,7 +50,7 @@
 		"title": "Modusspecifieke instructies (optioneel)",
 		"resetToDefault": "Terugzetten naar standaard",
 		"description": "Voeg gedragsrichtlijnen toe die specifiek zijn voor de modus {{modeName}}.",
-		"loadFromFile": "Modusspecifieke instructies voor {{mode}} kunnen ook worden geladen uit de map <span>.roo/rules-{{slug}}/</span> in je werkruimte (.roorules-{{slug}} en .clinerules-{{slug}} zijn verouderd en werken binnenkort niet meer)."
+		"loadFromFile": "Instructies kunnen ook worden geladen uit de map met regels in je werkruimte (verouderde regels werken binnenkort niet meer)."
 	},
 	"exportMode": {
 		"title": "Modus exporteren",
@@ -77,7 +77,7 @@
 	"globalCustomInstructions": {
 		"title": "Aangepaste instructies voor alle modi",
 		"description": "Deze instructies gelden voor alle modi. Ze bieden een basisset aan gedragingen die kunnen worden uitgebreid met modusspecifieke instructies hieronder. <0>Meer informatie</0>",
-		"loadFromFile": "Instructies kunnen ook worden geladen uit de map <span>.roo/rules/</span> in je werkruimte (.roorules en .clinerules zijn verouderd en werken binnenkort niet meer)."
+		"loadFromFile": "Instructies kunnen ook worden geladen uit de map met regels in je werkruimte (verouderde regels werken binnenkort niet meer)."
 	},
 	"systemPrompt": {
 		"preview": "Systeemprompt bekijken",
@@ -104,7 +104,7 @@
 		"types": {
 			"ENHANCE": {
 				"label": "Prompt verbeteren",
-				"description": "Gebruik promptverbetering om op maat gemaakte suggesties of verbeteringen voor je invoer te krijgen. Zo begrijpt Roo je intentie en krijg je de best mogelijke antwoorden. Beschikbaar via het ✨-icoon in de chat."
+				"description": "Gebruik promptverbetering om op maat gemaakte suggesties of verbeteringen voor je invoer te krijgen. Zo begrijpt AI IDE BAS je intentie en krijg je de best mogelijke antwoorden. Beschikbaar via het ✨-icoon in de chat."
 			},
 			"CONDENSE": {
 				"label": "Contextcondensatie",
@@ -173,7 +173,7 @@
 		},
 		"roleDefinition": {
 			"label": "Roldefinitie",
-			"description": "Definieer Roo's expertise en persoonlijkheid voor deze modus."
+			"description": "Definieer AI IDE BAS' expertise en persoonlijkheid voor deze modus."
 		},
 		"whenToUse": {
 			"label": "Wanneer te gebruiken (optioneel)",

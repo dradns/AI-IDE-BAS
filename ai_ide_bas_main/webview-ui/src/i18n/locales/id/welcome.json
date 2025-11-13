@@ -1,6 +1,6 @@
 {
-	"greeting": "Selamat datang di Roo Code!",
-	"introduction": "Dengan berbagai Mode bawaan dan dapat diperluas, Roo Code memungkinkan Anda merencanakan, merancang, coding, debug, dan meningkatkan produktivitas seperti yang belum pernah terjadi sebelumnya.",
+	"greeting": "Selamat datang di AI IDE BAS!",
+	"introduction": "Dengan berbagai Mode bawaan dan dapat diperluas, AI IDE BAS memungkinkan Anda merencanakan, merancang, coding, debug, dan meningkatkan produktivitas seperti yang belum pernah terjadi sebelumnya.",
 	"notice": "Untuk memulai, ekstensi ini memerlukan provider API.",
 	"start": "Ayo mulai!",
 	"routers": {
@@ -12,38 +12,37 @@
 			"description": "Interface terpadu untuk LLM"
 		}
 	},
-	"chooseProvider": "Untuk melakukan keajaibannya, Roo membutuhkan API key.",
+	"chooseProvider": "Untuk melakukan keajaibannya, AI IDE BAS membutuhkan API key.",
 	"startRouter": "Kami merekomendasikan menggunakan Router LLM:",
 	"startCustom": "Atau Anda dapat menggunakan API key Anda sendiri:",
 	"telemetry": {
-		"title": "Bantu Tingkatkan Roo Code",
+		"title": "Bantu Tingkatkan AI IDE BAS",
 		"anonymousTelemetry": "Kirim data error dan penggunaan anonim untuk membantu kami memperbaiki bug dan meningkatkan ekstensi. Tidak ada kode, prompt, atau informasi pribadi yang pernah dikirim.",
 		"changeSettings": "Anda selalu dapat mengubah ini di bagian bawah <settingsLink>pengaturan</settingsLink>",
 		"settings": "pengaturan",
 		"allow": "Izinkan",
 		"deny": "Tolak"
 	},
-	"importSettings": "Impor Pengaturan"
-,
-  "cloudCta": {
-    "social": {
-      "telegram": "Telegram",
-      "youtube": "YouTube",
-      "vk": "VK",
-      "github": "GitHub",
-      "instagram": "Instagram"
-    },
-    "title": "AI IDE BAS: asisten AI Anda untuk analitik",
-    "desc": "Hasilkan dokumentasi, persyaratan, dan artefak proyek jauh lebih cepat dengan AI.",
-    "features": {
-      "bonus": "Bonus selamat datang. Dapatkan token DeepSeek gratis setelah mendaftar.",
-      "productionArtifacts": "Hasilkan artefak nyata yang disesuaikan dengan proses pengembangan Anda.",
-      "inviteFriends": "Undang teman. Tingkatkan saldo bonus untuk setiap undangan dan berkolaborasi.",
-      "googleSignIn": "Masuk dengan Google. Mulai cepat tanpa kata sandi.",
-      "workAnywhere": "Bekerja dari mana saja. Buat proyek cloud dan bagikan hasilnya."
-    },
-    "signInWithGoogle": "Masuk dengan Google",
-    "openingBrowser": "Membuka browser...",
-    "checkBrowserWindow": "💡 Periksa apakah jendela otorisasi terbuka di browser"
-  }
+	"importSettings": "Impor Pengaturan",
+	"cloudCta": {
+		"social": {
+			"telegram": "Telegram",
+			"youtube": "YouTube",
+			"vk": "VK",
+			"github": "GitHub",
+			"instagram": "Instagram"
+		},
+		"title": "AI IDE BAS: asisten AI Anda untuk analitik",
+		"desc": "Hasilkan dokumentasi, persyaratan, dan artefak proyek jauh lebih cepat dengan AI.",
+		"features": {
+			"bonus": "Bonus selamat datang. Dapatkan token DeepSeek gratis setelah mendaftar.",
+			"productionArtifacts": "Hasilkan artefak nyata yang disesuaikan dengan proses pengembangan Anda.",
+			"inviteFriends": "Undang teman. Tingkatkan saldo bonus untuk setiap undangan dan berkolaborasi.",
+			"googleSignIn": "Masuk dengan Google. Mulai cepat tanpa kata sandi.",
+			"workAnywhere": "Bekerja dari mana saja. Buat proyek cloud dan bagikan hasilnya."
+		},
+		"signInWithGoogle": "Masuk dengan Google",
+		"openingBrowser": "Membuka browser...",
+		"checkBrowserWindow": "💡 Periksa apakah jendela otorisasi terbuka di browser"
+	}
 }

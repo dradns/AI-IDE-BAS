@@ -9,7 +9,7 @@
 		"editModesConfig": "Editar configuración de modos",
 		"editGlobalModes": "Editar modos globales",
 		"editProjectModes": "Editar modos del proyecto (.roomodes)",
-		"createModeHelpText": "Los modos son personas especializadas que adaptan el comportamiento de Roo. <0>Aprende sobre el uso de modos</0> o <1>Personalización de modos.</1>",
+		"createModeHelpText": "Los modos son personas especializadas que adaptan el comportamiento de AI IDE BAS. <0>Aprende sobre el uso de modos</0> o <1>Personalización de modos.</1>",
 		"selectMode": "Buscar modos"
 	},
 	"apiConfiguration": {
@@ -34,7 +34,7 @@
 	"roleDefinition": {
 		"title": "Definición de rol",
 		"resetToDefault": "Restablecer a valores predeterminados",
-		"description": "Define la experiencia y personalidad de Roo para este modo. Esta descripción determina cómo Roo se presenta y aborda las tareas."
+		"description": "Define la experiencia y personalidad de AI IDE BAS para este modo. Esta descripción determina cómo AI IDE BAS se presenta y aborda las tareas."
 	},
 	"description": {
 		"title": "Descripción breve (para humanos)",
@@ -50,7 +50,7 @@
 		"title": "Instrucciones personalizadas para el modo (opcional)",
 		"resetToDefault": "Restablecer a valores predeterminados",
 		"description": "Agrega directrices de comportamiento específicas para el modo {{modeName}}.",
-		"loadFromFile": "Las instrucciones personalizadas para el modo {{mode}} también se pueden cargar desde la carpeta <span>.roo/rules-{{slug}}/</span> en tu espacio de trabajo (.roorules-{{slug}} y .clinerules-{{slug}} están obsoletos y dejarán de funcionar pronto)."
+		"loadFromFile": "Las instrucciones también pueden cargarse desde la carpeta de reglas en tu espacio de trabajo (las reglas obsoletas dejarán de funcionar pronto)."
 	},
 	"exportMode": {
 		"title": "Exportar modo",
@@ -77,7 +77,7 @@
 	"globalCustomInstructions": {
 		"title": "Instrucciones personalizadas para todos los modos",
 		"description": "Estas instrucciones se aplican a todos los modos. Proporcionan un conjunto base de comportamientos que pueden ser mejorados por instrucciones específicas de cada modo a continuación. <0>Más información</0>",
-		"loadFromFile": "Las instrucciones también se pueden cargar desde la carpeta <span>.roo/rules/</span> en tu espacio de trabajo (.roorules y .clinerules están obsoletos y dejarán de funcionar pronto)."
+		"loadFromFile": "Las instrucciones también pueden cargarse desde la carpeta de reglas en tu espacio de trabajo (las reglas obsoletas dejarán de funcionar pronto)."
 	},
 	"systemPrompt": {
 		"preview": "Vista previa de la solicitud del sistema",
@@ -104,7 +104,7 @@
 		"types": {
 			"ENHANCE": {
 				"label": "Mejorar solicitud",
-				"description": "Utiliza la mejora de solicitudes para obtener sugerencias o mejoras personalizadas para tus entradas. Esto asegura que Roo entienda tu intención y proporcione las mejores respuestas posibles. Disponible a través del icono ✨ en el chat."
+				"description": "Utiliza la mejora de solicitudes para obtener sugerencias o mejoras personalizadas para tus entradas. Esto asegura que AI IDE BAS entienda tu intención y proporcione las mejores respuestas posibles. Disponible a través del icono ✨ en el chat."
 			},
 			"CONDENSE": {
 				"label": "Condensación de contexto",
@@ -173,7 +173,7 @@
 		},
 		"roleDefinition": {
 			"label": "Definición de rol",
-			"description": "Define la experiencia y personalidad de Roo para este modo."
+			"description": "Define la experiencia y personalidad de AI IDE BAS para este modo."
 		},
 		"whenToUse": {
 			"label": "Cuándo usar (opcional)",

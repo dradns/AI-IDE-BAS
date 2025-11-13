@@ -9,7 +9,7 @@
 		"editModesConfig": "Editar configuració de modes",
 		"editGlobalModes": "Editar modes globals",
 		"editProjectModes": "Editar modes de projecte (.roomodes)",
-		"createModeHelpText": "Els modes són persones especialitzades que adapten el comportament de Roo. <0>Aprèn sobre l'ús de modes</0> o <1>Personalització de modes.</1>",
+		"createModeHelpText": "Els modes són persones especialitzades que adapten el comportament de AI IDE BAS. <0>Aprèn sobre l'ús de modes</0> o <1>Personalització de modes.</1>",
 		"selectMode": "Cerqueu modes"
 	},
 	"apiConfiguration": {
@@ -34,7 +34,7 @@
 	"roleDefinition": {
 		"title": "Definició de rol",
 		"resetToDefault": "Restablir a valors predeterminats",
-		"description": "Definiu l'experiència i personalitat de Roo per a aquest mode. Aquesta descripció determina com Roo es presenta i aborda les tasques."
+		"description": "Definiu l'experiència i personalitat de AI IDE BAS per a aquest mode. Aquesta descripció determina com AI IDE BAS es presenta i aborda les tasques."
 	},
 	"description": {
 		"title": "Descripció curta (per a humans)",
@@ -50,7 +50,7 @@
 		"title": "Instruccions personalitzades específiques del mode (opcional)",
 		"resetToDefault": "Restablir a valors predeterminats",
 		"description": "Afegiu directrius de comportament específiques per al mode {{modeName}}.",
-		"loadFromFile": "Les instruccions personalitzades específiques per al mode {{mode}} també es poden carregar des de la carpeta <span>.roo/rules-{{slug}}/</span> al vostre espai de treball (.roorules-{{slug}} i .clinerules-{{slug}} estan obsolets i deixaran de funcionar aviat)."
+		"loadFromFile": "Les instruccions també es poden carregar des de la carpeta de regles al vostre espai de treball (les regles obsoletes deixaran de funcionar aviat)."
 	},
 	"exportMode": {
 		"title": "Exportar mode",
@@ -77,7 +77,7 @@
 	"globalCustomInstructions": {
 		"title": "Instruccions personalitzades per a tots els modes",
 		"description": "Aquestes instruccions s'apliquen a tots els modes. Proporcionen un conjunt bàsic de comportaments que es poden millorar amb instruccions específiques de cada mode a continuació. <0>Més informació</0>",
-		"loadFromFile": "Les instruccions també es poden carregar des de la carpeta <span>.roo/rules/</span> al vostre espai de treball (.roorules i .clinerules estan obsolets i deixaran de funcionar aviat)."
+		"loadFromFile": "Les instruccions també es poden carregar des de la carpeta de regles al vostre espai de treball (les regles obsoletes deixaran de funcionar aviat)."
 	},
 	"systemPrompt": {
 		"preview": "Previsualització del prompt del sistema",
@@ -104,7 +104,7 @@
 		"types": {
 			"ENHANCE": {
 				"label": "Millorar prompt",
-				"description": "Utilitzeu la millora de prompts per obtenir suggeriments o millores personalitzades per a les vostres entrades. Això assegura que Roo entengui la vostra intenció i proporcioni les millors respostes possibles. Disponible a través de la icona ✨ al xat."
+				"description": "Utilitzeu la millora de prompts per obtenir suggeriments o millores personalitzades per a les vostres entrades. Això assegura que AI IDE BAS entengui la vostra intenció i proporcioni les millors respostes possibles. Disponible a través de la icona ✨ al xat."
 			},
 			"CONDENSE": {
 				"label": "Condensació de context",
@@ -173,7 +173,7 @@
 		},
 		"roleDefinition": {
 			"label": "Definició de rol",
-			"description": "Definiu l'experiència i personalitat de Roo per a aquest mode."
+			"description": "Definiu l'experiència i personalitat de AI IDE BAS per a aquest mode."
 		},
 		"whenToUse": {
 			"label": "Quan utilitzar (opcional)",

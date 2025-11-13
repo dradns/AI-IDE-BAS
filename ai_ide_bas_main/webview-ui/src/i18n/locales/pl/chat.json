@@ -1,5 +1,5 @@
 {
-	"greeting": "Witamy w Roo Code",
+	"greeting": "Witamy w AI IDE BAS",
 	"task": {
 		"title": "Zadanie",
 		"seeMore": "Zobacz więcej",
@@ -241,7 +241,7 @@
 	"autoApprove": {
 		"title": "Automatyczne zatwierdzanie:",
 		"none": "Brak",
-		"description": "Automatyczne zatwierdzanie pozwala Roo Code wykonywać działania bez pytania o pozwolenie. Włącz tylko dla działań, którym w pełni ufasz. Bardziej szczegółowa konfiguracja dostępna w <settingsLink>Ustawieniach</settingsLink>.",
+		"description": "Automatyczne zatwierdzanie pozwala AI IDE BAS wykonywać działania bez pytania o pozwolenie. Włącz tylko dla działań, którym w pełni ufasz. Bardziej szczegółowa konfiguracja dostępna w <settingsLink>Ustawieniach</settingsLink>.",
 		"selectOptionsFirst": "Wybierz co najmniej jedną opcję poniżej, aby włączyć automatyczne zatwierdzanie",
 		"toggleAriaLabel": "Przełącz automatyczne zatwierdzanie",
 		"disabledAriaLabel": "Automatyczne zatwierdzanie wyłączone - najpierw wybierz opcje"
@@ -262,14 +262,14 @@
 		"countdownDisplay": "{{count}}s"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code {{version}} wydany",
-		"description": "Roo Code {{version}} wprowadza potężne nowe funkcje i znaczące ulepszenia, aby ulepszyć Twój przepływ pracy programistycznej.",
+		"title": "🎉 AI IDE BAS {{version}} wydany",
+		"description": "AI IDE BAS {{version}} wprowadza potężne nowe funkcje i znaczące ulepszenia, aby ulepszyć Twój przepływ pracy programistycznej.",
 		"whatsNew": "Co nowego",
 		"feature1": "<bold>Kolejka Wiadomości</bold>: Umieszczaj wiele wiadomości w kolejce podczas pracy Roo, pozwalając na kontynuowanie planowania przepływu pracy bez przerw.",
 		"feature2": "<bold>Niestandardowe Polecenia Slash</bold>: Twórz spersonalizowane polecenia slash dla szybkiego dostępu do często używanych promptów i przepływów pracy, z pełnym zarządzaniem interfejsu użytkownika.",
 		"feature3": "<bold>Ulepszone Narzędzia Gemini</bold>: Nowe możliwości kontekstu URL i ugruntowania wyszukiwania Google zapewniają modelom Gemini informacje internetowe w czasie rzeczywistym i ulepszone możliwości badawcze.",
 		"hideButton": "Ukryj ogłoszenie",
-		"detailsDiscussLinks": "Uzyskaj więcej szczegółów i dołącz do dyskusji na <discordLink>Discord</discordLink> i <redditLink>Reddit</redditLink> 🚀"
+		"detailsDiscussLinks": "Uzyskaj więcej szczegółów i dołącz do dyskusji na <vkLink>VK</vkLink> i <telegramLink>Telegram</telegramLink> 🚀"
 	},
 	"browser": {
 		"rooWantsToUse": "Roo chce użyć przeglądarki:",
@@ -306,7 +306,7 @@
 	"profileViolationWarning": "Bieżący profil nie jest kompatybilny z ustawieniami Twojej organizacji",
 	"shellIntegration": {
 		"title": "Ostrzeżenie wykonania polecenia",
-		"description": "Twoje polecenie jest wykonywane bez integracji powłoki terminala VSCode. Aby ukryć to ostrzeżenie, możesz wyłączyć integrację powłoki w sekcji <strong>Terminal</strong> w <settingsLink>ustawieniach Roo Code</settingsLink> lub rozwiązać problemy z integracją terminala VSCode korzystając z poniższego linku.",
+		"description": "Twoje polecenie jest wykonywane bez integracji powłoki terminala VSCode. Aby ukryć to ostrzeżenie, możesz wyłączyć integrację powłoki w sekcji <strong>Terminal</strong> w <settingsLink>ustawieniach AI IDE BAS</settingsLink> lub rozwiązać problemy z integracją terminala VSCode korzystając z poniższego linku.",
 		"troubleshooting": "Kliknij tutaj, aby zobaczyć dokumentację integracji powłoki."
 	},
 	"ask": {

@@ -9,7 +9,7 @@
 		"editModesConfig": "Edytuj konfigurację trybów",
 		"editGlobalModes": "Edytuj tryby globalne",
 		"editProjectModes": "Edytuj tryby projektu (.roomodes)",
-		"createModeHelpText": "Tryby to wyspecjalizowane persony, które dostosowują zachowanie Roo. <0>Dowiedz się o używaniu trybów</0> lub <1>dostosowywaniu trybów.</1>",
+		"createModeHelpText": "Tryby to wyspecjalizowane persony, które dostosowują zachowanie AI IDE BAS. <0>Dowiedz się o używaniu trybów</0> lub <1>dostosowywaniu trybów.</1>",
 		"selectMode": "Szukaj trybów"
 	},
 	"apiConfiguration": {
@@ -34,7 +34,7 @@
 	"roleDefinition": {
 		"title": "Definicja roli",
 		"resetToDefault": "Przywróć domyślne",
-		"description": "Zdefiniuj wiedzę specjalistyczną i osobowość Roo dla tego trybu. Ten opis kształtuje, jak Roo prezentuje się i podchodzi do zadań."
+		"description": "Zdefiniuj wiedzę specjalistyczną i osobowość AI IDE BAS dla tego trybu. Ten opis kształtuje, jak AI IDE BAS prezentuje się i podchodzi do zadań."
 	},
 	"description": {
 		"title": "Krótki opis (dla ludzi)",
@@ -50,7 +50,7 @@
 		"title": "Niestandardowe instrukcje dla trybu (opcjonalne)",
 		"resetToDefault": "Przywróć domyślne",
 		"description": "Dodaj wytyczne dotyczące zachowania specyficzne dla trybu {{modeName}}.",
-		"loadFromFile": "Niestandardowe instrukcje dla trybu {{mode}} mogą być również ładowane z folderu <span>.roo/rules-{{slug}}/</span> w Twoim obszarze roboczym (.roorules-{{slug}} i .clinerules-{{slug}} są przestarzałe i wkrótce przestaną działać)."
+		"loadFromFile": "Instrukcje mogą być również ładowane z folderu z regułami w Twoim obszarze roboczym (przestarzałe reguły wkrótce przestaną działać)."
 	},
 	"exportMode": {
 		"title": "Eksportuj tryb",
@@ -77,7 +77,7 @@
 	"globalCustomInstructions": {
 		"title": "Niestandardowe instrukcje dla wszystkich trybów",
 		"description": "Te instrukcje dotyczą wszystkich trybów. Zapewniają podstawowy zestaw zachowań, które mogą być rozszerzone przez instrukcje specyficzne dla trybów poniżej. <0>Dowiedz się więcej</0>",
-		"loadFromFile": "Instrukcje mogą być również ładowane z folderu <span>.roo/rules/</span> w Twoim obszarze roboczym (.roorules i .clinerules są przestarzałe i wkrótce przestaną działać)."
+		"loadFromFile": "Instrukcje mogą być również ładowane z folderu z regułami w Twoim obszarze roboczym (przestarzałe reguły wkrótce przestaną działać)."
 	},
 	"systemPrompt": {
 		"preview": "Podgląd podpowiedzi systemowej",
@@ -104,7 +104,7 @@
 		"types": {
 			"ENHANCE": {
 				"label": "Ulepsz podpowiedź",
-				"description": "Użyj ulepszenia podpowiedzi, aby uzyskać dostosowane sugestie lub ulepszenia dla swoich danych wejściowych. Zapewnia to, że Roo rozumie Twoje intencje i dostarcza najlepsze możliwe odpowiedzi. Dostępne za pośrednictwem ikony ✨ w czacie."
+				"description": "Użyj ulepszenia podpowiedzi, aby uzyskać dostosowane sugestie lub ulepszenia dla swoich danych wejściowych. Zapewnia to, że AI IDE BAS rozumie Twoje intencje i dostarcza najlepsze możliwe odpowiedzi. Dostępne za pośrednictwem ikony ✨ w czacie."
 			},
 			"CONDENSE": {
 				"label": "Kondensacja kontekstu",
@@ -173,7 +173,7 @@
 		},
 		"roleDefinition": {
 			"label": "Definicja roli",
-			"description": "Zdefiniuj wiedzę specjalistyczną i osobowość Roo dla tego trybu."
+			"description": "Zdefiniuj wiedzę specjalistyczną i osobowość AI IDE BAS dla tego trybu."
 		},
 		"whenToUse": {
 			"label": "Kiedy używać (opcjonalne)",

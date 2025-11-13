@@ -1,6 +1,4 @@
-# CHANGELOG
-
-## [0.1.5] - 2025-10-29
+[0.1.5] - 2025-10-29
 🌍 4-Language Support: Think and Create in Your Native Language
 AI IDE BAS now operates natively in Russian, English, Spanish, and Chinese not just translating, but thinking in your chosen language.
 🔹 Fully localized interface: Work comfortably in your preferred language with zero friction.
@@ -8,16 +6,16 @@ AI IDE BAS now operates natively in Russian, English, Spanish, and Chinese not j
 🔹 Native artifact generation: Outputs are created from the ground up in your selected language no post-generation translation. Logic, structure, and tone align authentically with the target linguistic context.
 🎯 Why it matters: Empower every developer, analyst, and designer to collaborate with AI naturally eliminating language barriers and preserving semantic precision.
 
-## [0.1.4] - 2025-10-15
+[0.1.4] - 2025-10-15
 Optimized AI prompts
 
-## [0.1.3] - 2025-10-05
+[0.1.3] - 2025-10-05
 Fixed a Google OAuth login error
 
-## [0.1.2] - 2025-09-29
+[0.1.2] - 2025-09-29
 Optimized Extension Performance
 
-## [0.1.1] - 2025-09-22
+[0.1.1] - 2025-09-22
 🧠✨ New Features and Capabilities of AI IDE BAS
 1️⃣🆓 Bonus Tokens for Gmail Registration
 We’ve added automatic issuance of starter tokens when registering via Google. Every new user who authenticates now receives bonus tokens to generate 3 artifacts, letting you immediately test the extension’s capabilities without purchasing an API key.
@@ -32,7 +30,7 @@ What changed:A new button allows exporting finalized artifacts directly to PDF.
 💡 How it works:After generating an artifact, preserve its formatting and save it as a PDF with one click.
 🎯 Why it matters:Easily share results with stakeholders in a universally accessible format.
 
-## [0.1.0] - 2025-09-02
+[0.1.0] - 2025-09-02
 🧠✨ New Features and Capabilities in AI IDE BAS
 1️⃣ 📈 Doubled Context Window with DeepSeek V3.1
 What’s changed: The context limit has been doubled from 64K to 128K tokens. Hitting the context window limit is now extremely unlikely.

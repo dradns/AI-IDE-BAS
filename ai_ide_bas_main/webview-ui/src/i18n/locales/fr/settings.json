@@ -253,6 +253,9 @@
 		"getChutesApiKey": "Obtenir la clé API Chutes",
 		"deepSeekApiKey": "Clé API DeepSeek",
 		"getDeepSeekApiKey": "Obtenir la clé API DeepSeek",
+		"myDeepSeekApiKey": "Clé API AI IDE BAS",
+		"myDeepSeekBaseUrl": "URL de base AI IDE BAS",
+		"myDeepSeekBaseUrlDescription": "URL de base pour votre serveur proxy AI IDE BAS",
 		"moonshotApiKey": "Clé API Moonshot",
 		"getMoonshotApiKey": "Obtenir la clé API Moonshot",
 		"moonshotBaseUrl": "Point d'entrée Moonshot",
@@ -715,7 +718,7 @@
 		"useCustomModel": "Utiliser personnalisé : {{modelId}}"
 	},
 	"footer": {
-		"feedback": "Si vous avez des questions ou des commentaires, n'hésitez pas à ouvrir un problème sur <githubLink>github.com/RooCodeInc/Roo-Code</githubLink> ou à rejoindre <redditLink>reddit.com/r/RooCode</redditLink> ou <discordLink>discord.gg/roocode</discordLink>",
+		"feedback": "💬 Rejoignez-nous: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Autoriser les rapports anonymes d'erreurs et d'utilisation",
 			"description": "Aidez à améliorer Roo Code en envoyant des données d'utilisation anonymes et des rapports d'erreurs. Aucun code, prompt ou information personnelle n'est jamais envoyé. Consultez notre politique de confidentialité pour plus de détails."

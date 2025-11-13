@@ -92,10 +92,30 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 								}}
 							/>
 						</li>
+						<li>
+							•{" "}
+							<Trans
+								i18nKey="chat:announcement.feature4"
+								components={{
+									bold: <b />,
+									code: <code />,
+								}}
+							/>
+						</li>
+						<li>
+							•{" "}
+							<Trans
+								i18nKey="chat:announcement.feature5"
+								components={{
+									bold: <b />,
+									code: <code />,
+								}}
+							/>
+						</li>
 					</ul>
 					<Trans
 						i18nKey="chat:announcement.detailsDiscussLinks"
-						components={{ vkLink: <VkLink />, instagramLink: <InstagramLink /> }}
+						components={{ vkLink: <VkLink />, telegramLink: <TelegramLink /> }}
 					/>
 				</div>
 			</DialogContent>
@@ -117,21 +137,21 @@ const VkLink = () => (
 	</VSCodeLink>
 )
 
-const InstagramLink = () => (
+const TelegramLink = () => (
 	<VSCodeLink
-		href="https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA=="
+		href="https://t.me/+E2c8DPMkAyFjMjcy"
 		onClick={(e) => {
 			e.preventDefault()
 			window.postMessage(
 				{
 					type: "action",
 					action: "openExternal",
-					data: { url: "https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" },
+					data: { url: "https://t.me/+E2c8DPMkAyFjMjcy" },
 				},
 				"*",
 			)
 		}}>
-		Instagram
+		Telegram
 	</VSCodeLink>
 )
 
