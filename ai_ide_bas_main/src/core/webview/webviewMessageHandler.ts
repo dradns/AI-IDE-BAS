@@ -808,6 +808,56 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
+		case "referral:link": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const result = await client.getReferralLink()
+				await provider.postMessageToWebview({ type: "referral:link:result", ...result })
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				await provider.postMessageToWebview({ type: "referral:error", error: detail })
+			}
+			break
+		}
+		case "referral:send": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const email: string = message.text!
+				const result = await client.sendReferralInvite(email)
+				await provider.postMessageToWebview({ type: "referral:send:result", ...result })
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				await provider.postMessageToWebview({ type: "referral:error", error: detail })
+			}
+			break
+		}
+		case "referral:claim": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const referralCode: string = message.text!
+				const result = await client.claimReferralBonus(referralCode)
+				await provider.postMessageToWebview({ type: "referral:claim:result", ...result })
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				await provider.postMessageToWebview({ type: "referral:error", error: detail })
+			}
+			break
+		}
+		case "referral:stats": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const result = await client.getReferralStats()
+				await provider.postMessageToWebview({ type: "referral:stats:result", ...result })
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				await provider.postMessageToWebview({ type: "referral:error", error: detail })
+			}
+			break
+		}
 		case "files:setToken": {
 			const token = (message.text || "").trim()
 			if (token) {

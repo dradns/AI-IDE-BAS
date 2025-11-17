@@ -67,16 +67,18 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 
 	// Invite friend state
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard(2000)
-	const personalCode = "INVITE-FRIEND-2024-ABC123"
+	const [personalCode, setPersonalCode] = useState<string>("")
+	const [referralLink, setReferralLink] = useState<string>("")
 	const [inviteEmail, setInviteEmail] = useState("")
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [isLoadingStats, setIsLoadingStats] = useState(false)
 	const [toasts, setToasts] = useState<ToastMessage[]>([])
 
-	// Mock statistics
-	const stats = {
-		invitedFriends: 5,
-		tokensReceived: 150,
-	}
+	// Statistics
+	const [stats, setStats] = useState({
+		invitedFriends: 0,
+		tokensReceived: 0,
+	})
 
 	const addToast = useCallback((message: string, type: "success" | "error") => {
 		const id = Math.random().toString(36).substring(7)
@@ -90,14 +92,19 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 	const handleCopyCode = useCallback(
 		async (e: React.MouseEvent) => {
 			e.preventDefault()
-			const success = await copyWithFeedback(personalCode, e)
+			const codeToCopy = referralLink || personalCode
+			if (!codeToCopy) {
+				addToast("Реферальная ссылка не загружена", "error")
+				return
+			}
+			const success = await copyWithFeedback(codeToCopy, e)
 			if (success) {
 				addToast("Код скопирован", "success")
 			} else {
 				addToast("Не удалось скопировать код", "error")
 			}
 		},
-		[personalCode, copyWithFeedback, addToast],
+		[referralLink, personalCode, copyWithFeedback, addToast],
 	)
 
 	const handleSubmitEmail = useCallback(
@@ -117,13 +124,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			}
 
 			setIsSubmitting(true)
-
-			// Simulate API call - только UI, без реальных запросов
-			setTimeout(() => {
-				setIsSubmitting(false)
-				addToast("Письмо отправлено", "success")
-				setInviteEmail("")
-			}, 800)
+			vscode.postMessage({ type: "referral:send", text: inviteEmail.trim() })
 		},
 		[inviteEmail, addToast],
 	)
@@ -162,20 +163,53 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 				setIsAuthorized(authorized)
 				if (authorized) {
 					setLoading(true)
+					setIsLoadingStats(true)
 					vscode.postMessage({ type: "files:me" })
+					// Загружаем реферальную ссылку и статистику
+					vscode.postMessage({ type: "referral:link" })
+					vscode.postMessage({ type: "referral:stats" })
 				} else {
 					setMe(null)
+					setPersonalCode("")
+					setReferralLink("")
+					setStats({ invitedFriends: 0, tokensReceived: 0 })
 				}
 			} else if (message?.type === "files:me:result") {
 				setMe(message.me || null)
 				setLoading(false)
+			} else if (message?.type === "referral:link:result") {
+				setReferralLink(message.referral_link || "")
+				setPersonalCode(message.referral_code || message.referral_link || "")
+			} else if (message?.type === "referral:send:result") {
+				setIsSubmitting(false)
+				if (message.ok) {
+					addToast(message.message || "Письмо отправлено", "success")
+					setInviteEmail("")
+					// Обновляем статистику
+					vscode.postMessage({ type: "referral:stats" })
+				} else {
+					addToast(message.message || "Не удалось отправить приглашение", "error")
+				}
+			} else if (message?.type === "referral:stats:result") {
+				setIsLoadingStats(false)
+				setStats({
+					invitedFriends: message.invited_count || 0,
+					tokensReceived: message.tokens_received || 0,
+				})
+			} else if (message?.type === "referral:error") {
+				setIsSubmitting(false)
+				setIsLoadingStats(false)
+				const errorMsg = typeof message.error === "string" 
+					? message.error 
+					: message.error?.message || "Не удалось выполнить операцию. Попробуйте позже."
+				addToast(errorMsg, "error")
 			}
 		}
 
 		window.addEventListener("message", handler)
 		vscode.postMessage({ type: "files:status" })
 		return () => window.removeEventListener("message", handler)
-	}, [])
+	}, [addToast])
 
 	// Track logout success via backend auth state
 	useEffect(() => {
@@ -293,7 +327,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 							</p>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 px-4 py-2.5 bg-vscode-input-background border border-vscode-input-border rounded-xs font-mono text-sm text-vscode-input-foreground break-all">
-									{personalCode}
+									{personalCode || (isAuthorized ? "Загрузка..." : "Войдите для получения ссылки")}
 								</div>
 								<Button
 									variant={showCopyFeedback ? "secondary" : "default"}
@@ -345,26 +379,32 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						{/* Statistics Section */}
 						<div className="bg-vscode-editorWidget-background border border-vscode-dropdown-border rounded-xs p-5">
 							<h3 className="text-base font-medium text-vscode-foreground mb-4">Статистика</h3>
-							<div className="grid grid-cols-2 gap-4">
-								<div className="flex items-center gap-3 p-3 bg-vscode-input-background rounded-xs">
-									<div className="w-10 h-10 rounded-xs bg-vscode-button-secondaryBackground flex items-center justify-center">
-										<Users className="w-5 h-5 text-vscode-button-secondaryForeground" />
+							{isLoadingStats ? (
+								<div className="flex items-center justify-center py-4">
+									<div className="text-sm text-vscode-descriptionForeground">Загрузка...</div>
+								</div>
+							) : (
+								<div className="grid grid-cols-2 gap-4">
+									<div className="flex items-center gap-3 p-3 bg-vscode-input-background rounded-xs">
+										<div className="w-10 h-10 rounded-xs bg-vscode-button-secondaryBackground flex items-center justify-center">
+											<Users className="w-5 h-5 text-vscode-button-secondaryForeground" />
+										</div>
+										<div>
+											<p className="text-2xl font-semibold text-vscode-foreground">{stats.invitedFriends}</p>
+											<p className="text-xs text-vscode-descriptionForeground">Друзей приглашено</p>
+										</div>
 									</div>
-									<div>
-										<p className="text-2xl font-semibold text-vscode-foreground">{stats.invitedFriends}</p>
-										<p className="text-xs text-vscode-descriptionForeground">Друзей приглашено</p>
+									<div className="flex items-center gap-3 p-3 bg-vscode-input-background rounded-xs">
+										<div className="w-10 h-10 rounded-xs bg-vscode-button-secondaryBackground flex items-center justify-center">
+											<Coins className="w-5 h-5 text-vscode-button-secondaryForeground" />
+										</div>
+										<div>
+											<p className="text-2xl font-semibold text-vscode-foreground">{stats.tokensReceived}</p>
+											<p className="text-xs text-vscode-descriptionForeground">Токенов получено</p>
+										</div>
 									</div>
 								</div>
-								<div className="flex items-center gap-3 p-3 bg-vscode-input-background rounded-xs">
-									<div className="w-10 h-10 rounded-xs bg-vscode-button-secondaryBackground flex items-center justify-center">
-										<Coins className="w-5 h-5 text-vscode-button-secondaryForeground" />
-									</div>
-									<div>
-										<p className="text-2xl font-semibold text-vscode-foreground">{stats.tokensReceived}</p>
-										<p className="text-xs text-vscode-descriptionForeground">Токенов получено</p>
-									</div>
-								</div>
-							</div>
+							)}
 						</div>
 
 						{/* Info Section */}

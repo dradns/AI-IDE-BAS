@@ -99,4 +99,25 @@ export class AiIdeBasFilesClient {
 		const { data } = await this.http.get(`/me`)
 		return data
 	}
+
+	// Referral system methods
+	public async getReferralLink(): Promise<{ referral_link: string; referral_code: string }> {
+		const { data } = await this.http.get(`/referral/link`)
+		return data
+	}
+
+	public async sendReferralInvite(email: string): Promise<{ ok: boolean; message: string }> {
+		const { data } = await this.http.post(`/referral/send`, { email })
+		return data
+	}
+
+	public async claimReferralBonus(referralCode: string): Promise<{ ok: boolean; message: string; bonus_inviter?: number; bonus_invitee?: number }> {
+		const { data } = await this.http.post(`/referral/claim`, { referral_code: referralCode })
+		return data
+	}
+
+	public async getReferralStats(): Promise<{ invited_count: number; tokens_received: number }> {
+		const { data } = await this.http.get(`/referral/stats`)
+		return data
+	}
 }
