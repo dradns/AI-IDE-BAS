@@ -123,6 +123,7 @@ export interface ExtensionMessage {
 		| "files:authChanged"
 		| "files:virtualKey"
 		| "files:notice"
+		| "files:updateProfile:result"
 	text?: string
 	isAuthorized?: boolean
 	payload?: any // Add a generic payload for now, can refine later
