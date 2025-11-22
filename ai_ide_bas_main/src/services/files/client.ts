@@ -99,4 +99,9 @@ export class AiIdeBasFilesClient {
 		const { data } = await this.http.get(`/me`)
 		return data
 	}
+
+	public async updateProfile(payload: { name: string }): Promise<any> {
+		const { data } = await this.http.patch(`/me`, payload)
+		return data
+	}
 }

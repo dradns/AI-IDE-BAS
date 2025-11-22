@@ -194,6 +194,7 @@ export interface WebviewMessage {
 		| "files:download"
 		| "files:share"
 		| "files:me"
+		| "files:updateProfile"
 		| "filterMarketplaceItems"
 		| "marketplaceButtonClicked"
 		| "installMarketplaceItem"
@@ -321,6 +322,14 @@ export type InstallMarketplaceItemWithParametersPayload = z.infer<
 	typeof installMarketplaceItemWithParametersPayloadSchema
 >
 
+export const updateUserProfilePayloadSchema = z.object({
+  name: z.string(),
+})
+
+export type UpdateUserProfilePayload = z.infer<
+  typeof updateUserProfilePayloadSchema
+>
+
 export type WebViewMessagePayload =
 	| CheckpointDiffPayload
 	| CheckpointRestorePayload
@@ -328,3 +337,4 @@ export type WebViewMessagePayload =
 	| IndexClearedPayload
 	| InstallMarketplaceItemWithParametersPayload
 	| UpdateTodoListPayload
+	| UpdateUserProfilePayload

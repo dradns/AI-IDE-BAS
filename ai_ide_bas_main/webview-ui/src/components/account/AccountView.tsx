@@ -44,6 +44,11 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						? (me as any)?.credits
 						: (userInfo as any)?.tokens
 
+	
+	const [isEditing, setIsEditing] = useState(false)
+	const [newName, setNewName] = useState(name || "")
+
+
 	// const _productLogoUri = (window as any).IMAGES_BASE_URI + "/product-logo.svg" // unused after design change
 
 	// Backend auth state + profile fetch
@@ -62,6 +67,11 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			} else if (message?.type === "files:me:result") {
 				setMe(message.me || null)
 				setLoading(false)
+			} else if (message?.type === "files:updateProfile:result") {
+				const { success, me } = message.payload || {}
+				if (success && me) {
+					setMe(me)
+				}
 			}
 		}
 
@@ -90,6 +100,19 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		// Send telemetry for account logout action
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_LOGOUT_CLICKED)
 		vscode.postMessage({ type: "files:logout" })
+	}
+
+	const handleEditClick = () => {
+		setIsEditing(true)
+		setNewName(name || "")
+	}
+
+	const handleSaveClick = () => {
+		vscode.postMessage({
+			type: "files:updateProfile",
+			payload: { name: newName },
+		})
+		setIsEditing(false)
 	}
 
 	// const handleVisitCloudWebsite = () => {
@@ -129,7 +152,24 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 								/>
 							</div>
 							{name && (
-								<h2 className="text-lg font-medium text-vscode-foreground mb-0">{name}</h2>
+								<div className="flex items-center gap-2">
+									{isEditing ? (
+										<>
+											<input
+												type="text"
+												value={newName}
+												onChange={(e) => setNewName(e.target.value)}
+												className="vscode-input text-lg font-medium text-vscode-foreground mb-0"
+											/>
+											<VSCodeButton appearance="icon" onClick={handleSaveClick}>💾</VSCodeButton>
+										</>
+									) : (
+										<>
+											<h2 className="text-lg font-medium text-vscode-foreground mb-0">{name}</h2>
+											<VSCodeButton appearance="icon" onClick={handleEditClick}>✏️</VSCodeButton>
+										</>
+									)}
+								</div>
 							)}
 							{email && (
 								<p className="text-sm text-vscode-descriptionForeground">{email}</p>
