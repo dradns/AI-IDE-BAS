@@ -13,6 +13,12 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
 import { unescapeHtmlEntities } from "../../utils/text-normalization"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
+import {
+	startArtifactTiming,
+	cancelArtifactTiming,
+	completeArtifactTiming,
+	createExecutionId,
+} from "../../utils/artifactTiming"
 
 export async function applyDiffToolLegacy(
 	cline: Task,
@@ -22,6 +28,7 @@ export async function applyDiffToolLegacy(
 	pushToolResult: PushToolResult,
 	removeClosingTag: RemoveClosingTag,
 ) {
+	let executionId: string | undefined
 	const relPath: string | undefined = block.params.path
 	let diffContent: string | undefined = block.params.diff
 
@@ -90,6 +97,10 @@ export async function applyDiffToolLegacy(
 
 			const originalContent: string = await fs.readFile(absolutePath, "utf-8")
 
+			// Start tracking artifact timing (always modifies existing files)
+			executionId = createExecutionId()
+			await startArtifactTiming(cline, executionId, relPath, "modified")
+
 			// Apply the diff to the original content
 			const diffResult = (await cline.diffStrategy?.applyDiff(
 				originalContent,
@@ -134,6 +145,9 @@ export async function applyDiffToolLegacy(
 				cline.recordToolError("apply_diff", formattedError)
 
 				pushToolResult(formattedError)
+
+				// Complete timing with error
+				await completeArtifactTiming(cline, executionId, formattedError || "Failed to apply diff")
 				return
 			}
 
@@ -153,6 +167,8 @@ export async function applyDiffToolLegacy(
 			// Check if file is write-protected
 			const isWriteProtected = cline.rooProtectedController?.isWriteProtected(relPath) || false
 
+			let timingHandled = false
+
 			if (isPreventFocusDisruptionEnabled) {
 				// Direct file write without diff view
 				const completeMessage = JSON.stringify({
@@ -170,6 +186,7 @@ export async function applyDiffToolLegacy(
 				const didApprove = await askApproval("tool", completeMessage, toolProgressStatus, isWriteProtected)
 
 				if (!didApprove) {
+					cancelArtifactTiming(cline, executionId)
 					return
 				}
 
@@ -183,6 +200,8 @@ export async function applyDiffToolLegacy(
 					diagnosticsEnabled,
 					writeDelayMs,
 				)
+
+				timingHandled = true
 			} else {
 				// Original behavior with diff view
 				// Show diff view before asking for approval
@@ -207,11 +226,21 @@ export async function applyDiffToolLegacy(
 
 				if (!didApprove) {
 					await cline.diffViewProvider.revertChanges() // Cline likely handles closing the diff view
+					cancelArtifactTiming(cline, executionId)
 					return
 				}
 
 				// Call saveChanges to update the DiffViewProvider properties
 				await cline.diffViewProvider.saveChanges(diagnosticsEnabled, writeDelayMs)
+				timingHandled = true
+			}
+
+			// User approved and we saved changes - track pending confirmation
+			if (timingHandled) {
+				if (!cline.pendingArtifactConfirmations) {
+					cline.pendingArtifactConfirmations = []
+				}
+				cline.pendingArtifactConfirmations.push(executionId)
 			}
 
 			// Track file edit operation
@@ -248,6 +277,13 @@ export async function applyDiffToolLegacy(
 			return
 		}
 	} catch (error) {
+		if (executionId) {
+			await completeArtifactTiming(
+				cline,
+				executionId,
+				error instanceof Error ? error.message : "Error applying diff",
+			)
+		}
 		await handleError("applying diff", error)
 		await cline.diffViewProvider.reset()
 		return

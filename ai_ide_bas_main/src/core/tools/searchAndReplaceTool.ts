@@ -13,6 +13,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
 import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
+import { startArtifactTiming, completeArtifactTiming, cancelArtifactTiming, createExecutionId } from "../../utils/artifactTiming"
 
 /**
  * Tool for performing search and replace operations on files
@@ -145,6 +146,10 @@ export async function searchAndReplaceTool(
 		// Reset consecutive mistakes since all validations passed
 		cline.consecutiveMistakeCount = 0
 
+		// Start tracking artifact generation time (always modify for search_and_replace)
+		const executionId = createExecutionId()
+		await startArtifactTiming(cline, executionId, validRelPath, "modified")
+
 		// Read and process file content
 		let fileContent: string
 		try {
@@ -228,6 +233,8 @@ export async function searchAndReplaceTool(
 			.then((response) => response.response === "yesButtonClicked")
 
 		if (!didApprove) {
+			// User denied - cancel timing tracking
+			cancelArtifactTiming(cline, executionId)
 			// Revert changes if diff view was shown
 			if (!isPreventFocusDisruptionEnabled) {
 				await cline.diffViewProvider.revertChanges()
@@ -236,6 +243,12 @@ export async function searchAndReplaceTool(
 			await cline.diffViewProvider.reset()
 			return
 		}
+
+		// User approved - add to pending confirmations (timing will be completed when user clicks "Document Ready")
+		if (!cline.pendingArtifactConfirmations) {
+			cline.pendingArtifactConfirmations = []
+		}
+		cline.pendingArtifactConfirmations.push(executionId)
 
 		// Save the changes
 		if (isPreventFocusDisruptionEnabled) {
@@ -266,6 +279,11 @@ export async function searchAndReplaceTool(
 		cline.recordToolUsage("search_and_replace")
 		await cline.diffViewProvider.reset()
 	} catch (error) {
+		// Complete timing with error if timing was started
+		if (relPath) {
+			const executionId = createExecutionId() // Note: in error case we may not have the original ID
+			await completeArtifactTiming(cline, executionId, error instanceof Error ? error.message : "Unknown error")
+		}
 		handleError("search and replace", error)
 		await cline.diffViewProvider.reset()
 	}

@@ -32,6 +32,8 @@ import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
+import { ArtifactTimingStorage, StoredArtifactTiming } from "./utils/artifactTimingStorage"
+import { ArtifactTimingCodeLensProvider } from "./services/ArtifactTimingCodeLensProvider"
 
 import {
 	handleUri,
@@ -211,6 +213,156 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerCodeActions(context)
 	registerTerminalActions(context)
+
+	// ✨ Register Artifact Timing CodeLens and History Command
+	const artifactTimingStorage = new ArtifactTimingStorage(context)
+	const artifactTimingCodeLensProvider = new ArtifactTimingCodeLensProvider(artifactTimingStorage)
+
+	// Register CodeLens provider for all files
+	context.subscriptions.push(
+		vscode.languages.registerCodeLensProvider({ scheme: "file" }, artifactTimingCodeLensProvider),
+	)
+
+	const formatDurationSeconds = (ms: number) => `${(ms / 1000).toFixed(1)}s`
+	const formatDurationMinutes = (ms: number) => `${(ms / 60000).toFixed(1)} мин`
+
+	// Register command to show timing history
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ide-bas.showArtifactTimingHistory", async (filePath: string) => {
+			const history = artifactTimingStorage.getTimingHistory(filePath)
+
+			if (history.length === 0) {
+				vscode.window.showInformationMessage("No timing history for this file")
+				return
+			}
+
+			type TimingQuickPickItem = vscode.QuickPickItem & { timing?: StoredArtifactTiming; action?: "addEditingTime" }
+
+			// Format history for QuickPick
+			const items: TimingQuickPickItem[] = history.map((timing) => {
+				const date = new Date(timing.timestamp).toLocaleString("ru-RU")
+				const duration = formatDurationSeconds(timing.duration)
+				const timeSaved =
+					timing.timeSaved && timing.timeSaved > 0
+						? `Saved ${formatDurationSeconds(timing.timeSaved)}`
+						: "No time saved"
+
+				// Use VSCode icons
+				const icon = timing.artifactType === "created" ? "$(file-add)" : "$(edit)"
+
+				return {
+					label: `${icon} ${timing.artifactType.toUpperCase()}`,
+					description: `${duration} • ${timeSaved}`,
+					detail: date,
+					timing,
+				}
+			})
+
+			const aggregated = artifactTimingStorage.getAggregatedTiming(filePath)
+			const summaryItems: TimingQuickPickItem[] = []
+
+			if (aggregated) {
+				summaryItems.push({
+					label: "$(dashboard) Итого затрачено времени",
+					description: formatDurationMinutes(aggregated.totalDuration),
+					detail: "Сумма создания и всех изменений",
+				})
+
+				if (aggregated.totalTimeSaved > 0) {
+					summaryItems.push({
+						label: "$(clock) Итого сэкономлено времени",
+						description: formatDurationMinutes(aggregated.totalTimeSaved),
+						detail: "Эталонное значение (создание + изменения)",
+					})
+				}
+			}
+
+			const quickPickItems = [...summaryItems, ...items]
+
+			// Show QuickPick
+			const selected = await vscode.window.showQuickPick(quickPickItems, {
+				title: `Artifact Timing History: ${path.basename(filePath)}`,
+				placeHolder: "Select an entry to view details",
+			})
+
+			if (selected?.timing) {
+				// Show details in modal dialog
+				const details = [
+					`Artifact Type: ${selected.timing.artifactType}`,
+					`Duration: ${formatDurationSeconds(selected.timing.duration)}`,
+					`Time Saved: ${
+						selected.timing.timeSaved && selected.timing.timeSaved > 0
+							? formatDurationSeconds(selected.timing.timeSaved)
+							: "N/A"
+					}`,
+					`Lines of Code: ${selected.timing.linesOfCode || "N/A"}`,
+					`Created: ${new Date(selected.timing.timestamp).toLocaleString("ru-RU")}`,
+				].join("\n")
+
+				vscode.window.showInformationMessage(details, { modal: true })
+			}
+		}),
+	)
+
+	// Register command to finish manual editing for current file
+	context.subscriptions.push(
+		vscode.commands.registerCommand("ide-bas.finishEditing", async (filePath?: string) => {
+			try {
+				const targetPath =
+					filePath ||
+					vscode.window.activeTextEditor?.document.uri.fsPath ||
+					undefined
+
+				if (!targetPath) {
+					vscode.window.showInformationMessage("Нет активного файла для завершения редактирования")
+					return
+				}
+
+				const duration = artifactTimingStorage.stopEditing(targetPath)
+				if (!duration || duration <= 0) {
+					vscode.window.showInformationMessage("Редактирование не было начато для этого файла")
+					artifactTimingCodeLensProvider.refresh()
+					return
+				}
+
+				// Save as a modified timing entry without timeSaved
+				await artifactTimingStorage.saveTiming(targetPath, "modified", duration)
+				artifactTimingCodeLensProvider.refresh()
+
+				vscode.window.showInformationMessage(
+					`Редактирование завершено: ${(duration / 60000).toFixed(1)} мин`,
+				)
+			} catch (e) {
+				console.warn("[Editing] Failed to finish editing:", e)
+			}
+		}),
+	)
+
+	// Auto-start editing on first user change
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeTextDocument((event) => {
+			try {
+				const { document } = event
+				if (document.uri.scheme !== "file") return
+
+				const filePath = document.uri.fsPath
+				if (artifactTimingStorage.getEditingStart(filePath)) {
+					return
+				}
+
+				artifactTimingStorage.startEditing(filePath)
+				artifactTimingCodeLensProvider.refresh()
+			} catch (e) {
+				console.warn("[Editing] onDidChangeTextDocument handler error:", e)
+			}
+		}),
+	)
+
+	// Store instances in context for access from other modules
+	;(context as any).artifactTimingStorage = artifactTimingStorage
+	;(context as any).artifactTimingCodeLensProvider = artifactTimingCodeLensProvider
+
+	outputChannel.appendLine("✨ Artifact Timing CodeLens registered")
 
 	// Allows other extensions to activate once Roo is ready.
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)

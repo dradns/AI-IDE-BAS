@@ -16,6 +16,7 @@ import {
 } from "../../shared/tools"
 import { formatResponse } from "../prompts/responses"
 import { Package } from "../../shared/package"
+import { prepareArtifactConfirmation } from "../../utils/artifactTiming"
 
 export async function attemptCompletionTool(
 	cline: Task,
@@ -41,6 +42,7 @@ export async function attemptCompletionTool(
 	if (preventCompletionWithOpenTodos && hasIncompleteTodos) {
 		cline.consecutiveMistakeCount++
 		cline.recordToolError("attempt_completion")
+		
 		pushToolResult(
 			formatResponse.toolError(
 				"Cannot complete task while there are incomplete todos. Please finish all todos before attempting completion.",
@@ -89,6 +91,7 @@ export async function attemptCompletionTool(
 			// Command execution is permanently disabled in attempt_completion
 			// Users must use execute_command tool separately before attempt_completion
 			await cline.say("completion_result", result, undefined, false)
+			
 			TelemetryService.instance.captureTaskCompleted(cline.taskId)
 			cline.emit("taskCompleted", cline.taskId, cline.getTokenUsage(), cline.toolUsage)
 
@@ -102,6 +105,44 @@ export async function attemptCompletionTool(
 				// tell the provider to remove the current subtask and resume the previous task in the stack
 				await cline.providerRef.deref()?.finishSubTask(result)
 				return
+			}
+
+			// Request artifact confirmation for EACH file individually (sequential)
+			if (cline.pendingArtifactConfirmations && cline.pendingArtifactConfirmations.length > 0) {
+				// Import timing utilities
+				const { completeArtifactTiming, cancelArtifactTiming } = await import("../../utils/artifactTiming")
+				
+				// Process each file sequentially
+				for (const executionId of cline.pendingArtifactConfirmations) {
+					// Prepare confirmation data for THIS file only
+					const confirmationData = prepareArtifactConfirmation(cline, [executionId])
+					
+					if (!confirmationData) {
+						console.log('[DEBUG] No confirmation data for', executionId)
+						continue
+					}
+					
+					// Ask user and wait for response for THIS file
+					const confirmationResponse = await cline.ask("artifact_confirmation", confirmationData, false)
+					
+					console.log('[DEBUG] Artifact confirmation response:', confirmationResponse)
+					
+					// Handle response for THIS file
+					if (confirmationResponse.response === "yesButtonClicked") {
+						// User clicked "Document Ready" - show timing
+						console.log('[DEBUG] User clicked Document Ready, completing timing for', executionId)
+						await completeArtifactTiming(cline, executionId)
+					} else if (confirmationResponse.response === "noButtonClicked") {
+						// User clicked "Document Not Accepted" - don't show timing
+						console.log('[DEBUG] User clicked Document Not Accepted, canceling timing for', executionId)
+						cancelArtifactTiming(cline, executionId)
+					} else {
+						console.log('[DEBUG] Unexpected response:', confirmationResponse.response)
+					}
+				}
+				
+				// Clear all pending confirmations
+				cline.pendingArtifactConfirmations = []
 			}
 
 			// We already sent completion_result says, an

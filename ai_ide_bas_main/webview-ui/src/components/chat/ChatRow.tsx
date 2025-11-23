@@ -46,6 +46,8 @@ import { CommandExecutionError } from "./CommandExecutionError"
 import { AutoApprovedRequestLimitWarning } from "./AutoApprovedRequestLimitWarning"
 import { CondenseContextErrorRow, CondensingContextRow, ContextCondenseRow } from "./ContextCondenseRow"
 import CodebaseSearchResultsDisplay from "./CodebaseSearchResultsDisplay"
+import { ArtifactGenerationTiming } from "./ArtifactGenerationTiming"
+import { ArtifactConfirmationButtons } from "./ArtifactConfirmationButtons"
 
 interface ChatRowProps {
 	message: ClineMessage
@@ -1149,6 +1151,12 @@ export const ChatRowContent = ({
 								{icon}
 								{title}
 							</div>
+							{message.fileArtifactTiming && (
+								<ArtifactGenerationTiming
+									executionId={message.fileArtifactTiming.executionId}
+									initialTiming={message.fileArtifactTiming}
+								/>
+							)}
 							<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
 								<Markdown markdown={message.text} />
 							</div>
@@ -1204,6 +1212,26 @@ export const ChatRowContent = ({
 					return <CodebaseSearchResultsDisplay results={results} />
 				case "user_edit_todos":
 					return <UpdateTodoListToolBlock userEdited onChange={() => {}} />
+				case "file_artifact_timing":
+					// Parse the timing data from message text
+					const timingData = message.text ? safeJsonParse<any>(message.text, {}) : null
+					
+					if (!timingData || !timingData.executionId) {
+						return (
+							<>
+								<div style={{ paddingTop: 10, fontSize: "12px", color: "var(--vscode-descriptionForeground)" }}>
+									File created/modified successfully. Timing data temporarily unavailable.
+								</div>
+							</>
+						)
+					}
+
+					return (
+						<ArtifactGenerationTiming
+							executionId={timingData.executionId}
+							initialTiming={timingData}
+						/>
+					)
 				default:
 					return (
 						<>
@@ -1340,6 +1368,15 @@ export const ChatRowContent = ({
 					)
 				case "auto_approval_max_req_reached": {
 					return <AutoApprovedRequestLimitWarning message={message} />
+				}
+				case "artifact_confirmation": {
+					const confirmationData = message.text ? safeJsonParse<any>(message.text, {}) : null
+					
+					if (!confirmationData || !confirmationData.files) {
+						return null
+					}
+					
+					return <ArtifactConfirmationButtons files={confirmationData.files} />
 				}
 				default:
 					return null

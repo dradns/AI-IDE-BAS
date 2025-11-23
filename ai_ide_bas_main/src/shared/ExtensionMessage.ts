@@ -103,6 +103,7 @@ export interface ExtensionMessage {
 		| "setHistoryPreviewCollapsed"
 		| "commandExecutionStatus"
 		| "mcpExecutionStatus"
+		| "file_artifact_timing"
 		| "vsCodeSetting"
 		| "authenticatedUser"
 		| "condenseTaskContextResponse"
@@ -419,6 +420,16 @@ export interface ClineAskUseMcpServer {
 	arguments?: string
 	uri?: string
 	response?: string
+}
+
+export interface ClineAskArtifactConfirmation {
+	type: "artifact_confirmation"
+	executionIds: string[]
+	files: Array<{
+		executionId: string
+		fileName: string
+		artifactType: "created" | "modified"
+	}>
 }
 
 export interface ClineApiReqInfo {

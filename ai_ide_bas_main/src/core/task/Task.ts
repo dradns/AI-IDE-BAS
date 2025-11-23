@@ -238,6 +238,15 @@ export class Task extends EventEmitter<ClineEvents> {
 	consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
 	toolUsage: ToolUsage = {}
 
+	// Artifact Timing
+	activeArtifactTimings?: Map<string, {
+		executionId: string
+		fileName: string
+		artifactType: "created" | "modified"
+		startTime: number
+	}>
+	pendingArtifactConfirmations?: string[] // executionIds waiting for user confirmation
+
 	// Checkpoints
 	enableCheckpoints: boolean
 	checkpointService?: RepoPerTaskCheckpointService
@@ -722,6 +731,24 @@ export class Task extends EventEmitter<ClineEvents> {
 		} else if (terminalOperation === "abort") {
 			this.terminalProcess?.abort()
 		}
+	}
+
+	async handleArtifactConfirmation(accepted: boolean): Promise<void> {
+		const { completeArtifactTiming, cancelArtifactTiming } = await import("../../utils/artifactTiming")
+		
+		if (!this.pendingArtifactConfirmations) {
+			return
+		}
+		
+		for (const execId of this.pendingArtifactConfirmations) {
+			if (accepted) {
+				await completeArtifactTiming(this, execId)
+			} else {
+				cancelArtifactTiming(this, execId)
+			}
+		}
+		
+		this.pendingArtifactConfirmations = []
 	}
 
 	public async condenseContext(): Promise<void> {

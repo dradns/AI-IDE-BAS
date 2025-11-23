@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { fileArtifactTimingSchema } from "./timing.js"
 
 /**
  * ClineAsk
@@ -38,6 +39,7 @@ export const clineAsks = [
 	"browser_action_launch",
 	"use_mcp_server",
 	"auto_approval_max_req_reached",
+	"artifact_confirmation",
 ] as const
 
 export const clineAskSchema = z.enum(clineAsks)
@@ -107,6 +109,7 @@ export const clineSays = [
 	"condense_context_error",
 	"codebase_search_result",
 	"user_edit_todos",
+	"file_artifact_timing",
 ] as const
 
 export const clineSaySchema = z.enum(clineSays)
@@ -156,6 +159,7 @@ export const clineMessageSchema = z.object({
 	contextCondense: contextCondenseSchema.optional(),
 	isProtected: z.boolean().optional(),
 	apiProtocol: z.union([z.literal("openai"), z.literal("anthropic")]).optional(),
+	fileArtifactTiming: fileArtifactTimingSchema.optional(),
 })
 
 export type ClineMessage = z.infer<typeof clineMessageSchema>

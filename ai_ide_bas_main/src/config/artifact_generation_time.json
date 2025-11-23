@@ -1,0 +1,24 @@
+{
+  "documentation_templates": [
+    {
+      "file_format": "*_us.md",
+      "reference_creation_time_sec": 600
+    },
+    {
+      "file_format": "*_uc.md",
+      "reference_creation_time_sec": 1800
+    },
+    {
+      "file_format": "*_activity.plantuml",
+      "reference_creation_time_sec": 3600
+    },
+    {
+      "file_format": "*_ac.md",
+      "reference_creation_time_sec": 3000
+    },
+    {
+      "file_format": "*_glossary.md",
+      "reference_creation_time_sec": 1200
+    }
+  ]
+}

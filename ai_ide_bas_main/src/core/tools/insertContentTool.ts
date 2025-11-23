@@ -12,6 +12,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { insertGroups } from "../diff/insert-groups"
 import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
+import { startArtifactTiming, completeArtifactTiming, cancelArtifactTiming, createExecutionId } from "../../utils/artifactTiming"
 
 export async function insertContentTool(
 	cline: Task,
@@ -97,6 +98,11 @@ export async function insertContentTool(
 
 		cline.consecutiveMistakeCount = 0
 
+		// Start tracking artifact generation time
+		const executionId = createExecutionId()
+		const artifactType = fileExists ? "modified" : "created"
+		await startArtifactTiming(cline, executionId, relPath, artifactType)
+
 		cline.diffViewProvider.editType = fileExists ? "modify" : "create"
 		cline.diffViewProvider.originalContent = fileContent
 		const lines = fileExists ? fileContent.split("\n") : []
@@ -158,6 +164,8 @@ export async function insertContentTool(
 			.then((response) => response.response === "yesButtonClicked")
 
 		if (!didApprove) {
+			// User denied - cancel timing tracking
+			cancelArtifactTiming(cline, executionId)
 			// Revert changes if diff view was shown
 			if (!isPreventFocusDisruptionEnabled) {
 				await cline.diffViewProvider.revertChanges()
@@ -166,6 +174,12 @@ export async function insertContentTool(
 			await cline.diffViewProvider.reset()
 			return
 		}
+
+		// User approved - add to pending confirmations (timing will be completed when user clicks "Document Ready")
+		if (!cline.pendingArtifactConfirmations) {
+			cline.pendingArtifactConfirmations = []
+		}
+		cline.pendingArtifactConfirmations.push(executionId)
 
 		// Save the changes
 		if (isPreventFocusDisruptionEnabled) {
@@ -190,6 +204,11 @@ export async function insertContentTool(
 
 		await cline.diffViewProvider.reset()
 	} catch (error) {
+		// Complete timing with error if timing was started
+		if (relPath) {
+			const executionId = createExecutionId() // Note: in error case we may not have the original ID
+			await completeArtifactTiming(cline, executionId, error instanceof Error ? error.message : "Unknown error")
+		}
 		handleError("insert content", error)
 		await cline.diffViewProvider.reset()
 	}

@@ -16,6 +16,7 @@ import { detectCodeOmission } from "../../integrations/editor/detect-omission"
 import { unescapeHtmlEntities } from "../../utils/text-normalization"
 import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
+import { startArtifactTiming, completeArtifactTiming, cancelArtifactTiming, createExecutionId } from "../../utils/artifactTiming"
 
 export async function writeToFileTool(
 	cline: Task,
@@ -161,6 +162,11 @@ export async function writeToFileTool(
 
 			cline.consecutiveMistakeCount = 0
 
+			// Start tracking artifact generation time
+			const executionId = createExecutionId()
+			const artifactType = fileExists ? "modified" : "created"
+			await startArtifactTiming(cline, executionId, relPath, artifactType)
+
 			// Check if preventFocusDisruption experiment is enabled
 			const provider = cline.providerRef.deref()
 			const state = await provider?.getState()
@@ -210,8 +216,16 @@ export async function writeToFileTool(
 				const didApprove = await askApproval("tool", completeMessage, undefined, isWriteProtected)
 
 				if (!didApprove) {
+					// User denied - cancel timing tracking
+					cancelArtifactTiming(cline, executionId)
 					return
 				}
+
+				// User approved - add to pending confirmations (timing will be completed when user clicks "Document Ready")
+				if (!cline.pendingArtifactConfirmations) {
+					cline.pendingArtifactConfirmations = []
+				}
+				cline.pendingArtifactConfirmations.push(executionId)
 
 				// Set up diffViewProvider properties needed for saveDirectly
 				cline.diffViewProvider.editType = fileExists ? "modify" : "create"
@@ -286,9 +300,17 @@ export async function writeToFileTool(
 				const didApprove = await askApproval("tool", completeMessage, undefined, isWriteProtected)
 
 				if (!didApprove) {
+					// User denied - cancel timing tracking
+					cancelArtifactTiming(cline, executionId)
 					await cline.diffViewProvider.revertChanges()
 					return
 				}
+
+				// User approved - add to pending confirmations (timing will be completed when user clicks "Document Ready")
+				if (!cline.pendingArtifactConfirmations) {
+					cline.pendingArtifactConfirmations = []
+				}
+				cline.pendingArtifactConfirmations.push(executionId)
 
 				// Call saveChanges to update the DiffViewProvider properties
 				await cline.diffViewProvider.saveChanges(diagnosticsEnabled, writeDelayMs)
@@ -311,6 +333,11 @@ export async function writeToFileTool(
 			return
 		}
 	} catch (error) {
+		// Complete timing with error if timing was started
+		if (relPath) {
+			const executionId = createExecutionId() // Note: in error case we may not have the original ID, but we try to clean up
+			await completeArtifactTiming(cline, executionId, error instanceof Error ? error.message : "Unknown error")
+		}
 		await handleError("writing file", error)
 		await cline.diffViewProvider.reset()
 		return

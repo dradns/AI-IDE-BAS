@@ -15,6 +15,7 @@ import { unescapeHtmlEntities } from "../../utils/text-normalization"
 import { parseXml } from "../../utils/xml"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { applyDiffToolLegacy } from "./applyDiffTool"
+import { startArtifactTiming, completeArtifactTiming, cancelArtifactTiming, createExecutionId } from "../../utils/artifactTiming"
 
 interface DiffOperation {
 	path: string
@@ -33,6 +34,7 @@ interface OperationResult {
 	diffItems?: Array<{ content: string; startLine?: number }>
 	absolutePath?: string
 	fileExists?: boolean
+	executionId?: string // For tracking artifact timing
 }
 
 // Add proper type definitions
@@ -213,6 +215,7 @@ Original error: ${errorMessage}`
 		path: op.path,
 		status: "pending",
 		diffItems: op.diff,
+		executionId: createExecutionId(), // Create unique ID for timing tracking
 	}))
 
 	// Function to update operation result
@@ -262,6 +265,12 @@ Original error: ${errorMessage}`
 				opResult.absolutePath = absolutePath
 				opResult.fileExists = fileExists
 				operationsToApprove.push(opResult)
+				
+				// Start timing for this file
+				if (opResult.executionId) {
+					const artifactType = fileExists ? "modified" : "created"
+					await startArtifactTiming(cline, opResult.executionId, relPath, artifactType)
+				}
 			}
 		}
 
@@ -314,6 +323,10 @@ Original error: ${errorMessage}`
 				}
 				cline.didRejectTool = true
 				operationsToApprove.forEach((opResult) => {
+					// Cancel timing for denied files
+					if (opResult.executionId) {
+						cancelArtifactTiming(cline, opResult.executionId)
+					}
 					updateOperationResult(opResult.path, {
 						status: "denied",
 						result: `Changes to ${opResult.path} were not approved by user`,
@@ -335,6 +348,10 @@ Original error: ${errorMessage}`
 								updateOperationResult(opResult.path, { status: "approved" })
 							} else {
 								hasAnyDenial = true
+								// Cancel timing for denied files
+								if (opResult.executionId) {
+									cancelArtifactTiming(cline, opResult.executionId)
+								}
 								updateOperationResult(opResult.path, {
 									status: "denied",
 									result: `Changes to ${opResult.path} were not approved by user`,
@@ -358,6 +375,10 @@ Original error: ${errorMessage}`
 								updateOperationResult(opResult.path, { status: "approved" })
 							} else {
 								hasAnyDenial = true
+								// Cancel timing for denied files
+								if (opResult.executionId) {
+									cancelArtifactTiming(cline, opResult.executionId)
+								}
 								updateOperationResult(opResult.path, {
 									status: "denied",
 									result: `Changes to ${opResult.path} were not approved by user`,
@@ -374,6 +395,10 @@ Original error: ${errorMessage}`
 					console.error("Failed to parse individual permissions:", error)
 					cline.didRejectTool = true
 					operationsToApprove.forEach((opResult) => {
+						// Cancel timing for denied files
+						if (opResult.executionId) {
+							cancelArtifactTiming(cline, opResult.executionId)
+						}
 						updateOperationResult(opResult.path, {
 							status: "denied",
 							result: `Changes to ${opResult.path} were not approved by user`,
@@ -482,6 +507,11 @@ ${errorDetails ? `\nTechnical details:\n${errorDetails}\n` : ""}
 
 				// If no diffs were successfully applied, continue to next file
 				if (successCount === 0) {
+					// Complete timing with error
+					if (opResult.executionId) {
+						await completeArtifactTiming(cline, opResult.executionId, formattedError || "Failed to apply diff")
+					}
+					
 					if (formattedError) {
 						const currentCount = cline.consecutiveMistakeCountForApplyDiff.get(relPath) || 0
 						if (currentCount >= 2) {
@@ -564,12 +594,24 @@ ${errorDetails ? `\nTechnical details:\n${errorDetails}\n` : ""}
 					didApprove = await askApproval("tool", operationMessage, toolProgressStatus, isWriteProtected)
 
 					if (!didApprove) {
+						// User denied - cancel timing tracking
+						if (opResult.executionId) {
+							cancelArtifactTiming(cline, opResult.executionId)
+						}
 						// Revert changes if diff view was shown
 						if (!isPreventFocusDisruptionEnabled) {
 							await cline.diffViewProvider.revertChanges()
 						}
 						results.push(`Changes to ${relPath} were not approved by user`)
 						continue
+					}
+
+					// User approved - add to pending confirmations (timing will be completed when user clicks "Document Ready")
+					if (opResult.executionId) {
+						if (!cline.pendingArtifactConfirmations) {
+							cline.pendingArtifactConfirmations = []
+						}
+						cline.pendingArtifactConfirmations.push(opResult.executionId)
 					}
 
 					// Save the changes
@@ -609,6 +651,14 @@ ${errorDetails ? `\nTechnical details:\n${errorDetails}\n` : ""}
 						// Call saveChanges to update the DiffViewProvider properties
 						await cline.diffViewProvider.saveChanges(diagnosticsEnabled, writeDelayMs)
 					}
+					
+					// Add to pending confirmations for batch operations
+					if (opResult.executionId) {
+						if (!cline.pendingArtifactConfirmations) {
+							cline.pendingArtifactConfirmations = []
+						}
+						cline.pendingArtifactConfirmations.push(opResult.executionId)
+					}
 				}
 
 				// Track file edit operation
@@ -634,6 +684,10 @@ ${errorDetails ? `\nTechnical details:\n${errorDetails}\n` : ""}
 				await cline.diffViewProvider.reset()
 			} catch (error) {
 				const errorMsg = error instanceof Error ? error.message : String(error)
+				// Complete timing with error
+				if (opResult.executionId) {
+					await completeArtifactTiming(cline, opResult.executionId, errorMsg)
+				}
 				updateOperationResult(relPath, {
 					status: "error",
 					error: `Error processing ${relPath}: ${errorMsg}`,

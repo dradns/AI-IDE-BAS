@@ -737,6 +737,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					setInputValue("")
 					setSelectedImages([])
 					break
+				case "artifact_confirmation":
+					// User clicked "Document Ready"
+					vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked" })
+					setInputValue("")
+					setSelectedImages([])
+					break
 				case "completion_result":
 				case "resume_completed_task":
 					// Waiting for feedback, but we can just present a new task button
@@ -772,6 +778,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				case "mistake_limit_reached":
 				case "resume_task":
 					startNewTask()
+					break
+				case "artifact_confirmation":
+					// User clicked "Document Not Accepted"
+					vscode.postMessage({ type: "askResponse", askResponse: "noButtonClicked" })
+					setInputValue("")
+					setSelectedImages([])
 					break
 				case "command":
 				case "tool":
