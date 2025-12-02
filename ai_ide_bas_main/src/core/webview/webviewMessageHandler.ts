@@ -737,6 +737,78 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
+		case "referral:getLink": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const { referral_link, referral_code } = await client.getReferralLink()
+				await provider.postMessageToWebview({
+					type: "referral:link:result",
+					referral_link,
+					referral_code,
+				})
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				const status = anyErr?.response?.status
+				await provider.postMessageToWebview({
+					type: "referral:error",
+					error: detail,
+					values: { status, source: "getLink" },
+				})
+			}
+			break
+		}
+		case "referral:getStats": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			try {
+				const stats = await client.getReferralStats()
+				await provider.postMessageToWebview({
+					type: "referral:stats:result",
+					stats,
+				})
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				const status = anyErr?.response?.status
+				await provider.postMessageToWebview({
+					type: "referral:error",
+					error: detail,
+					values: { status, source: "getStats" },
+				})
+			}
+			break
+		}
+		case "referral:sendInvite": {
+			const client = new AiIdeBasFilesClient(provider.context)
+			const email = (message.values?.email ?? message.text ?? "").trim()
+			if (!email) {
+				await provider.postMessageToWebview({
+					type: "referral:error",
+					error: "Email is required",
+					values: { source: "sendInvite" },
+				})
+				break
+			}
+
+			try {
+				await client.sendReferralInvite(email)
+				await provider.postMessageToWebview({
+					type: "referral:send:result",
+					email,
+					success: true,
+				})
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || (anyErr?.message ?? String(anyErr))
+				const status = anyErr?.response?.status
+				await provider.postMessageToWebview({
+					type: "referral:error",
+					error: detail,
+					values: { status, source: "sendInvite", email },
+				})
+			}
+			break
+		}
 		case "files:list": {
 			const client = new AiIdeBasFilesClient(provider.context)
 			try {

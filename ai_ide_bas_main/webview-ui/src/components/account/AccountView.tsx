@@ -154,7 +154,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 
 	// const _productLogoUri = (window as any).IMAGES_BASE_URI + "/product-logo.svg" // unused after design change
 
-	// Backend auth state + profile fetch
+	// Backend auth state + profile fetch + referral data
 	useEffect(() => {
 		const handler = (e: MessageEvent<any>) => {
 			const message = e.data
@@ -334,7 +334,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 									size="default"
 									onClick={handleCopyCode}
 									className="shrink-0"
-									disabled={showCopyFeedback}>
+									disabled={showCopyFeedback || !personalCode}>
 									{showCopyFeedback ? (
 										<>
 											<CheckCircle2 className="w-4 h-4" />
@@ -348,6 +348,11 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 									)}
 								</Button>
 							</div>
+							{referralLink && (
+								<p className="text-xs text-vscode-descriptionForeground break-all">
+									Также доступна реферальная ссылка: {referralLink}
+								</p>
+							)}
 						</div>
 
 						{/* Email Invite Section */}

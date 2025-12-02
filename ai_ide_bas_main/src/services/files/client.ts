@@ -4,9 +4,24 @@ import * as vscode from "vscode"
 
 import { AIIDEBAS_EXTENSION_URI_SCHEME, AIIDEBAS_PLATFORM_STORAGE_KEY } from "../../shared/constants"
 
-const BASE_URL = "https://api.aiidebas.com/api/v1"
+// Используем тестовый backend, соответствующий документации https://api-test.aiidebas.com/docs#/
+const BASE_URL = "https://api-test.aiidebas.com/api/v1"
 
 export type FileItem = { id?: string; filename: string; public_url?: string | null; project?: string | null }
+
+export type ReferralLinkResponse = {
+	referral_link: string
+	referral_code: string
+}
+
+export type ReferralStatsResponse = {
+	invited_count: number
+	tokens_received: number
+}
+
+export type ReferralSendRequest = {
+	email: string
+}
 
 export class AiIdeBasFilesClient {
 	private readonly http: AxiosInstance
@@ -50,7 +65,7 @@ export class AiIdeBasFilesClient {
 		const s = state ? `&state=${encodeURIComponent(state)}` : ""
 		const platform = this.getPlatform()
 		const platformQuery = platform ? `&platform=${encodeURIComponent(platform)}` : ""
-		return `https://api.aiidebas.com/api/v1/login?redirect_uri=${cb}${s}${platformQuery}`
+		return `https://api-test.aiidebas.com/api/v1/login?redirect_uri=${cb}${s}${platformQuery}`
 	}
 
 	public async logout(): Promise<void> {
