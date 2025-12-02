@@ -67,7 +67,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 
 	// Invite friend state
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard(2000)
-	const [personalCode, setPersonalCode] = useState<string>("")
+	const [_personalCode, setPersonalCode] = useState<string>("")
 	const [referralLink, setReferralLink] = useState<string>("")
 	const [inviteEmail, setInviteEmail] = useState("")
 	const [isSubmitting, setIsSubmitting] = useState(false)
@@ -92,19 +92,18 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 	const handleCopyCode = useCallback(
 		async (e: React.MouseEvent) => {
 			e.preventDefault()
-			const codeToCopy = referralLink || personalCode
-			if (!codeToCopy) {
-				addToast("Реферальная ссылка не загружена", "error")
+			if (!referralLink) {
+				addToast("Ссылка пока недоступна", "error")
 				return
 			}
-			const success = await copyWithFeedback(codeToCopy, e)
+			const success = await copyWithFeedback(referralLink, e)
 			if (success) {
-				addToast("Код скопирован", "success")
+				addToast("Ссылка скопирована", "success")
 			} else {
-				addToast("Не удалось скопировать код", "error")
+				addToast("Не удалось скопировать ссылку", "error")
 			}
 		},
-		[referralLink, personalCode, copyWithFeedback, addToast],
+		[referralLink, copyWithFeedback, addToast],
 	)
 
 	const handleSubmitEmail = useCallback(
@@ -316,25 +315,25 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 					<div className="mt-8 space-y-6">
 						<h2 className="text-lg font-medium text-vscode-foreground">Пригласи друга</h2>
 
-						{/* Personal Code Section */}
+						{/* Referral link section */}
 						<div className="bg-vscode-editorWidget-background border border-vscode-dropdown-border rounded-xs p-5 space-y-4">
 							<div className="flex items-center gap-2">
 								<Copy className="w-5 h-5 text-vscode-foreground" />
-								<h3 className="text-base font-medium text-vscode-foreground">Ваш персональный код</h3>
+								<h3 className="text-base font-medium text-vscode-foreground">Ваша реферальная ссылка</h3>
 							</div>
 							<p className="text-sm text-vscode-descriptionForeground">
-								Поделитесь этим кодом с друзьями, чтобы они могли присоединиться
+								Поделитесь этой ссылкой с друзьями, чтобы они могли присоединиться
 							</p>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 px-4 py-2.5 bg-vscode-input-background border border-vscode-input-border rounded-xs font-mono text-sm text-vscode-input-foreground break-all">
-									{personalCode || (isAuthorized ? "Загрузка..." : "Войдите для получения ссылки")}
+									{referralLink || (isAuthorized ? "Загрузка..." : "Войдите для получения ссылки")}
 								</div>
 								<Button
 									variant={showCopyFeedback ? "secondary" : "default"}
 									size="default"
 									onClick={handleCopyCode}
 									className="shrink-0"
-									disabled={showCopyFeedback || !personalCode}>
+									disabled={showCopyFeedback || !referralLink}>
 									{showCopyFeedback ? (
 										<>
 											<CheckCircle2 className="w-4 h-4" />
@@ -348,11 +347,6 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 									)}
 								</Button>
 							</div>
-							{referralLink && (
-								<p className="text-xs text-vscode-descriptionForeground break-all">
-									Также доступна реферальная ссылка: {referralLink}
-								</p>
-							)}
 						</div>
 
 						{/* Email Invite Section */}
