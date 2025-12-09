@@ -10,7 +10,8 @@ import { vscode } from "@src/utils/vscode"
 export const useStatusMessage = (type: string, deps: DependencyList = []) => {
 	useEffect(() => {
 		try {
-			vscode.postMessage({ type })
+			// Пересылаем без жёсткой типизации, чтобы не ломать сборку при новых сообщениях
+			vscode.postMessage({ type } as any)
 		} catch (error) {
 			console.error("[useStatusMessage] Failed to post message", error)
 		}

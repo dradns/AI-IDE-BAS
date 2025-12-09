@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { vscode } from "@src/utils/vscode"
-import { useStatusMessage } from "@src/hooks/useSafeVscodeMessage"
+import { useStatusMessage } from "../../hooks/useSafeVscodeMessage"
 
 export function RooCloudCTA() {
 	// Keep translation context available for future localization
@@ -44,14 +44,12 @@ export function RooCloudCTA() {
 		}
 
 		const windowHandler = (event: MessageEvent<any>) => handleMessage(event)
-		const disposable = vscode.onDidReceiveMessage(handleMessage)
 
 		window.addEventListener("message", windowHandler)
-		vscode.postMessage({ type: "files:status" })
+		vscode.postMessage({ type: "files:status" } as any)
 
 		return () => {
 			window.removeEventListener("message", windowHandler)
-			disposable?.dispose()
 			if (noticeTimeout) {
 				window.clearTimeout(noticeTimeout)
 			}

@@ -12,7 +12,7 @@ import { useCopyToClipboard } from "@src/utils/clipboard"
 import { Button } from "@src/components/ui/button"
 import { Input } from "@src/components/ui/input"
 import { cn } from "@src/lib/utils"
-import { useStatusMessage } from "@src/hooks/useSafeVscodeMessage"
+import { useStatusMessage } from "../../hooks/useSafeVscodeMessage"
 
 type AccountViewProps = {
 	userInfo: CloudUserInfo | null
