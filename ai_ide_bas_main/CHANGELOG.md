@@ -1,5 +1,75 @@
 # CHANGELOG
 
+## [0.1.6] - 2025-12-17
+
+### Русский
+🤝✨ Реферальная программа: приглашайте друзей — получайте токены  
+Приводите друзей и зарабатывайте токены вместе!
+
+**Что изменилось:**
+- Новый раздел «Invite Friend» в личном кабинете.
+- Отправка приглашений через Gmail или персональная реферальная ссылка.
+- +1000 токенов (~6 артефактов) для вас и +500 токенов (~3 артефакта) друга за каждую успешную регистрацию через Google.
+
+**Как это работает:**
+- Перейдите в профиль → «Invite Friend».
+- Отправьте приглашение или скопируйте ссылку.
+- Друг регистрируется через Google → токены зачисляются обоим автоматически.
+
+**Зачем это нужно:**
+- Работайте в команде бесплатно, увеличивайте лимиты и делитесь возможностями AI IDE с коллегами.
+
+### English
+🤝✨ Referral Program: Invite Friends – Earn Tokens  
+Invite your friends and earn tokens together!
+
+**What’s New:**
+- A new «Invite Friend» section has been added.
+- Send invites via Gmail or use your personal referral link.
+- +1000 tokens (~6 artifacts) for you and +500 tokens (~3 artifacts) for your friend for every successful registration via Google.
+
+**How it works:**
+- Go to Profile → «Invite Friend».
+- Send an invitation or copy your link.
+- Your friend registers using Google → tokens are automatically credited to both of you.
+
+**Why it matters:**
+- Collaborate as a team for free, increase your usage limits, and share the power of AI IDE BAS with your colleagues.
+
+### Español
+🤝✨ Programa de Referidos: ¡Invita a amigos – obtén tokens!  
+¡Invita a tus amigos y ganen tokens juntos!
+
+**Novedades:**
+- Nueva sección «Invite Friend».
+- Envía invitaciones por Gmail o usa tu enlace de referido personal.
+- +1000 tokens (6 artefactos) para ti y +500 tokens (3 artefactos) tu amigo por cada registro exitoso mediante Google.
+
+**Cómo funciona:**
+- Ve a tu perfil → «Invite Friend».
+- Envía la invitación o copia tu enlace.
+- Tu amigo se registra con Google → los tokens se acreditan automáticamente a ambos.
+
+**¿Por qué es útil?**
+- Trabajen en equipo sin costo, aumenten sus límites y compartan las ventajas de AI IDE BAS con sus colegas.
+
+### 中文 (简体)
+🤝✨ 推荐计划：邀请好友，领取代币！  
+邀请好友，一起赚取代币！
+
+**更新内容：**
+- 新增 «Invite Friend» 板块。
+- 可通过 Gmail 发送邀请，或使用你的专属推荐链接。
+- 每成功通过 Google 注册一位好友，你和好友各得 500 代币（相当于 3 个工件）。
+
+**操作指南：**
+- 进入个人资料 → 点击 «Invite Friend»。
+- 发送邀请或复制你的链接。
+- 好友通过 Google 完成注册 → 代币将自动发放给你们双方。
+
+**为何值得参与？**
+- 免费与团队协作、提升使用额度，并与同事共享 AI IDE BAS 的强大功能。
+
 ## [0.1.5] - 2025-10-29
 🌍 4-Language Support: Think and Create in Your Native Language
 AI IDE BAS now operates natively in Russian, English, Spanish, and Chinese not just translating, but thinking in your chosen language.

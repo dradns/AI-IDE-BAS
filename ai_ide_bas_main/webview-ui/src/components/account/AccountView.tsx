@@ -60,7 +60,7 @@ function Toast({ message, type, onClose }: { message: string; type: "success" | 
 }
 
 export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiUrl, onDone }: AccountViewProps) => {
-	const { t } = useAppTranslation()
+	const { t, i18n } = useAppTranslation()
 	const wasAuthenticatedRef = useRef(false)
 	const [isAuthorized, setIsAuthorized] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
@@ -97,17 +97,17 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		async (e: React.MouseEvent) => {
 			e.preventDefault()
 			if (!referralLink) {
-				addToast("Ссылка пока недоступна", "error")
+				addToast(t("account:referralLinkUnavailable"), "error")
 				return
 			}
 			const success = await copyWithFeedback(referralLink, e)
 			if (success) {
-				addToast("Ссылка скопирована", "success")
+				addToast(t("account:referralLinkCopied"), "success")
 			} else {
-				addToast("Не удалось скопировать ссылку", "error")
+				addToast(t("account:referralLinkCopyError"), "error")
 			}
 		},
-		[referralLink, copyWithFeedback, addToast],
+		[referralLink, copyWithFeedback, addToast, t],
 	)
 
 	const handleSubmitEmail = useCallback(
@@ -115,21 +115,21 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			e.preventDefault()
 
 			if (!inviteEmail.trim()) {
-				addToast("Введите email адрес", "error")
+				addToast(t("account:emailRequired"), "error")
 				return
 			}
 
 			// Basic email validation
 			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 			if (!emailRegex.test(inviteEmail.trim())) {
-				addToast("Некорректный email адрес", "error")
+				addToast(t("account:emailInvalid"), "error")
 				return
 			}
 
 			setIsSubmitting(true)
 			vscode.postMessage({ type: "referral:send", text: inviteEmail.trim() })
 		},
-		[inviteEmail, addToast],
+		[inviteEmail, addToast, t],
 	)
 
 	// Resolve local images base URI exposed by the extension host
@@ -186,12 +186,12 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			} else if (message?.type === "referral:send:result") {
 				setIsSubmitting(false)
 				if (message.ok) {
-					addToast(message.message || "Письмо отправлено", "success")
+					addToast(message.message || t("account:emailSent"), "success")
 					setInviteEmail("")
 					// Обновляем статистику
 					vscode.postMessage({ type: "referral:stats" })
 				} else {
-					addToast(message.message || "Не удалось отправить приглашение", "error")
+					addToast(message.message || t("account:emailSendError"), "error")
 				}
 			} else if (message?.type === "referral:stats:result") {
 				setIsLoadingStats(false)
@@ -202,9 +202,10 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			} else if (message?.type === "referral:error") {
 				setIsSubmitting(false)
 				setIsLoadingStats(false)
-				const errorMsg = typeof message.error === "string" 
-					? message.error 
-					: message.error?.message || "Не удалось выполнить операцию. Попробуйте позже."
+				const errorMsg =
+					typeof message.error === "string"
+						? message.error
+						: message.error?.message || t("account:referralGenericError")
 				addToast(errorMsg, "error")
 			}
 		}
@@ -317,20 +318,24 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 
 					{/* Invite Friend Section */}
 					<div className="mt-8 space-y-6">
-						<h2 className="text-lg font-medium text-vscode-foreground">Пригласи друга</h2>
+						<h2 className="text-lg font-medium text-vscode-foreground">
+							{t("account:inviteSectionTitle")}
+						</h2>
 
 						{/* Referral link section */}
 						<div className="bg-vscode-editorWidget-background border border-vscode-dropdown-border rounded-xs p-5 space-y-4">
 							<div className="flex items-center gap-2">
 								<Copy className="w-5 h-5 text-vscode-foreground" />
-								<h3 className="text-base font-medium text-vscode-foreground">Ваша реферальная ссылка</h3>
+								<h3 className="text-base font-medium text-vscode-foreground">
+									{t("account:referralLinkTitle")}
+								</h3>
 							</div>
 							<p className="text-sm text-vscode-descriptionForeground">
-								Поделитесь этой ссылкой с друзьями, чтобы они могли присоединиться
+								{t("account:referralLinkDescription")}
 							</p>
 							<div className="flex items-center gap-3">
 								<div className="flex-1 px-4 py-2.5 bg-vscode-input-background border border-vscode-input-border rounded-xs font-mono text-sm text-vscode-input-foreground break-all">
-									{referralLink || (isAuthorized ? "Загрузка..." : "Войдите для получения ссылки")}
+									{referralLink || (isAuthorized ? t("account:referralLinkLoading") : t("account:referralLinkLogin"))}
 								</div>
 								<Button
 									variant={showCopyFeedback ? "secondary" : "default"}
@@ -341,12 +346,12 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 									{showCopyFeedback ? (
 										<>
 											<CheckCircle2 className="w-4 h-4" />
-											Скопировано
+											{t("account:copied")}
 										</>
 									) : (
 										<>
 											<Copy className="w-4 h-4" />
-											Скопировать
+											{t("account:copy")}
 										</>
 									)}
 								</Button>
@@ -357,16 +362,18 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						<div className="bg-vscode-editorWidget-background border border-vscode-dropdown-border rounded-xs p-5 space-y-4">
 							<div className="flex items-center gap-2">
 								<Mail className="w-5 h-5 text-vscode-foreground" />
-								<h3 className="text-base font-medium text-vscode-foreground">Отправить приглашение по email</h3>
+								<h3 className="text-base font-medium text-vscode-foreground">
+									{t("account:emailSectionTitle")}
+								</h3>
 							</div>
 							<p className="text-sm text-vscode-descriptionForeground">
-								Введите email адрес друга, и мы отправим ему приглашение
+								{t("account:emailSectionDescription")}
 							</p>
 							<form onSubmit={handleSubmitEmail} className="flex items-end gap-3">
 								<div className="flex-1">
 									<Input
 										type="email"
-										placeholder="email@google.com"
+										placeholder={t("account:emailPlaceholder")}
 										value={inviteEmail}
 										onChange={(e) => setInviteEmail(e.target.value)}
 										disabled={isSubmitting}
@@ -374,17 +381,21 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 									/>
 								</div>
 								<Button type="submit" disabled={isSubmitting || !inviteEmail.trim()}>
-									{isSubmitting ? "Отправка..." : "Отправить"}
+									{isSubmitting ? t("account:sending") : t("account:send")}
 								</Button>
 							</form>
 						</div>
 
 						{/* Statistics Section */}
 						<div className="bg-vscode-editorWidget-background border border-vscode-dropdown-border rounded-xs p-5">
-							<h3 className="text-base font-medium text-vscode-foreground mb-4">Статистика</h3>
+							<h3 className="text-base font-medium text-vscode-foreground mb-4">
+								{t("account:statsTitle")}
+							</h3>
 							{isLoadingStats ? (
 								<div className="flex items-center justify-center py-4">
-									<div className="text-sm text-vscode-descriptionForeground">Загрузка...</div>
+									<div className="text-sm text-vscode-descriptionForeground">
+										{t("account:loading")}
+									</div>
 								</div>
 							) : (
 								<div className="grid grid-cols-2 gap-4">
@@ -394,7 +405,19 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 										</div>
 										<div>
 											<p className="text-2xl font-semibold text-vscode-foreground">{stats.invitedFriends}</p>
-											<p className="text-xs text-vscode-descriptionForeground">Друзей приглашено</p>
+											<p className="text-xs text-vscode-descriptionForeground">
+												{i18n.language.startsWith("ru")
+													? (() => {
+															const count = stats.invitedFriends
+															const mod10 = count % 10
+															const mod100 = count % 100
+															if (mod10 === 1 && mod100 !== 11) return "Друг приглашён"
+															if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14))
+																return "Друга приглашено"
+															return "Друзей приглашено"
+													  })()
+													: t("account:invitedFriendsLabel")}
+											</p>
 										</div>
 									</div>
 									<div className="flex items-center gap-3 p-3 bg-vscode-input-background rounded-xs">
@@ -403,7 +426,9 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 										</div>
 										<div>
 											<p className="text-2xl font-semibold text-vscode-foreground">{stats.tokensReceived}</p>
-											<p className="text-xs text-vscode-descriptionForeground">Токенов получено</p>
+											<p className="text-xs text-vscode-descriptionForeground">
+												{t("account:tokensReceivedLabel")}
+											</p>
 										</div>
 									</div>
 								</div>
@@ -413,8 +438,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						{/* Info Section */}
 						<div className="bg-vscode-input-background border border-vscode-dropdown-border rounded-xs p-4">
 							<p className="text-sm text-vscode-descriptionForeground">
-								За каждого приглашенного друга вы получите бонусные токены. Ваш друг также получит токены при
-								регистрации.
+								{t("account:referralInfoText")}
 							</p>
 						</div>
 					</div>

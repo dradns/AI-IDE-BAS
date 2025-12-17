@@ -1,3 +1,20 @@
+[0.1.6] - 2025-12-17
+🤝✨ Referral Program: Invite Friends – Earn Tokens  
+Invite your friends and earn tokens together!
+
+**What’s New:**
+- A new «Invite Friend» section has been added.
+- Send invites via Gmail or use your personal referral link.
+- +1000 tokens (~6 artifacts) for you and +500 tokens (~3 artifacts) for your friend for every successful registration via Google.
+
+**How it works:**
+- Go to Profile → «Invite Friend».
+- Send an invitation or copy your link.
+- Your friend registers using Google → tokens are automatically credited to both of you.
+
+**Why it matters:**
+- Collaborate as a team for free, increase your usage limits, and share the power of AI IDE BAS with your colleagues.
+
 [0.1.5] - 2025-10-29
 🌍 4-Language Support: Think and Create in Your Native Language
 AI IDE BAS now operates natively in Russian, English, Spanish, and Chinese not just translating, but thinking in your chosen language.
