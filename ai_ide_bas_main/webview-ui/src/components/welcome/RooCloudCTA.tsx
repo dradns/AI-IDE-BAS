@@ -62,7 +62,20 @@ export function RooCloudCTA() {
 	// Обработчик нажатия кнопки авторизации
 	const handleLogin = () => {
 		setIsLoggingIn(true)
-		vscode.postMessage({ type: "files:login" })
+		try {
+			vscode.postMessage({ type: "files:login" })
+			console.debug("[CLICK] Google sign-in button clicked - message sent successfully")
+		} catch (error) {
+			console.error("[CLICK] Failed to send login message:", error)
+			// Резервный канал отправки
+			try {
+				window.parent.postMessage({ command: "webview-message", message: { type: "files:login" } }, "*")
+				console.debug("[CLICK] Fallback message sent via window.parent")
+			} catch (fallbackError) {
+				console.error("[CLICK] All message channels failed:", fallbackError)
+				setIsLoggingIn(false)
+			}
+		}
 		
 		// Таймаут на случай, если пользователь закроет окно авторизации
 		// или что-то пойдет не так - сбросим состояние через 30 секунд
@@ -244,42 +257,6 @@ export function RooCloudCTA() {
 							💡 Проверьте, не открылось ли окно авторизации в браузере
 						</p>
 					)}
-					<div className="flex justify-start">
-						<button
-							className="h-9 rounded-full px-4 inline-flex items-center gap-2 border border-vscode-editorWidget-border bg-[color:var(--vscode-editor-background)] hover:bg-vscode-list-hoverBackground"
-							data-click-handler
-							onClick={(e) => {
-								// Принудительная остановка всплытия события для предотвращения перехвата глобальными слушателями
-								e.preventDefault()
-								e.stopPropagation()
-								e.nativeEvent.stopImmediatePropagation()
-								
-								// Принудительная отправка сообщения с дополнительной защитой
-								try {
-									vscode.postMessage({ type: "files:login" })
-									console.debug("[CLICK] Google sign-in button clicked - message sent successfully")
-								} catch (error) {
-									console.error("[CLICK] Failed to send login message:", error)
-									// Дополнительная попытка отправки через альтернативный канал
-									try {
-										window.parent.postMessage({ command: "webview-message", message: { type: "files:login" } }, "*")
-										console.debug("[CLICK] Fallback message sent via window.parent")
-									} catch (fallbackError) {
-										console.error("[CLICK] All message channels failed:", fallbackError)
-									}
-								}
-							}}
-							aria-label="Sign in with Google">
-							{/* Google G logo */}
-							<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-								<path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.6 2 30.8 0 24 0 14.6 0 6.4 5.3 2.4 13l8.8 6.8C13 14.1 18.1 9.5 24 9.5z"/>
-								<path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-2.7-.4-4H24v8h12.7c-.6 3.1-2.4 5.7-5 7.4l7.7 6c4.5-4.2 7.1-10.4 7.1-17.4z"/>
-								<path fill="#FBBC05" d="M11.2 28.2C10.7 26.7 10.5 25 10.5 23s.2-3.7.7-5.2l-8.8-6.8C.8 14.8 0 18.3 0 23c0 4.7.8 8.2 2.4 12l8.8-6.8z"/>
-								<path fill="#34A853" d="M24 46c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6 0-11.1-4.1-12.8-9.6l-8.8 6.8C6.4 42.7 14.6 46 24 46z"/>
-							</svg>
-							<span className="text-sm">Sign in with Google</span>
-						</button>
-					</div>
 				</div>
 			)}
 
