@@ -13,6 +13,7 @@ import { Button } from "@src/components/ui/button"
 import { Input } from "@src/components/ui/input"
 import { cn } from "@src/lib/utils"
 import { useStatusMessage } from "../../hooks/useSafeVscodeMessage"
+import { Avatar } from "@src/components/common/Avatar"
 
 type AccountViewProps = {
 	userInfo: CloudUserInfo | null
@@ -136,10 +137,6 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		[inviteEmail, addToast, t, i18n.language],
 	)
 
-	// Resolve local images base URI exposed by the extension host
-	const imagesBaseUri = (window as any).IMAGES_BASE_URI || ""
-	const fallbackAvatar = `${imagesBaseUri}/fallback-avatar.jpg`
-
 	// Normalize common field names from different backends
 	const name = me?.name ?? (me as any)?.full_name ?? (me as any)?.fullName ?? (me as any)?.user?.name ?? userInfo?.name
 	const email =
@@ -148,6 +145,8 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 		(me as any)?.emailAddress ??
 		(me as any)?.user?.email ??
 		userInfo?.email
+	const avatarUrl =
+		me?.avatar_url || me?.avatarUrl || me?.avatar || me?.picture || userInfo?.picture || ""
 	const tokensValue =
 		typeof me?.tokens !== "undefined"
 			? me?.tokens
@@ -273,23 +272,13 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						</div>
 					) : (me || userInfo) && (
 						<div className="flex flex-col items-center mb-6">
-							<div className="w-16 h-16 mb-3 rounded-full overflow-hidden">
-								<img
-									src={
-										me?.avatar_url ||
-										me?.avatarUrl ||
-										me?.avatar ||
-										me?.picture ||
-										userInfo?.picture ||
-										fallbackAvatar
-									}
-									onError={(e) => {
-										const el = e.currentTarget as HTMLImageElement
-										el.onerror = null
-										el.src = fallbackAvatar
-									}}
+							<div className="mb-3">
+								<Avatar
+									avatarUrl={avatarUrl}
+									displayName={name}
+									email={email}
+									size={64}
 									alt={t("account:profilePicture")}
-									className="w-full h-full object-cover"
 								/>
 							</div>
 							{name && (

@@ -115,4 +115,8 @@ What’s changed: A dedicated “Project Manager” role has been added to the l
 💡 How it works: This mode assists in planning development phases, tracking deadlines, and generating progress reports based on your project data.
 🎯 Why it matters: Helps analysts or architects understand how their work fits into the team’s overall workflow and ensures documentation is properly aligned with release schedules.
 🛠️ Other Improvements
+<<<<<<< HEAD
 Optimized promptsEnhanced UI/UX
+=======
+Optimized promptsEnhanced UI/UX
+>>>>>>> 80435003c3d37972a23719f787e550cc7b3b21cf
