@@ -20,6 +20,9 @@ import { exportMarkdownToPdf } from "../integrations/misc/export-markdown-to-pdf
 import * as path from "path"
 import * as fs from "fs/promises"
 import { loadModeInfo } from "../services/mode-info-loader"
+import { clearPromptCache, refreshAllPromptsFromApi } from "../services/prompt-api-service"
+import { checkAndRefreshPromptsIfNeeded } from "../services/prompt-refresh-service"
+import { formatLanguage } from "../shared/language"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -95,6 +98,12 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		if (!visibleProvider) {
 			return
 		}
+
+		// Проверяем обновления промптов перед созданием новой задачи (в фоне)
+		const state = await visibleProvider.getState()
+		checkAndRefreshPromptsIfNeeded(context, state?.language).catch(err => {
+			console.debug(`[plusButtonClicked] Prompt refresh failed:`, err)
+		})
 
 		TelemetryService.instance.captureTitleButtonClicked("plus")
 
@@ -230,79 +239,50 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		}
 	},
 	exportAllRoleRules: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
 		try {
-			const visibleProvider = getVisibleProviderOrLog(outputChannel)
 			if (!visibleProvider) return
 
 			const workspaceRoot = visibleProvider.cwd || (await import("../utils/path")).getWorkspacePath()
 			if (!workspaceRoot) {
-				vscode.window.showErrorMessage("Нет открытой рабочей папки")
+				vscode.window.showErrorMessage(t("common:errors.no_workspace"))
 				return
 			}
 
-			// Get current language from provider state
-			const state = await visibleProvider.getState()
-			const { formatLanguage } = await import("../shared/language")
-			const language = state?.language ?? formatLanguage(vscode.env.language)
-
-			// Source: extension's built-in rules folders (copied during build to dist/prompts/<lang>)
-			const srcPromptsLangUri = vscode.Uri.joinPath(context.extensionUri, "dist", "prompts", language)
-			let srcStats: any
-			try {
-				srcStats = await fs.stat(srcPromptsLangUri.fsPath)
-				if (!srcStats.isDirectory()) throw new Error(`Папка prompts/${language} не найдена`)
-			} catch (e) {
-				// Fallback to English if language-specific folder doesn't exist
-				const srcPromptsEnUri = vscode.Uri.joinPath(context.extensionUri, "dist", "prompts", "en")
-				try {
-					srcStats = await fs.stat(srcPromptsEnUri.fsPath)
-					if (!srcStats.isDirectory()) throw new Error("Папка prompts/en не найдена")
-					vscode.window.showWarningMessage(`Правила для языка "${language}" не найдены, используется английская версия`)
-				} catch (e2) {
-					vscode.window.showErrorMessage(`Папка prompts не найдена`)
-					return
-				}
-			}
-
-			// Target: workspace .roo directory (flattened, without language subfolder)
-			const dstRooDir = path.join(workspaceRoot, ".roo")
-			await fs.mkdir(dstRooDir, { recursive: true })
-
-			// Copy only rules-* directories from prompts/<lang> to .roo/
-			const entries = await fs.readdir(srcPromptsLangUri.fsPath, { withFileTypes: true })
-			const rulesDirs = entries.filter(entry => entry.isDirectory() && entry.name.startsWith("rules-"))
+			// Ensure language is up to date before showing notifications
+			const currentLanguage = visibleProvider.contextProxy.getValue("language") || formatLanguage(vscode.env.language)
+			const { changeLanguage, getCurrentLanguage } = await import("../i18n")
+			changeLanguage(currentLanguage)
 			
-			if (rulesDirs.length === 0) {
-				vscode.window.showErrorMessage(`Не найдены папки с правилами ролей (rules-*) для языка "${language}"`)
-				return
-			}
+			// Debug: log current language
+			const actualLang = getCurrentLanguage()
+			console.log(`[exportAllRoleRules] Language: requested=${currentLanguage}, actual=${actualLang}`)
 
-			// Recursive copy function
-			const copyRecursive = async (src: string, dst: string) => {
-				const dirEntries = await fs.readdir(src, { withFileTypes: true })
-				for (const entry of dirEntries) {
-					const srcPath = path.join(src, entry.name)
-					const dstPath = path.join(dst, entry.name)
-					if (entry.isDirectory()) {
-						await fs.mkdir(dstPath, { recursive: true })
-						await copyRecursive(srcPath, dstPath)
-					} else if (entry.isFile()) {
-						await fs.copyFile(srcPath, dstPath)
-					}
-				}
+			// Import copy function
+			const { copyPromptsFromGlobalToProject } = await import("../services/prompt-export-service")
+			
+			// Copy prompts from global ~/.roo to project .roo directory
+			// ВАЖНО: Копируем из глобальной директории только текущий язык пользователя
+			// Это позволяет выгружать только нужный язык при локальной выгрузке
+			console.log(`[exportAllRoleRules] Copying prompts from global ~/.roo to project .roo: ${workspaceRoot}/.roo (language: ${actualLang})`)
+			const result = await copyPromptsFromGlobalToProject(workspaceRoot, actualLang)
+			
+			if (result.totalCopied > 0) {
+				const successMessage = t("prompts:exportAllRoleRules.success")
+				// ВАЖНО: Копируется только текущий язык пользователя
+				vscode.window.showInformationMessage(`${successMessage} (${result.totalCopied} режимов, язык: ${actualLang})`)
+			} else {
+				const warningMessage = t("prompts:exportAllRoleRules.warning")
+				vscode.window.showWarningMessage(warningMessage)
 			}
-
-			// Copy each rules-* directory
-			for (const rulesDir of rulesDirs) {
-				const srcRulesPath = path.join(srcPromptsLangUri.fsPath, rulesDir.name)
-				const dstRulesPath = path.join(dstRooDir, rulesDir.name)
-				await fs.mkdir(dstRulesPath, { recursive: true })
-				await copyRecursive(srcRulesPath, dstRulesPath)
-			}
-
-			vscode.window.showInformationMessage(`Экспортировано ${rulesDirs.length} папок с правилами ролей (${language}) в .roo папку проекта`) 
 		} catch (error) {
-			vscode.window.showErrorMessage(`Не удалось экспортировать правила ролей: ${error instanceof Error ? error.message : String(error)}`)
+			const errorMessage = error instanceof Error ? error.message : String(error)
+			outputChannel.appendLine(`[exportAllRoleRules] Error: ${errorMessage}`)
+			const currentLanguage = visibleProvider?.contextProxy?.getValue("language") || formatLanguage(vscode.env.language)
+			const { changeLanguage } = await import("../i18n")
+			changeLanguage(currentLanguage)
+			const errorMsg = t("prompts:exportAllRoleRules.error")
+			vscode.window.showErrorMessage(errorMsg)
 		}
 	},
 	loadModeInfo: async (modeSlug: string) => {
@@ -388,6 +368,53 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
 	},
 	exportMarkdownToPdf: () => exportMarkdownToPdf(),
+	clearFeedbackState: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+		if (!visibleProvider) return
+		await visibleProvider.clearFeedbackState()
+		vscode.window.showInformationMessage("Feedback state cleared. Next task completion will show feedback dialog.")
+	},
+	clearPromptCache: async () => {
+		try {
+			await clearPromptCache(context)
+			const language = formatLanguage(vscode.env.language)
+			// После очистки кэша сразу обновляем промпты из API
+			await refreshAllPromptsFromApi(context, language)
+			vscode.window.showInformationMessage("Prompt cache cleared and refreshed from API.")
+		} catch (error) {
+			outputChannel.appendLine(`[ClearPromptCache] Error: ${error instanceof Error ? error.message : String(error)}`)
+			vscode.window.showErrorMessage(`Failed to clear prompt cache: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
+	forceRefreshPrompt: async (mode?: string) => {
+		try {
+			const { forceRefreshPrompt } = await import("../services/prompt-api-service")
+			const language = formatLanguage(vscode.env.language)
+			
+			// Если mode не указан, спрашиваем пользователя
+			if (!mode) {
+				mode = await vscode.window.showQuickPick(
+					["ask", "code", "architect", "debug", "designer", "helper", "pm"],
+					{ placeHolder: "Select mode to refresh" }
+				)
+			}
+			
+			if (!mode) {
+				return // User cancelled
+			}
+			
+			const result = await forceRefreshPrompt(context, mode, language)
+			
+			if (result) {
+				vscode.window.showInformationMessage(`Prompt for mode "${mode}" refreshed successfully.`)
+			} else {
+				vscode.window.showWarningMessage(`Failed to refresh prompt for mode "${mode}".`)
+			}
+		} catch (error) {
+			outputChannel.appendLine(`[ForceRefreshPrompt] Error: ${error instanceof Error ? error.message : String(error)}`)
+			vscode.window.showErrorMessage(`Failed to refresh prompt: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
 })
 
 export const openClineInNewTab = async ({ context, outputChannel }: Omit<RegisterCommandOptions, "provider">) => {

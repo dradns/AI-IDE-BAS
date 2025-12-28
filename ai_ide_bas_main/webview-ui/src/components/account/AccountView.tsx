@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
+import { MessageSquare } from "lucide-react"
 
 import type { CloudUserInfo } from "@roo-code/types"
 import { TelemetryEventName } from "@roo-code/types"
@@ -8,6 +9,7 @@ import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { vscode } from "@src/utils/vscode"
 import { telemetryClient } from "@src/utils/TelemetryClient"
 import { Avatar } from "@src/components/common/Avatar"
+import { FeedbackForm } from "./FeedbackForm"
 
 type AccountViewProps = {
 	userInfo: CloudUserInfo | null
@@ -22,6 +24,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 	const [isAuthorized, setIsAuthorized] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
 	const [me, setMe] = useState<any | null>(null)
+	const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState<boolean>(false)
 
 	// Normalize common field names from different backends
 	const name = me?.name ?? (me as any)?.full_name ?? (me as any)?.fullName ?? (me as any)?.user?.name ?? userInfo?.name
@@ -155,6 +158,14 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						</div>
 					)}
 					<div className="flex flex-col gap-2 mt-4">
+						<VSCodeButton
+							appearance="secondary"
+							onClick={() => setIsFeedbackDialogOpen(true)}
+							className="w-full flex items-center justify-center gap-2"
+						>
+							<MessageSquare className="w-4 h-4" />
+							{t("account:sendFeedback")}
+						</VSCodeButton>
 						<VSCodeButton appearance="secondary" onClick={handleLogoutClick} className="w-full">
 							{t("account:logOut")}
 						</VSCodeButton>
@@ -189,9 +200,24 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 						<VSCodeButton appearance="primary" onClick={handleConnectClick} className="w-full">
 							{t("account:connect")}
 						</VSCodeButton>
+						{/* Show feedback button even for non-authenticated users */}
+						<VSCodeButton
+							appearance="secondary"
+							onClick={() => setIsFeedbackDialogOpen(true)}
+							className="w-full flex items-center justify-center gap-2"
+						>
+							<MessageSquare className="w-4 h-4" />
+							{t("account:sendFeedback")}
+						</VSCodeButton>
 					</div>
 				</>
 			)}
+			<FeedbackForm
+				isAuthorized={isAuthorized}
+				isOpen={isFeedbackDialogOpen}
+				onOpenChange={setIsFeedbackDialogOpen}
+				source="manual"
+			/>
 		</div>
 	)
 }

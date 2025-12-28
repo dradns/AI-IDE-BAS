@@ -15,6 +15,12 @@ import { logger } from "../../utils/logging"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { ensureSettingsDirectoryExists } from "../../utils/globalContext"
 import { t } from "../../i18n"
+import { AIIDEBAS_PROMPTS_API_BASE_URL } from "../../shared/constants"
+import { modeToRole } from "../../services/prompt-api-service"
+import { addCustomInstructions } from "../prompts/sections/custom-instructions"
+import { loadBuiltInModeRules } from "../../services/builtin-rules"
+import { formatLanguage } from "../../shared/language"
+import { getAllModes } from "../../shared/modes"
 
 const ROOMODES_FILENAME = ".roomodes"
 
@@ -26,6 +32,7 @@ interface RuleFile {
 
 interface ExportedModeConfig extends ModeConfig {
 	rulesFiles?: RuleFile[]
+	exportedCustomInstructions?: string // "USER'S CUSTOM INSTRUCTIONS" section with all changes from admin panel
 }
 
 interface ImportData {
@@ -702,18 +709,112 @@ export class CustomModesManager {
 	}
 
 	/**
+	 * Generates only the "USER'S CUSTOM INSTRUCTIONS" section for export
+	 * This includes all changes from admin panel (customModePrompts) and rules
+	 */
+	private async generateCustomInstructionsSection(
+		slug: string,
+		cwd: string,
+		customPrompts?: PromptComponent,
+		globalCustomInstructions?: string,
+		language?: string,
+		apiCustomInstructions?: string,
+		apiArtifactsInstructions?: string,
+		apiPromptLoaded?: boolean,
+		context?: vscode.ExtensionContext
+	): Promise<string> {
+		try {
+			// Объединяем apiCustomInstructions с изменениями из админки
+			const modeCustomInstructionsFromAdmin = customPrompts?.customInstructions || ""
+			const combinedModeCustomInstructions = modeCustomInstructionsFromAdmin
+				? (apiCustomInstructions ? `${apiCustomInstructions}\n\n${modeCustomInstructionsFromAdmin}` : modeCustomInstructionsFromAdmin)
+				: (apiCustomInstructions || "")
+
+			// Загружаем встроенные правила для fallback (если нужно)
+			const loadBuiltInModeRulesFn = context 
+				? (mode: string) => loadBuiltInModeRules(context, mode)
+				: undefined
+
+			// Генерируем секцию с учетом всех изменений
+			// ВАЖНО: При экспорте НЕ включаем mode-specific rules files, потому что они уже экспортируются в rulesFiles
+			// Это предотвращает дублирование контента в exportedCustomInstructions и rulesFiles
+			const hasApiData = apiPromptLoaded || !!(apiCustomInstructions || apiArtifactsInstructions)
+			const customInstructions = await addCustomInstructions(
+				combinedModeCustomInstructions,
+				globalCustomInstructions || "",
+				cwd,
+				slug,
+				{
+					language: language ? formatLanguage(language) : undefined,
+					settings: {
+						useAgentRules: true, // Включаем AGENTS.md по умолчанию
+					},
+					loadBuiltInModeRules: loadBuiltInModeRulesFn,
+					artifactsInstructions: apiArtifactsInstructions || "",
+					useApiDataOnly: hasApiData, // Если есть ЛЮБЫЕ данные из API, не используем правила из .roo
+					skipModeRulesFiles: true, // Не загружаем rules-{mode}/ файлы - они уже в rulesFiles при экспорте
+				}
+			)
+
+			return customInstructions
+		} catch (error) {
+			logger.warn(`[CustomModesManager] Failed to generate custom instructions section: ${error instanceof Error ? error.message : String(error)}`)
+			return ""
+		}
+	}
+
+	/**
 	 * Exports a mode configuration with its associated rules files into a shareable YAML format
 	 * @param slug - The mode identifier to export
 	 * @param customPrompts - Optional custom prompts to merge into the export
+	 * @param provider - Optional provider for generating custom instructions section
 	 * @returns Success status with YAML content or error message
 	 */
-	public async exportModeWithRules(slug: string, customPrompts?: PromptComponent): Promise<ExportResult> {
+	public async exportModeWithRules(
+		slug: string, 
+		customPrompts?: PromptComponent,
+		provider?: any
+	): Promise<ExportResult> {
 		try {
+			// Try to load from API first (for API-provided modes)
+			// This ensures we get the latest published prompt from the API
+			let modeFromApi: ModeConfig | null = null
+			try {
+				const role = modeToRole(slug)
+				const apiBaseUrl = AIIDEBAS_PROMPTS_API_BASE_URL
+				const exportUrl = `${apiBaseUrl}/api/v1/prompts/export/${role}`
+				
+				const response = await fetch(exportUrl, {
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					signal: AbortSignal.timeout(5000),
+				})
+
+				if (response.ok) {
+					const apiData = await response.json()
+					// API returns mode configuration in export format
+					if (apiData && apiData.slug === slug) {
+						modeFromApi = apiData as ModeConfig
+						logger.info(`[CustomModesManager] Loaded mode ${slug} from API export endpoint`)
+					}
+				}
+			} catch (error) {
+				// API export endpoint might not be available or mode might not exist in API
+				// Continue with local data
+				logger.debug(`[CustomModesManager] Could not load mode ${slug} from API: ${error instanceof Error ? error.message : String(error)}`)
+			}
+
 			// Import modes from shared to check built-in modes
 			const { modes: builtInModes } = await import("../../shared/modes")
 
-			// Get all current modes
-			const allModes = await this.getCustomModes()
+			// Get all current modes (including API roles)
+			// ⚠️ ВАЖНО: Используем getAllModes() вместо getCustomModes() для включения ролей из API
+			const customModes = await this.getCustomModes()
+			const allModes = provider?.context
+				? await getAllModes(customModes, provider.context, undefined, formatLanguage(vscode.env.language))
+				: customModes
 			let mode = allModes.find((m) => m.slug === slug)
 
 			// If mode not found in custom modes, check if it's a built-in mode that has been customized
@@ -743,20 +844,31 @@ export class CustomModesManager {
 					if (builtInMode) {
 						// Use the built-in mode as the base
 						mode = { ...builtInMode }
+					} else if (modeFromApi) {
+						// Use mode from API if available
+						mode = modeFromApi
 					} else {
 						return { success: false, error: "Mode not found" }
 					}
 				}
 			}
 
+			// If mode was loaded from API, prioritize API data
+			if (modeFromApi && mode) {
+				// Merge API data with local mode (API takes precedence)
+				mode = { ...mode, ...modeFromApi }
+				logger.info(`[CustomModesManager] Using API data for mode ${slug} in export`)
+			}
+
 			// Determine the base directory based on mode source
+			// API roles don't have a source property, so we default to workspace
 			const isGlobalMode = mode.source === "global"
 			let baseDir: string
 			if (isGlobalMode) {
 				// For global modes, use the global .roo directory
 				baseDir = getGlobalRooDirectory()
 			} else {
-				// For project modes, use the workspace directory
+				// For project modes or API roles (which don't have source), use the workspace directory
 				const workspacePath = getWorkspacePath()
 				if (!workspacePath) {
 					return { success: false, error: "No workspace found" }
@@ -764,56 +876,271 @@ export class CustomModesManager {
 				baseDir = workspacePath
 			}
 
-			// Check for .roo/rules-{slug}/ directory (or rules-{slug}/ for global)
-			const modeRulesDir = isGlobalMode
-				? path.join(baseDir, `rules-${slug}`)
-				: path.join(baseDir, ".roo", `rules-${slug}`)
-
+			// ВАЖНО: Файлы в глобальной папке .roo создаются в структуре ~/.roo/{lang}/rules-{slug}/
+			// Нужно искать файлы в правильной структуре с учетом языка
+			// Сначала пробуем найти файлы в структуре с языковой папкой, затем в старой структуре (для обратной совместимости)
 			let rulesFiles: RuleFile[] = []
-			try {
-				const stats = await fs.stat(modeRulesDir)
-				if (stats.isDirectory()) {
-					// Extract content specific to this mode by looking for the mode-specific rules
-					const entries = await fs.readdir(modeRulesDir, { withFileTypes: true })
+			
+			// Получаем текущий язык из провайдера
+			let currentLang = "ru" // По умолчанию русский
+			if (provider) {
+				try {
+					const state = await provider.getState()
+					currentLang = state.language || "ru"
+				} catch (error) {
+					// Используем значение по умолчанию
+				}
+			}
+			
+			// Форматируем язык используя импортированную функцию
+			const normalizedLang = formatLanguage(currentLang)
+			
+			// Список путей для проверки (сначала новая структура с языком, затем старая для обратной совместимости)
+			const pathsToCheck: string[] = []
+			
+			if (isGlobalMode) {
+				// Для глобальных режимов: ~/.roo/{lang}/rules-{slug}/ (новая структура)
+				pathsToCheck.push(path.join(baseDir, normalizedLang, `rules-${slug}`))
+				// Старая структура для обратной совместимости: ~/.roo/rules-{slug}/
+				pathsToCheck.push(path.join(baseDir, `rules-${slug}`))
+			} else {
+				// Для проектных режимов: {workspace}/.roo/{lang}/rules-{slug}/ (новая структура)
+				pathsToCheck.push(path.join(baseDir, ".roo", normalizedLang, `rules-${slug}`))
+				// Старая структура для обратной совместимости: {workspace}/.roo/rules-{slug}/
+				pathsToCheck.push(path.join(baseDir, ".roo", `rules-${slug}`))
+			}
+			
+			// Ищем файлы в каждой из возможных директорий
+			for (const modeRulesDir of pathsToCheck) {
+				try {
+					const stats = await fs.stat(modeRulesDir)
+					if (stats.isDirectory()) {
+						// Extract content specific to this mode by looking for the mode-specific rules
+						const entries = await fs.readdir(modeRulesDir, { withFileTypes: true })
 
-					for (const entry of entries) {
-						if (entry.isFile()) {
-							// Use path.join with modeRulesDir and entry.name for compatibility
-							const filePath = path.join(modeRulesDir, entry.name)
-							const content = await fs.readFile(filePath, "utf-8")
-							if (content.trim()) {
-								// Calculate relative path from within the rules directory
-								// This excludes the rules-{slug} folder from the path
-								const relativePath = path.relative(modeRulesDir, filePath)
-								// Normalize path to use forward slashes for cross-platform compatibility
-								const normalizedRelativePath = relativePath.replace(/\\/g, "/")
-								rulesFiles.push({ relativePath: normalizedRelativePath, content: content.trim() })
+						for (const entry of entries) {
+							if (entry.isFile()) {
+								// Use path.join with modeRulesDir and entry.name for compatibility
+								const filePath = path.join(modeRulesDir, entry.name)
+								const content = await fs.readFile(filePath, "utf-8")
+								if (content.trim()) {
+									// Calculate relative path from within the rules directory
+									// This excludes the rules-{slug} folder from the path
+									const relativePath = path.relative(modeRulesDir, filePath)
+									// Normalize path to use forward slashes for cross-platform compatibility
+									const normalizedRelativePath = relativePath.replace(/\\/g, "/")
+									
+									// Дедупликация: проверяем, нет ли уже файла с таким же именем
+									const existingFile = rulesFiles.find(f => f.relativePath === normalizedRelativePath)
+									if (!existingFile) {
+										rulesFiles.push({ relativePath: normalizedRelativePath, content: content.trim() })
+									}
+								}
+							}
+						}
+						
+						// Если нашли файлы в новой структуре, прекращаем поиск (приоритет новой структуре)
+						if (rulesFiles.length > 0) {
+							break
+						}
+					}
+				} catch (error) {
+					// Directory doesn't exist, continue to next path
+					continue
+				}
+			}
+
+			// Determine if this is a new role from API (has API-specific fields)
+			const isNewRoleFromApi = !!(mode as any).id || !!(mode as any).artifact_type || !!(mode as any).template
+			
+			// ВАЖНО: Для API-ролей файлы всегда создаются в глобальной папке ~/.roo/{lang}/rules-{slug}/
+			// даже если режим не помечен как global. Нужно искать файлы в глобальной папке для API-ролей.
+			if (isNewRoleFromApi && !isGlobalMode) {
+				// Для API-ролей ищем файлы в глобальной папке
+				const globalBaseDir = getGlobalRooDirectory()
+				const globalPathsToCheck: string[] = [
+					path.join(globalBaseDir, normalizedLang, `rules-${slug}`),
+					path.join(globalBaseDir, `rules-${slug}`)
+				]
+				
+				// Ищем файлы в глобальной папке для API-ролей
+				for (const modeRulesDir of globalPathsToCheck) {
+					try {
+						const stats = await fs.stat(modeRulesDir)
+						if (stats.isDirectory()) {
+							const entries = await fs.readdir(modeRulesDir, { withFileTypes: true })
+							
+							for (const entry of entries) {
+								if (entry.isFile()) {
+									const filePath = path.join(modeRulesDir, entry.name)
+									const content = await fs.readFile(filePath, "utf-8")
+									if (content.trim()) {
+										const relativePath = path.relative(modeRulesDir, filePath)
+										const normalizedRelativePath = relativePath.replace(/\\/g, "/")
+										
+										// Дедупликация: проверяем, нет ли уже файла с таким же именем
+										const existingFile = rulesFiles.find(f => f.relativePath === normalizedRelativePath)
+										if (!existingFile) {
+											rulesFiles.push({ relativePath: normalizedRelativePath, content: content.trim() })
+										}
+									}
+								}
+							}
+							
+							// Если нашли файлы в новой структуре, прекращаем поиск
+							if (rulesFiles.length > 0) {
+								break
+							}
+						}
+					} catch (error) {
+						// Directory doesn't exist, continue to next path
+						continue
+					}
+				}
+			}
+			
+			// Get current language for filtering multilingual fields
+			let currentLanguage: string | undefined
+			if (provider) {
+				try {
+					const state = await provider.getState()
+					currentLanguage = state.language
+				} catch (error) {
+					// Continue without language
+				}
+			}
+			
+			// Import pickTextFromMultilang for extracting current language from multilingual fields
+			const { pickTextFromMultilang } = await import("../../shared/modes")
+			
+			// Create an export mode with rules files preserved
+			let exportMode: ExportedModeConfig
+			
+			if (isNewRoleFromApi) {
+				// For new roles from API, create minimal export with only needed fields
+				// Extract description for current language only
+				const descriptionValue = (mode as any).description
+				const extractedDescription = descriptionValue 
+					? (typeof descriptionValue === "string" 
+						? descriptionValue 
+						: pickTextFromMultilang(descriptionValue, currentLanguage))
+					: undefined
+				
+				// Create minimal export object with only required fields for new roles from API
+				// Only include: id, name, description (current language only), artifact_type, target_roles, tags, source
+				exportMode = {
+					id: (mode as any).id,
+					name: mode.name,
+					description: extractedDescription ? { [currentLanguage || "en"]: extractedDescription } : undefined,
+					artifact_type: (mode as any).artifact_type,
+					target_roles: (mode as any).target_roles || [],
+					tags: (mode as any).tags || [],
+					source: "project" as const,
+				} as any as ExportedModeConfig
+			} else {
+				// For built-in or custom modes, use standard export
+				exportMode = {
+					...mode,
+					// Remove source property for export
+					source: "project" as const,
+				}
+				
+				// Merge custom prompts if provided
+				if (customPrompts) {
+					if (customPrompts.roleDefinition) exportMode.roleDefinition = customPrompts.roleDefinition
+					// For description, extract current language if it's multilingual
+					if (customPrompts.description) {
+						if (typeof customPrompts.description === "string") {
+							exportMode.description = customPrompts.description
+						} else {
+							// Extract only current language
+							const extracted = pickTextFromMultilang(customPrompts.description, currentLanguage)
+							if (extracted) {
+								exportMode.description = extracted
 							}
 						}
 					}
+					if (customPrompts.whenToUse) exportMode.whenToUse = customPrompts.whenToUse
+					if (customPrompts.customInstructions) exportMode.customInstructions = customPrompts.customInstructions
 				}
-			} catch (error) {
-				// Directory doesn't exist, which is fine - mode might not have rules
-			}
-
-			// Create an export mode with rules files preserved
-			const exportMode: ExportedModeConfig = {
-				...mode,
-				// Remove source property for export
-				source: "project" as const,
-			}
-
-			// Merge custom prompts if provided
-			if (customPrompts) {
-				if (customPrompts.roleDefinition) exportMode.roleDefinition = customPrompts.roleDefinition
-				if (customPrompts.description) exportMode.description = customPrompts.description
-				if (customPrompts.whenToUse) exportMode.whenToUse = customPrompts.whenToUse
-				if (customPrompts.customInstructions) exportMode.customInstructions = customPrompts.customInstructions
 			}
 
 			// Add rules files if any exist
 			if (rulesFiles.length > 0) {
 				exportMode.rulesFiles = rulesFiles
+			}
+
+			// Generate "USER'S CUSTOM INSTRUCTIONS" section with all changes from admin panel
+			// ВАЖНО: Если уже есть rulesFiles, НЕ загружаем данные из API для exportedCustomInstructions,
+			// потому что rulesFiles УЖЕ содержат промпты из API (они были созданы при выгрузке)
+			// Это предотвращает дублирование контента
+			let exportedCustomInstructions: string | undefined
+			if (provider) {
+				try {
+					// Получаем состояние провайдера для доступа к globalCustomInstructions и другим настройкам
+					const state = await provider.getState()
+					const cwd = provider.cwd || getWorkspacePath() || ""
+					
+					// Если есть rulesFiles, пропускаем загрузку из API — данные уже в rulesFiles
+					let apiCustomInstructions = ""
+					let apiArtifactsInstructions = ""
+					let apiPromptLoaded = false
+					
+					// Только загружаем из API если НЕТ rulesFiles
+					if (rulesFiles.length === 0) {
+						try {
+							const { loadPromptFromApiSeparated } = await import("../../services/prompt-api-service")
+							const apiPromptData = await loadPromptFromApiSeparated(
+								slug, 
+								state.language, 
+								undefined, 
+								provider.context
+							)
+							if (apiPromptData) {
+								if (apiPromptData.customInstructions && apiPromptData.customInstructions.trim()) {
+									apiCustomInstructions = apiPromptData.customInstructions.trim()
+								}
+								if (apiPromptData.artifactsInstructions && apiPromptData.artifactsInstructions.trim()) {
+									apiArtifactsInstructions = apiPromptData.artifactsInstructions.trim()
+								}
+								if (apiCustomInstructions || apiArtifactsInstructions) {
+									apiPromptLoaded = true
+									logger.info(`[CustomModesManager] Loaded API data for export: customInstructions=${apiCustomInstructions.length}, artifactsInstructions=${apiArtifactsInstructions.length}`)
+								}
+							}
+						} catch (error) {
+							// API недоступен, продолжаем без API данных
+							logger.debug(`[CustomModesManager] Could not load API data for export: ${error instanceof Error ? error.message : String(error)}`)
+						}
+					} else {
+						logger.info(`[CustomModesManager] Skipping API data loading for export - rulesFiles already contain ${rulesFiles.length} files`)
+					}
+					
+					// Генерируем секцию "USER'S CUSTOM INSTRUCTIONS" с учетом всех изменений
+					exportedCustomInstructions = await this.generateCustomInstructionsSection(
+						slug,
+						cwd,
+						customPrompts,
+						state.customInstructions, // globalCustomInstructions
+						state.language,
+						apiCustomInstructions,
+						apiArtifactsInstructions,
+						apiPromptLoaded,
+						provider.context
+					)
+					
+					if (exportedCustomInstructions) {
+						logger.info(`[CustomModesManager] Generated custom instructions section for export, length=${exportedCustomInstructions.length}`)
+					}
+				} catch (error) {
+					logger.warn(`[CustomModesManager] Failed to generate custom instructions section: ${error instanceof Error ? error.message : String(error)}`)
+					// Continue without custom instructions section
+				}
+			}
+
+			// Add exported custom instructions section if available
+			if (exportedCustomInstructions) {
+				exportMode.exportedCustomInstructions = exportedCustomInstructions
 			}
 
 			// Generate YAML

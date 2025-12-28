@@ -118,7 +118,7 @@
 				"icon": "$(add)"
 			},
 			{
-				"command": "ai-ide-baspromptsButtonClicked",
+				"command": "ai-ide-bas.promptsButtonClicked",
 				"title": "%command.prompts.title%",
 				"icon": "$(organization)"
 			},
@@ -460,6 +460,11 @@
 					"default": true,
 					"description": "%settings.useAgentRules.description%"
 				},
+				"roo-cline.useRooRulesOnly": {
+					"type": "boolean",
+					"default": false,
+					"description": "If enabled, system prompt with all sections + rules from .roo directories will be used, WITHOUT USER'S CUSTOM INSTRUCTIONS section. If disabled (default), system prompt with all sections + USER'S CUSTOM INSTRUCTIONS will be used WITHOUT .roo rules."
+				},
 				"ai-ide-bas.trustedDomains": {
 					"type": "array",
 					"items": {
@@ -484,9 +489,9 @@
 		"test": "vitest run",
 		"format": "prettier --write .",
 		"bundle": "node esbuild.mjs",
-		"vscode:prepublish": "pnpm bundle --production",
-		"vsix": "mkdirp ../bin && vsce package --no-dependencies --out ../bin",
-		"publish:marketplace": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
+		"vscode:prepublish": "pnpm bundle --production && rimraf dist/prompts && node scripts/copy-ws-to-dist.mjs",
+		"vsix": "mkdirp ../bin && rimraf dist/prompts && vsce package --no-dependencies --out ../bin && node scripts/add-ws-to-vsix.mjs",
+		"publish:marketplace": "vsce publish && ovsx publish",
 		"watch:bundle": "pnpm bundle --watch",
 		"watch:tsc": "cd .. && tsc --noEmit --watch --project src/tsconfig.json",
 		"clean": "rimraf README.md CHANGELOG.md LICENSE dist mock .turbo"
@@ -564,9 +569,13 @@
 		"vscode-material-icons": "^0.1.1",
 		"web-tree-sitter": "^0.25.6",
 		"workerpool": "^9.2.0",
+		"ws": "^8.18.0",
 		"yaml": "^2.8.0",
 		"zod": "^3.25.61"
 	},
+	"bundledDependencies": [
+		"ws"
+	],
 	"devDependencies": {
 		"@roo-code/build": "workspace:^",
 		"@roo-code/config-eslint": "workspace:^",
@@ -587,6 +596,7 @@
 		"@types/tmp": "^0.2.6",
 		"@types/turndown": "^5.0.5",
 		"@types/vscode": "^1.84.0",
+		"@types/ws": "^8.5.13",
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "3.3.2",
 		"esbuild": "^0.25.0",

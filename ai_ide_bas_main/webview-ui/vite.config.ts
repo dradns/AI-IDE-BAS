@@ -50,6 +50,28 @@ const persistPortPlugin = (): Plugin => ({
 	},
 })
 
+// Плагин для замены импортов vscode на пустой объект в webview
+// Это предотвращает ошибки при попытке импортировать vscode в браузерном контексте
+const replaceVscodeImportsPlugin = (): Plugin => ({
+	name: "replace-vscode-imports",
+	enforce: "pre",
+	resolveId(id) {
+		if (id === "vscode") {
+			return "\0vscode-virtual" // Виртуальный модуль
+		}
+		return null
+	},
+	load(id) {
+		if (id === "\0vscode-virtual") {
+			// Возвращаем пустой объект для runtime
+			// Типы TypeScript не нужны здесь, так как используется import type в VSCodeLM.tsx
+			// TypeScript обработает типы на этапе компиляции, а в runtime это не будет использоваться
+			return `export default {};`
+		}
+		return null
+	},
+})
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
 	let outDir = "../src/webview-ui/build"
@@ -80,7 +102,14 @@ export default defineConfig(({ mode }) => {
 		define["process.env.PKG_OUTPUT_CHANNEL"] = JSON.stringify("AI-IDE-BAS-Nightly")
 	}
 
-	const plugins: PluginOption[] = [react(), tailwindcss(), persistPortPlugin(), wasmPlugin(), sourcemapPlugin()]
+	const plugins: PluginOption[] = [
+		react(),
+		tailwindcss(),
+		persistPortPlugin(),
+		wasmPlugin(),
+		replaceVscodeImportsPlugin(),
+		sourcemapPlugin(),
+	]
 
 	return {
 		plugins,
@@ -100,6 +129,7 @@ export default defineConfig(({ mode }) => {
 			// Ensure source maps are properly included in the build
 			minify: mode === "production" ? "esbuild" : false,
 			rollupOptions: {
+				// external: ["vscode"] удалено - плагин replaceVscodeImportsPlugin обрабатывает импорты vscode
 				output: {
 					entryFileNames: `assets/[name].js`,
 					chunkFileNames: (chunkInfo) => {

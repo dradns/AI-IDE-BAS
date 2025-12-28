@@ -50,11 +50,27 @@ import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { getCommand } from "../../utils/commands"
 import { AiIdeBasFilesClient } from "../../services/files/client"
+import { FeedbackClient } from "../../services/feedback/client"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
 import { setPendingTodoList } from "../tools/updateTodoListTool"
+import { checkAndRefreshPromptForMode, checkAndRefreshPromptsIfNeeded } from "../../services/prompt-refresh-service"
+
+/**
+ * Вспомогательная функция для проверки обновлений промпта при действиях пользователя
+ * Вызывается в фоне, не блокирует UI
+ */
+const triggerPromptRefresh = (provider: ClineProvider) => {
+	const currentMode = provider.state?.mode
+	const currentLanguage = provider.state?.language
+	if (currentMode) {
+		checkAndRefreshPromptForMode(provider.context, currentMode, currentLanguage).catch(err => {
+			console.debug(`[triggerPromptRefresh] Prompt refresh failed for mode=${currentMode}:`, err)
+		})
+	}
+}
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -285,12 +301,18 @@ export const webviewMessageHandler = async (
 			provider.isViewLaunched = true
 			break
 		case "newTask":
+			// Проверяем обновления промпта при каждом действии пользователя (в фоне)
+			triggerPromptRefresh(provider)
+			
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new
 			// task. This essentially creates a fresh slate for the new task.
 			await provider.initClineWithTask(message.text, message.images)
 			break
 		case "customInstructions":
+			// Проверяем обновления промпта при изменении кастомных инструкций (в фоне)
+			triggerPromptRefresh(provider)
+			
 			await provider.updateCustomInstructions(message.text)
 			break
 		case "alwaysAllowReadOnly":
@@ -342,6 +364,9 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		case "askResponse":
+			// Проверяем обновления промпта при каждом действии пользователя (в фоне)
+			triggerPromptRefresh(provider)
+			
 			provider.getCurrentCline()?.handleWebviewAskResponse(message.askResponse!, message.text, message.images)
 			break
 		case "autoCondenseContext":
@@ -691,6 +716,41 @@ export const webviewMessageHandler = async (
 				})
 			}
 			break
+		case "requestApiRoles":
+			try {
+				const { getAllRolesFromApi, loadPromptFromApiSeparated, roleToMode } = await import("../../services/prompt-api-service")
+				const { formatLanguage } = await import("../../shared/language")
+				// Используем язык из сообщения, если передан, иначе из VS Code настроек
+				const language = message.language 
+					? formatLanguage(message.language) 
+					: formatLanguage(vscode.env.language)
+				console.log(`[webviewMessageHandler] requestApiRoles: using language="${language}" (from message: ${message.language || "none"}, from vscode: ${vscode.env.language})`)
+				const allApiRoles = await getAllRolesFromApi(undefined, language)
+				
+				// ⚠️ ВАЖНО: Endpoint /modes уже возвращает ТОЛЬКО опубликованные роли
+				// Дополнительная фильтрация через loadPromptFromApiSeparated НЕ нужна и вызывала проблемы
+				// (роли helper, pm, code, simple отфильтровывались из-за проблем с кэшем или API)
+				// 
+				// Если нужна фильтрация по языку в будущем, бэкенд /modes должен её делать
+				const filteredRoles = allApiRoles
+				
+				console.log(`[webviewMessageHandler] Using all ${filteredRoles.length} roles from /modes API (no additional filtering)`)
+				
+				// Cache the filtered roles for instant initial load on next webview launch
+				await updateGlobalState("cachedApiRoles", filteredRoles)
+				
+				provider.postMessageToWebview({
+					type: "apiRoles",
+					apiRoles: filteredRoles,
+				})
+			} catch (error) {
+				console.error("Failed to fetch API roles:", error)
+				provider.postMessageToWebview({
+					type: "apiRoles",
+					apiRoles: [],
+				})
+			}
+			break
 		case "openImage":
 			openImage(message.text!, { values: message.values })
 			break
@@ -813,6 +873,151 @@ export const webviewMessageHandler = async (
 			if (token) {
 				await provider.context.secrets.store("aiidebas.token", token)
 				await provider.postMessageToWebview({ type: "files:authChanged", isAuthorized: true })
+			}
+			break
+		}
+		case "feedback:dismissed": {
+			// User closed the feedback dialog without submitting
+			await provider.markFeedbackDismissed()
+			break
+		}
+		case "feedback:submit": {
+			const client = new FeedbackClient(provider.context)
+			try {
+				if (!message.feedback) {
+					throw new Error("Feedback data is required")
+				}
+
+				const { rating, comment, session_id } = message.feedback
+
+				if (!rating || rating < 1 || rating > 5) {
+					throw new Error("Rating must be between 1 and 5")
+				}
+
+				// Validate comment length (max 1000 chars)
+				if (comment && comment.length > 1000) {
+					throw new Error("Comment must be 1000 characters or less")
+				}
+
+				// Check if user is authorized
+				const isAuthorized = await client.isAuthorized()
+				
+				// Try to submit feedback
+				// For unauthorized users, try anonymous submission first
+				// For authorized users, try with token first, fallback to anonymous if 401
+				let feedbackSubmitted = false
+				
+				if (!isAuthorized) {
+					// For unauthorized users, try anonymous submission directly
+					try {
+						await client.createFeedbackAnonymous({
+							rating,
+							comment: comment || null,
+							session_id: session_id || null,
+						})
+						feedbackSubmitted = true
+					} catch (anonymousError) {
+						// If anonymous fails, show error
+						const anonymousErr = anonymousError as any
+						const anonymousDetail = anonymousErr?.response?.data?.detail || anonymousErr?.message || String(anonymousErr)
+						
+						await provider.postMessageToWebview({
+							type: "feedback:error",
+							error: anonymousDetail,
+							values: { status: anonymousErr?.response?.status },
+							feedback: {
+								success: false,
+								message: anonymousDetail,
+							},
+						})
+						break
+					}
+				} else {
+					// For authorized users, try with token first
+					try {
+						await client.createFeedback({
+							rating,
+							comment: comment || null,
+							session_id: session_id || null,
+						})
+						feedbackSubmitted = true
+					} catch (authError) {
+						const authErr = authError as any
+						const status = authErr?.response?.status
+						
+						// If 401, try anonymous submission as fallback
+						if (status === 401) {
+							try {
+								await client.createFeedbackAnonymous({
+									rating,
+									comment: comment || null,
+									session_id: session_id || null,
+								})
+								feedbackSubmitted = true
+							} catch (anonymousError) {
+								// If anonymous also fails, show error
+								const anonymousErr = anonymousError as any
+								const anonymousDetail = anonymousErr?.response?.data?.detail || anonymousErr?.message || String(anonymousErr)
+								
+								await provider.postMessageToWebview({
+									type: "feedback:error",
+									error: anonymousDetail,
+									values: { status: anonymousErr?.response?.status },
+									feedback: {
+										success: false,
+										message: anonymousDetail,
+									},
+								})
+								break
+							}
+						} else {
+							// For other errors, show error
+							const detail = authErr?.response?.data?.detail || authErr?.message || String(authErr)
+							await provider.postMessageToWebview({
+								type: "feedback:error",
+								error: detail,
+								values: { status },
+								feedback: {
+									success: false,
+									message: detail,
+								},
+							})
+							break
+						}
+					}
+				}
+
+				// If feedback was successfully submitted
+				if (feedbackSubmitted) {
+					// Only mark as submitted if feedback was sent from automatic dialog (task completion)
+					// Manual feedback from profile should not block automatic prompts
+					const source = message.feedback?.source || "automatic"
+					if (source === "automatic") {
+						await provider.markFeedbackSubmitted()
+					}
+
+					await provider.postMessageToWebview({
+						type: "feedback:result",
+						feedback: {
+							success: true,
+							message: t("common:info.feedback_thank_you"),
+						},
+					})
+				}
+			} catch (error) {
+				const anyErr = error as any
+				const detail = anyErr?.response?.data?.detail || anyErr?.message || String(anyErr)
+				const status = anyErr?.response?.status
+
+				await provider.postMessageToWebview({
+					type: "feedback:error",
+					error: detail,
+					values: { status },
+					feedback: {
+						success: false,
+						message: detail,
+					},
+				})
 			}
 			break
 		}
@@ -1261,9 +1466,18 @@ export const webviewMessageHandler = async (
 				Terminal.setCompressProgressBar(message.bool)
 			}
 			break
-		case "mode":
-			await provider.handleModeSwitch(message.text as Mode)
+		case "mode": {
+			const newMode = message.text as Mode
+			
+			// Проверяем обновления промпта для нового режима (в фоне)
+			// Используем прямой вызов, так как режим еще не переключен
+			checkAndRefreshPromptForMode(provider.context, newMode, provider.state?.language).catch(err => {
+				console.debug(`[mode switch] Prompt refresh failed for mode=${newMode}:`, err)
+			})
+			
+			await provider.handleModeSwitch(newMode)
 			break
+		}
 		case "updateSupportPrompt":
 			try {
 				if (!message?.values) {
@@ -1358,6 +1572,9 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		case "language":
+			// Проверяем обновления промпта при смене языка (в фоне)
+			triggerPromptRefresh(provider)
+			
 			changeLanguage(message.text ?? "en")
 			await updateGlobalState("language", message.text as Language)
 			await provider.postStateToWebview()
@@ -1480,8 +1697,21 @@ export const webviewMessageHandler = async (
 				}
 			}
 			break
+		case "checkPromptsUpdate": {
+			// Проверка обновлений промптов (вызывается из webview при открытии settings/modes)
+			const lang = provider.state?.language
+			checkAndRefreshPromptsIfNeeded(provider.context, lang).catch(err => {
+				console.debug(`[checkPromptsUpdate] Prompt refresh failed:`, err)
+			})
+			break
+		}
 		case "getSystemPrompt":
 			try {
+				// Проверяем обновления перед генерацией системного промпта
+				if (message.mode) {
+					await checkAndRefreshPromptForMode(provider.context, message.mode, provider.state?.language)
+				}
+				
 				const systemPrompt = await generateSystemPrompt(provider, message)
 
 				await provider.postMessageToWebview({
@@ -1507,6 +1737,63 @@ export const webviewMessageHandler = async (
 					`Error getting system prompt:  ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 				)
 				vscode.window.showErrorMessage(t("common:errors.get_system_prompt"))
+			}
+			break
+		case "saveSystemPromptForMode":
+			try {
+				const mode = message.mode || message.text
+				const systemPrompt = (message.values as any)?.systemPrompt || message.text || ""
+				
+				if (!mode) {
+					vscode.window.showErrorMessage(t("common:errors.invalid_mode") || "Invalid mode")
+					break
+				}
+				
+				if (!systemPrompt) {
+					vscode.window.showErrorMessage(t("common:errors.empty_system_prompt") || "System prompt cannot be empty")
+					break
+				}
+				
+				// Check if this is a new role from API (not a built-in mode)
+				const knownModes = ["code", "architect", "ask", "debug", "designer", "helper", "pm"]
+				const isBuiltInMode = knownModes.includes(mode as string)
+				
+				let filePath: string
+				const rooDir = path.join(provider.cwd, ".roo")
+				
+				// Ensure .roo directory exists
+				try {
+					await fs.mkdir(rooDir, { recursive: true })
+				} catch (err) {
+					// Directory might already exist, ignore error
+				}
+				
+				if (isBuiltInMode) {
+					// For built-in modes, use the standard system prompt file path
+					const { getSystemPromptFilePath } = await import("../prompts/sections/custom-system-prompt")
+					filePath = getSystemPromptFilePath(provider.cwd, mode as Mode)
+				} else {
+					// For new roles from API, save to .roo/rules-newmode/00_system_prompt.md
+					const newModeDir = path.join(rooDir, "rules-newmode")
+					// Ensure directories exist
+					await fs.mkdir(newModeDir, { recursive: true })
+					filePath = path.join(newModeDir, "00_system_prompt.md")
+				}
+				
+				// Write system prompt to file
+				await fs.writeFile(filePath, systemPrompt, "utf-8")
+				
+				provider.log(`System prompt saved for mode ${mode} to ${filePath}`)
+				await vscode.window.showInformationMessage(
+					t("common:info.system_prompt_saved") || `System prompt saved for ${isBuiltInMode ? `mode ${mode}` : "new roles"}`
+				)
+			} catch (error) {
+				provider.log(
+					`Error saving system prompt: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+				)
+				vscode.window.showErrorMessage(
+					t("common:errors.save_system_prompt") || "Failed to save system prompt"
+				)
 			}
 			break
 		case "searchCommits": {
@@ -1844,7 +2131,19 @@ export const webviewMessageHandler = async (
 				await provider.postStateToWebview()
 			}
 			break
+		case "exportAllRoleRules":
+			try {
+				await vscode.commands.executeCommand("ai-ide-bas.exportAllRoleRules")
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				provider.log(`Failed to export all role rules: ${errorMessage}`)
+				vscode.window.showErrorMessage(t("prompts:exportAllRoleRules.error", { error: errorMessage }))
+			}
+			break
 		case "exportMode":
+			// Проверяем обновления промпта при экспорте режима (в фоне)
+			triggerPromptRefresh(provider)
+			
 			if (message.slug) {
 				try {
 					// Get custom mode prompts to check if built-in mode has been customized
@@ -1852,7 +2151,8 @@ export const webviewMessageHandler = async (
 					const customPrompt = customModePrompts[message.slug]
 
 					// Export the mode with any customizations merged directly
-					const result = await provider.customModesManager.exportModeWithRules(message.slug, customPrompt)
+					// Pass provider to generate full custom instructions section with all changes
+					const result = await provider.customModesManager.exportModeWithRules(message.slug, customPrompt, provider)
 
 					if (result.success && result.yaml) {
 						// Get last used directory for export
@@ -1932,24 +2232,17 @@ export const webviewMessageHandler = async (
 				}
 			}
 			break
-		case "exportAllRoleRules":
-			try {
-				// Execute the exportAllRoleRules command via vscode commands
-				await vscode.commands.executeCommand("ai-ide-bas.exportAllRoleRules")
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : String(error)
-				provider.log(`Failed to export all role rules: ${errorMessage}`)
-				vscode.window.showErrorMessage(`Не удалось экспортировать правила ролей: ${errorMessage}`)
-			}
-			break
 		case "loadModeInfo":
+			// Проверяем обновления промпта при загрузке информации о режиме (в фоне)
+			triggerPromptRefresh(provider)
+			
 			try {
 				const { modeSlug } = message as any
 				if (!modeSlug) {
 					throw new Error("Mode slug is required")
 				}
 				const modeInfo = await vscode.commands.executeCommand("ai-ide-bas.loadModeInfo", modeSlug)
-				postMessageToWebview(provider, {
+				await provider.postMessageToWebview({
 					type: "loadModeInfoResult",
 					modeSlug,
 					modeInfo,
@@ -1957,7 +2250,7 @@ export const webviewMessageHandler = async (
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : String(error)
 				provider.log(`Failed to load mode info: ${errorMessage}`)
-				postMessageToWebview(provider, {
+				await provider.postMessageToWebview({
 					type: "loadModeInfoResult",
 					modeSlug: (message as any).modeSlug,
 					modeInfo: null,
@@ -1966,6 +2259,9 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "importMode":
+			// Проверяем обновления промпта при импорте режима (в фоне)
+			triggerPromptRefresh(provider)
+			
 			try {
 				// Get last used directory for import
 				const lastImportPath = getGlobalState("lastModeImportPath")
@@ -2497,6 +2793,12 @@ export const webviewMessageHandler = async (
 
 		case "switchTab": {
 			if (message.tab) {
+				// Проверяем обновления промпта при переключении вкладок (особенно modes/settings)
+				// Это гарантирует, что пользователь увидит актуальные промпты при открытии вкладок
+				if (message.tab === "modes" || message.tab === "settings") {
+					triggerPromptRefresh(provider)
+				}
+				
 				// Capture tab shown event for all switchTab messages (which are user-initiated)
 				if (TelemetryService.hasInstance()) {
 					TelemetryService.instance.captureTabShown(message.tab)

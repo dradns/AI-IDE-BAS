@@ -2,7 +2,7 @@ import type { ToolName, ModeConfig } from "@roo-code/types"
 
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS, DiffStrategy } from "../../../shared/tools"
 import { McpHub } from "../../../services/mcp/McpHub"
-import { Mode, getModeConfig, isToolAllowedForMode, getGroupName } from "../../../shared/modes"
+import { Mode, getModeConfig, getModeBySlug, defaultModeSlug, isToolAllowedForMode, getGroupName } from "../../../shared/modes"
 
 import { ToolArgs } from "./types"
 import { getExecuteCommandDescription } from "./execute-command"
@@ -63,7 +63,23 @@ export function getToolDescriptionsForMode(
     settings?: Record<string, any>,
     language?: string,
 ): string {
-	const config = getModeConfig(mode, customModes)
+	// customModes может содержать allModes (включая роли из API)
+	// Если режим не найден, пробуем найти его в переданном массиве напрямую
+	let config = getModeBySlug(mode, customModes)
+	if (!config && customModes) {
+		// Если не нашли через getModeBySlug, ищем напрямую в массиве (для ролей из API)
+		config = customModes.find(m => m.slug === mode)
+	}
+	if (!config) {
+		// Если все еще не нашли, используем getModeConfig, который выбросит ошибку или вернет дефолтный режим
+		try {
+			config = getModeConfig(mode, customModes)
+		} catch (error) {
+			// Если режим не найден, используем дефолтный режим
+			console.warn(`[getToolDescriptionsForMode] Mode ${mode} not found, using default mode`)
+			config = getModeConfig(defaultModeSlug, customModes)
+		}
+	}
     const args: ToolArgs = {
 		cwd,
 		supportsComputerUse,

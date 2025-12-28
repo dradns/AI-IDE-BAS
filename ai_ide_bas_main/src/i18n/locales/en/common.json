@@ -110,7 +110,8 @@
 		"image_copied_to_clipboard": "Image data URI copied to clipboard",
 		"image_saved": "Image saved to {{path}}",
 		"mode_exported": "Mode '{{mode}}' exported successfully",
-		"mode_imported": "Mode imported successfully"
+		"mode_imported": "Mode imported successfully",
+		"feedback_thank_you": "Thank you for your feedback!"
 	},
 	"answers": {
 		"yes": "Yes",

@@ -13,7 +13,7 @@ export interface Role {
  */
 export const roles: readonly Role[] = [
 	{
-		slug: "ba",
+		slug: "code",
 		name: "📋 BA (Business Analyst)",
 		description:
 			"Responsible for generating requirements (User Story, Use Case, Activity Diagram, Acceptance Criteria).",
@@ -24,12 +24,12 @@ export const roles: readonly Role[] = [
 		description: "Generates architectural documents (currently: component diagram).",
 	},
 	{
-		slug: "sa",
+		slug: "ask",
 		name: "📝 SA (System Analyst)",
 		description: "Prepares system analysis documents.",
 	},
 	{
-		slug: "review",
+		slug: "debug",
 		name: "🔍 Review (Reviewer)",
 		description: "Reviews architecture, security, maintainability and senior-level system analysis documents.",
 	},

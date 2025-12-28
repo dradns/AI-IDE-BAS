@@ -115,7 +115,8 @@
 		"organization_share_link_copied": "组织分享链接已复制到剪贴板！",
 		"public_share_link_copied": "公开分享链接已复制到剪贴板！",
 		"mode_exported": "模式 '{{mode}}' 已成功导出",
-		"mode_imported": "模式已成功导入"
+		"mode_imported": "模式已成功导入",
+		"feedback_thank_you": "感谢您的反馈！"
 	},
 	"answers": {
 		"yes": "是",

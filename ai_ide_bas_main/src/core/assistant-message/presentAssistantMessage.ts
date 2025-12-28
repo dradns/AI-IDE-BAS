@@ -4,7 +4,7 @@ import { serializeError } from "serialize-error"
 import type { ToolName, ClineAsk, ToolProgressStatus } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 
-import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
+import { defaultModeSlug, getModeBySlug, getAllModes } from "../../shared/modes"
 import type { ToolParamName, ToolResponse } from "../../shared/tools"
 
 import { fetchInstructionsTool } from "../tools/fetchInstructionsTool"
@@ -352,13 +352,19 @@ export async function presentAssistantMessage(cline: Task) {
 			}
 
 			// Validate tool use before execution.
-			const { mode, customModes } = (await cline.providerRef.deref()?.getState()) ?? {}
+			// ⚠️ ВАЖНО: Используем allModes (включая роли из API) для проверки доступности инструментов
+			// customModes содержит только режимы из файлов, но не роли из API
+			const { mode, customModes, language } = (await cline.providerRef.deref()?.getState()) ?? {}
+			const provider = cline.providerRef.deref()
+			const allModes = provider?.context 
+				? await getAllModes(customModes, provider.context, undefined, language)
+				: (customModes ?? [])
 
 			try {
 				validateToolUse(
 					block.name as ToolName,
 					mode ?? defaultModeSlug,
-					customModes ?? [],
+					allModes, // Используем allModes вместо customModes, чтобы включить роли из API
 					{ apply_diff: cline.diffEnabled },
 					block.params,
 				)

@@ -10,5 +10,28 @@
 	"cloudBenefitHistory": "在线任务历史",
 	"cloudBenefitSharing": "共享和协作功能",
 	"cloudBenefitMetrics": "基于任务、Token 和成本的使用指标",
-	"visitCloudWebsite": "访问 AI IDE BAS Cloud"
+	"visitCloudWebsite": "访问 AI IDE BAS Cloud",
+	"sendFeedback": "发送反馈",
+	"feedback": {
+		"title": "发送反馈",
+		"description": "通过分享您使用扩展的经验，帮助我们改进。",
+		"rating": "评分",
+		"ratingRequired": "评分 *",
+		"comment": "评论",
+		"commentOptional": "评论（可选）",
+		"placeholder": "告诉我们更多关于您的体验...",
+		"submit": "提交反馈",
+		"submitting": "提交中...",
+		"cancel": "取消",
+		"close": "关闭",
+		"submittedTitle": "反馈已提交",
+		"submittedDescription": "感谢您的反馈！",
+		"submittedMessage": "您的反馈已成功提交，帮助我们改进扩展。",
+		"loginRequired": "请登录以提交反馈",
+		"selectRating": "请选择评分",
+		"submitFailed": "提交反馈失败",
+		"rateLimitExceeded": "请求频率超限。每 10 分钟最多 5 条反馈",
+		"rateStars": "评价 {{count}} 星",
+		"rateStars_plural": "评价 {{count}} 星"
+	}
 }

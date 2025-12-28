@@ -20,7 +20,7 @@ import { combineApiRequests } from "@roo/combineApiRequests"
 import { combineCommandSequences } from "@roo/combineCommandSequences"
 import { getApiMetrics } from "@roo/getApiMetrics"
 import { AudioType } from "@roo/WebviewMessage"
-import { getAllModes } from "@roo/modes"
+import { getAllModesSync } from "@roo/modes"
 import { ProfileValidator } from "@roo/ProfileValidator"
 
 import { vscode } from "@src/utils/vscode"
@@ -1671,7 +1671,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	// Function to handle mode switching
 	const switchToNextMode = useCallback(() => {
-		const allModes = getAllModes(customModes)
+		const allModes = getAllModesSync(customModes)
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const nextModeIndex = (currentModeIndex + 1) % allModes.length
 		// Update local state and notify extension to sync mode change
@@ -1680,7 +1680,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	// Function to handle switching to previous mode
 	const switchToPreviousMode = useCallback(() => {
-		const allModes = getAllModes(customModes)
+		const allModes = getAllModesSync(customModes)
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const previousModeIndex = (currentModeIndex - 1 + allModes.length) % allModes.length
 		// Update local state and notify extension to sync mode change

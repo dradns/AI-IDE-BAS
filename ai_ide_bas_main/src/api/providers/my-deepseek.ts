@@ -1,6 +1,7 @@
 import { deepSeekModels, deepSeekDefaultModelId } from "@roo-code/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
+import { AIIDEBAS_API_BASE_URL } from "../../shared/constants"
 
 import type { ApiStreamUsageChunk } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
@@ -13,7 +14,7 @@ export class MyDeepSeekHandler extends OpenAiHandler {
 			...options,
 			openAiApiKey: options.myDeepSeekApiKey ?? "not-provided",
 			openAiModelId: options.apiModelId ?? deepSeekDefaultModelId,
-			openAiBaseUrl: options.myDeepSeekBaseUrl ?? "https://api.aiidebas.com/api/v1",
+			openAiBaseUrl: options.myDeepSeekBaseUrl ?? AIIDEBAS_API_BASE_URL,
 			openAiStreamingEnabled: true,
 			includeMaxTokens: true,
 		})

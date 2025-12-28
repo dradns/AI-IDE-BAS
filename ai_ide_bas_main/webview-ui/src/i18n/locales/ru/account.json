@@ -10,5 +10,30 @@
 	"cloudBenefitHistory": "Онлайн-история задач",
 	"cloudBenefitSharing": "Функции обмена и совместной работы",
 	"cloudBenefitMetrics": "Метрики использования на основе задач, токенов и затрат",
-	"visitCloudWebsite": "Посетить AI IDE BAS Cloud"
+	"visitCloudWebsite": "Посетить AI IDE BAS Cloud",
+	"sendFeedback": "Отправить отзыв",
+	"feedback": {
+		"title": "Отправить отзыв",
+		"description": "Помогите нам улучшить расширение, поделившись своим опытом.",
+		"rating": "Оценка",
+		"ratingRequired": "Оценка *",
+		"comment": "Комментарий",
+		"commentOptional": "Комментарий (необязательно)",
+		"placeholder": "Расскажите нам больше о вашем опыте...",
+		"submit": "Отправить отзыв",
+		"submitting": "Отправка...",
+		"cancel": "Отмена",
+		"close": "Закрыть",
+		"submittedTitle": "Отзыв отправлен",
+		"submittedDescription": "Спасибо за ваш отзыв!",
+		"submittedMessage": "Ваш отзыв успешно отправлен и помогает нам улучшить расширение.",
+		"loginRequired": "Пожалуйста, войдите, чтобы отправить отзыв",
+		"selectRating": "Пожалуйста, выберите оценку",
+		"submitFailed": "Не удалось отправить отзыв",
+		"rateLimitExceeded": "Превышен лимит запросов. Максимум 5 отзывов за 10 минут",
+		"rateStars_one": "Оценить {{count}} звезду",
+		"rateStars_few": "Оценить {{count}} звезды",
+		"rateStars_many": "Оценить {{count}} звезд",
+		"rateStars_other": "Оценить {{count}} звезд"
+	}
 }

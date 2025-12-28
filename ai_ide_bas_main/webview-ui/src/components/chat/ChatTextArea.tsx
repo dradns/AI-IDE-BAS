@@ -4,7 +4,7 @@ import DynamicTextArea from "react-textarea-autosize"
 
 import { mentionRegex, mentionRegexGlobal, commandRegexGlobal, unescapeSpaces } from "@roo/context-mentions"
 import { WebviewMessage } from "@roo/WebviewMessage"
-import { Mode, getAllModes } from "@roo/modes"
+import { Mode, getAllModesSync } from "@roo/modes"
 import { ExtensionMessage } from "@roo/ExtensionMessage"
 
 import { vscode } from "@/utils/vscode"
@@ -245,7 +245,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			}
 		}, [inputValue, setInputValue, t])
 
-		const allModes = useMemo(() => getAllModes(customModes), [customModes])
+		const allModes = useMemo(() => getAllModesSync(customModes), [customModes])
 
 		const queryItems = useMemo(() => {
 			return [

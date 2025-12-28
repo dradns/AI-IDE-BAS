@@ -77,9 +77,11 @@ export interface ExtensionMessage {
 		| "lmStudioModels"
 		| "vsCodeLmModels"
 		| "huggingFaceModels"
+		| "apiRoles"
 		| "vsCodeLmApiAvailable"
 		| "updatePrompt"
 		| "systemPrompt"
+		| "promptsUpdated"
 		| "autoApprovalEnabled"
 		| "updateCustomMode"
 		| "deleteCustomMode"
@@ -123,6 +125,15 @@ export interface ExtensionMessage {
 		| "files:authChanged"
 		| "files:virtualKey"
 		| "files:notice"
+		| "files:me:result"
+		| "files:list:result"
+		| "files:error"
+		| "files:delete:result"
+		| "openExternal"
+		| "loadModeInfoResult"
+		| "feedback:result"
+		| "feedback:error"
+		| "showFeedbackDialog"
 	text?: string
 	isAuthorized?: boolean
 	payload?: any // Add a generic payload for now, can refine later
@@ -170,6 +181,15 @@ export interface ExtensionMessage {
 			}
 		}>
 	}>
+	apiRoles?: Array<{
+		slug: string
+		name: string
+		emoji?: string
+		target_roles: string[]
+		role_definition?: string | Record<string, string>
+		short_description?: Record<string, string>
+		when_to_use?: Record<string, string>
+	}>
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]
 	listApiConfig?: ProviderSettingsEntry[]
@@ -197,10 +217,22 @@ export interface ExtensionMessage {
 	errors?: string[]
 	visibility?: ShareVisibility
 	rulesFolderPath?: string
+	timestamp?: number // For promptsUpdated messages from WebSocket
 	settings?: any
 	messageTs?: number
 	context?: string
 	commands?: Command[]
+	feedback?: {
+		success: boolean
+		message?: string
+	}
+	taskId?: string // For feedback dialog session_id
+	me?: any // For files:me:result
+	files?: any[] // For files:list:result
+	id?: string // For files:delete:result
+	url?: string // For openExternal
+	modeSlug?: string // For loadModeInfoResult
+	modeInfo?: any // For loadModeInfoResult
 }
 
 export type ExtensionState = Pick<
@@ -276,6 +308,7 @@ export type ExtensionState = Pick<
 	| "profileThresholds"
 	| "includeDiagnosticMessages"
 	| "maxDiagnosticMessages"
+	| "cachedApiRoles"
 > & {
 	version: string
 	clineMessages: ClineMessage[]

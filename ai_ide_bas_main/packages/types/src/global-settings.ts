@@ -144,6 +144,20 @@ export const globalSettingsSchema = z.object({
 	hasOpenedModeSelector: z.boolean().optional(),
 	lastModeExportPath: z.string().optional(),
 	lastModeImportPath: z.string().optional(),
+	// Cached API roles for instant initial load without fallback flash
+	cachedApiRoles: z
+		.array(
+			z.object({
+				slug: z.string(),
+				name: z.string(),
+				emoji: z.string().optional(),
+				target_roles: z.array(z.string()),
+				role_definition: z.union([z.string(), z.record(z.string(), z.string())]).optional(),
+				short_description: z.record(z.string(), z.string()).optional(),
+				when_to_use: z.record(z.string(), z.string()).optional(),
+			}),
+		)
+		.optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>

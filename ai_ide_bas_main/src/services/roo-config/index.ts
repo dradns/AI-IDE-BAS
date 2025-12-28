@@ -1,6 +1,12 @@
 import * as path from "path"
 import * as os from "os"
 import fs from "fs/promises"
+import * as vscode from "vscode"
+
+// Cache for global .roo directory existence check to avoid repeated macOS permission dialogs
+// Cache TTL: 30 seconds (enough to avoid repeated prompts, but not too long to miss actual changes)
+const GLOBAL_ROO_CACHE_TTL = 30_000 // 30 seconds
+let globalRooCache: { exists: boolean; timestamp: number } | null = null
 
 /**
  * Gets the global .roo directory path based on the current platform
@@ -26,6 +32,71 @@ import fs from "fs/promises"
 export function getGlobalRooDirectory(): string {
 	const homeDir = os.homedir()
 	return path.join(homeDir, ".roo")
+}
+
+/**
+ * Checks if global .roo directory exists with caching to avoid repeated macOS permission dialogs
+ * @returns Promise<boolean> - true if directory exists, false otherwise
+ */
+export async function globalRooDirectoryExists(): Promise<boolean> {
+	const now = Date.now()
+	
+	// Return cached result if still valid
+	if (globalRooCache && (now - globalRooCache.timestamp) < GLOBAL_ROO_CACHE_TTL) {
+		return globalRooCache.exists
+	}
+	
+	// Check directory existence
+	const globalDir = getGlobalRooDirectory()
+	
+	// ВАЖНО: Проверяем, не открыта ли папка ~/.roo как workspace
+	// Если да, то не проверяем её существование, чтобы избежать запросов доступа macOS
+	const workspaceFolders = vscode.workspace.workspaceFolders
+	
+	if (workspaceFolders) {
+		for (const folder of workspaceFolders) {
+			const workspacePath = path.normalize(folder.uri.fsPath)
+			const normalizedGlobalDir = path.normalize(globalDir)
+			
+			// Если workspace является глобальной директорией .roo, возвращаем true без проверки
+			// Это предотвращает постоянные запросы доступа macOS
+			if (workspacePath === normalizedGlobalDir) {
+				// Кэшируем результат как true, чтобы не проверять снова
+				globalRooCache = { exists: true, timestamp: now }
+				return true
+			}
+		}
+	}
+	
+	let exists = false
+	
+	try {
+		const stat = await fs.stat(globalDir)
+		exists = stat.isDirectory()
+	} catch (error: any) {
+		// Only catch expected "not found" errors
+		if (error.code === "ENOENT" || error.code === "ENOTDIR") {
+			exists = false
+		} else {
+			// For permission errors (EACCES, EPERM), assume directory might exist but we can't access it
+			// This prevents repeated permission dialogs
+			// Cache the "false" result to avoid repeated prompts
+			exists = false
+		}
+	}
+	
+	// Update cache
+	globalRooCache = { exists, timestamp: now }
+	
+	return exists
+}
+
+/**
+ * Clears the global .roo directory existence cache
+ * Useful when directory is created/deleted and we want to re-check immediately
+ */
+export function clearGlobalRooCache(): void {
+	globalRooCache = null
 }
 
 /**
@@ -63,8 +134,24 @@ export function getProjectRooDirectoryForCwd(cwd: string): string {
 
 /**
  * Checks if a directory exists
+ * Uses cache for global .roo directory to avoid repeated macOS permission dialogs
  */
 export async function directoryExists(dirPath: string): Promise<boolean> {
+	// Use cache for global .roo directory
+	const globalDir = getGlobalRooDirectory()
+	if (dirPath === globalDir || dirPath.startsWith(globalDir + path.sep)) {
+		// Check if global directory exists first (using cache)
+		const globalExists = await globalRooDirectoryExists()
+		if (!globalExists) {
+			return false
+		}
+		// If checking the global dir itself, return cached result
+		if (dirPath === globalDir) {
+			return globalExists
+		}
+		// For subdirectories, still need to check, but global dir exists
+	}
+	
 	try {
 		const stat = await fs.stat(dirPath)
 		return stat.isDirectory()
@@ -73,7 +160,12 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
 		if (error.code === "ENOENT" || error.code === "ENOTDIR") {
 			return false
 		}
-		// Re-throw unexpected errors (permission, I/O, etc.)
+		// For permission errors on global .roo, return false to avoid repeated dialogs
+		if ((error.code === "EACCES" || error.code === "EPERM") && 
+		    (dirPath === globalDir || dirPath.startsWith(globalDir + path.sep))) {
+			return false
+		}
+		// Re-throw unexpected errors (I/O, etc.)
 		throw error
 	}
 }
@@ -97,8 +189,19 @@ export async function fileExists(filePath: string): Promise<boolean> {
 
 /**
  * Reads a file safely, returning null if it doesn't exist
+ * Uses cache for global .roo directory to avoid repeated macOS permission dialogs
  */
 export async function readFileIfExists(filePath: string): Promise<string | null> {
+	// Use cache for files in global .roo directory
+	const globalDir = getGlobalRooDirectory()
+	if (filePath.startsWith(globalDir + path.sep) || filePath === globalDir) {
+		// Check if global directory exists first (using cache)
+		const globalExists = await globalRooDirectoryExists()
+		if (!globalExists) {
+			return null
+		}
+	}
+	
 	try {
 		return await fs.readFile(filePath, "utf-8")
 	} catch (error: any) {
@@ -106,7 +209,12 @@ export async function readFileIfExists(filePath: string): Promise<string | null>
 		if (error.code === "ENOENT" || error.code === "ENOTDIR" || error.code === "EISDIR") {
 			return null
 		}
-		// Re-throw unexpected errors (permission, I/O, etc.)
+		// For permission errors on global .roo files, return null to avoid repeated dialogs
+		if ((error.code === "EACCES" || error.code === "EPERM") && 
+		    (filePath.startsWith(globalDir + path.sep) || filePath === globalDir)) {
+			return null
+		}
+		// Re-throw unexpected errors (I/O, etc.)
 		throw error
 	}
 }
@@ -146,12 +254,24 @@ export async function readFileIfExists(filePath: string): Promise<string | null>
  */
 export function getRooDirectoriesForCwd(cwd: string): string[] {
 	const directories: string[] = []
+	const globalDir = getGlobalRooDirectory()
+	const projectDir = getProjectRooDirectoryForCwd(cwd)
 
-	// Add global directory first
-	directories.push(getGlobalRooDirectory())
+	// ВАЖНО: Если cwd является глобальной директорией .roo, не добавляем её дважды
+	// Это предотвращает постоянные запросы доступа macOS при открытии ~/.roo как workspace
+	const normalizedCwd = path.normalize(cwd)
+	const normalizedGlobalDir = path.normalize(globalDir)
+	
+	// Добавляем глобальную директорию только если она не совпадает с cwd
+	if (normalizedCwd !== normalizedGlobalDir) {
+		directories.push(globalDir)
+	}
 
-	// Add project-local directory second
-	directories.push(getProjectRooDirectoryForCwd(cwd))
+	// Добавляем project-local директорию только если она не совпадает с глобальной
+	// (чтобы избежать дублирования, если cwd = ~/.roo)
+	if (path.normalize(projectDir) !== normalizedGlobalDir) {
+		directories.push(projectDir)
+	}
 
 	return directories
 }
@@ -221,8 +341,11 @@ export async function loadConfiguration(
 	const globalFilePath = path.join(globalDir, relativePath)
 	const projectFilePath = path.join(projectDir, relativePath)
 
-	// Read global configuration
-	const globalContent = await readFileIfExists(globalFilePath)
+	// Read global configuration (uses cache internally)
+	// Check if global directory exists first to avoid unnecessary file read attempts
+	const globalContent = await globalRooDirectoryExists() 
+		? await readFileIfExists(globalFilePath)
+		: null
 
 	// Read project-local configuration
 	const projectContent = await readFileIfExists(projectFilePath)

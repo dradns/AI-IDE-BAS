@@ -100,6 +100,7 @@ export async function loadModeInfo(
 		const rooDirectories = getRooDirectoriesForCwd(cwd)
 		
 		for (const rooDir of rooDirectories) {
+			// Use mode slug directly from API (e.g., code, debug)
 			const modeRulesDir = path.join(rooDir, `rules-${modeSlug}`)
 			const dirInfo = await readModeInfoFromDirectory(modeRulesDir)
 			
@@ -117,7 +118,12 @@ export async function loadModeInfo(
 	}
 	
 	// Step 3: Check built-in rules from extension
-	if (!info.roleDefinition || !info.description || !info.whenToUse) {
+	// ⚠️ ВАЖНО: Для новых ролей из API (не встроенных) не используем fallback к встроенным правилам
+	// Это предотвращает использование метаданных из встроенных режимов для новых ролей
+	const knownModes = ["code", "architect", "ask", "debug", "designer", "helper", "pm"]
+	const isBuiltInMode = knownModes.includes(modeSlug)
+	
+	if (isBuiltInMode && (!info.roleDefinition || !info.description || !info.whenToUse)) {
 		try {
 			const builtInRules = await loadBuiltInModeRules(modeSlug)
 			if (builtInRules) {
@@ -136,6 +142,10 @@ export async function loadModeInfo(
 		} catch (err) {
 			// Ignore errors from built-in rules loading
 		}
+	} else if (!isBuiltInMode) {
+		// Для новых ролей из API не используем fallback к встроенным правилам
+		// Метаданные для новых ролей должны быть заданы через API/админку
+		console.log(`[loadModeInfo] ⚠️ No rules found for new role mode=${modeSlug}, NOT using fallback to built-in rules`)
 	}
 	
 	// Step 4: Fallback to JSON configuration

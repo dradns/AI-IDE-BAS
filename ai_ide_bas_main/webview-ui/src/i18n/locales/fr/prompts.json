@@ -58,6 +58,12 @@
 		"export": "Exporter le mode",
 		"exporting": "Exportation..."
 	},
+	"exportAllRoleRules": {
+		"title": "Exporter les règles",
+		"description": "Exporter toutes les règles de rôle de tous les modes vers le dossier .roo du projet pour la personnalisation et le contrôle de version.",
+		"success": "Toutes les règles de rôle ont été exportées vers le dossier .roo du projet",
+		"error": "Échec de l'exportation de toutes les règles de rôle"
+	},
 	"importMode": {
 		"selectLevel": "Choisissez où importer ce mode :",
 		"import": "Importer",

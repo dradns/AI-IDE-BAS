@@ -7,7 +7,7 @@ import { IconButton } from "./IconButton"
 import { vscode } from "@/utils/vscode"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useAppTranslation } from "@/i18n/TranslationContext"
-import { Mode, getAllModes } from "@roo/modes"
+import { Mode, getAllModes, getAllModesSync } from "@roo/modes"
 import { ModeConfig, CustomModePrompts } from "@roo-code/types"
 import { telemetryClient } from "@/utils/TelemetryClient"
 import { TelemetryEventName } from "@roo-code/types"
@@ -43,7 +43,7 @@ export const ModeSelector = ({
 	const [searchValue, setSearchValue] = React.useState("")
 	const searchInputRef = React.useRef<HTMLInputElement>(null)
 	const portalContainer = useRooPortal("roo-portal")
-	const { hasOpenedModeSelector, setHasOpenedModeSelector } = useExtensionState()
+	const { hasOpenedModeSelector, setHasOpenedModeSelector, apiRoles, language } = useExtensionState()
 	const { t } = useAppTranslation()
 
 	const trackModeSelectorOpened = React.useCallback(() => {
@@ -58,13 +58,158 @@ export const ModeSelector = ({
 	}, [hasOpenedModeSelector, setHasOpenedModeSelector])
 
 	// Get all modes including custom modes and merge custom prompt descriptions
-	const modes = React.useMemo(() => {
-		const allModes = getAllModes(customModes)
-		return allModes.map((mode) => ({
-			...mode,
-			description: customModePrompts?.[mode.slug]?.description ?? mode.description,
-		}))
-	}, [customModes, customModePrompts])
+	// Загружаем режимы асинхронно, включая роли из API
+	// Начальное состояние - синхронная версия (без ролей из API) для быстрого рендеринга
+	const [modes, setModes] = React.useState<ModeConfig[]>(() => {
+		const initialModes = getAllModesSync(customModes)
+		// ⚠️ КРИТИЧНО: Нормализуем язык для совместимости с бэкендом (ru-RU -> ru, en-US -> en)
+		const normalizedLang = language ? language.split("-")[0].toLowerCase() : "en"
+		return initialModes.map((mode) => {
+			// Use pickTextFromMultilang to extract description based on current language
+			const promptDescription = customModePrompts?.[mode.slug]?.description
+			const extractedDescription = promptDescription 
+				? (typeof promptDescription === "string" 
+					? promptDescription 
+					: (promptDescription[normalizedLang] || promptDescription[language || "en"] || promptDescription["en"] || promptDescription["ru"] || Object.values(promptDescription)[0] || ""))
+				: mode.description
+			return {
+				...mode,
+				description: extractedDescription,
+			}
+		})
+	})
+
+	// Запрашиваем роли из API через extension host (избегаем CORS в webview)
+	React.useEffect(() => {
+		console.log(`[ModeSelector] Requesting API roles from extension host with language="${language}"...`)
+		vscode.postMessage({ type: "requestApiRoles", language })
+	}, [language])
+
+	// Обновляем режимы когда получаем роли из API
+	React.useEffect(() => {
+		if (apiRoles && apiRoles.length > 0) {
+			console.log(`[ModeSelector] Received ${apiRoles.length} roles from extension host:`, apiRoles.map(r => r.slug).join(", "))
+			
+			// ⚠️ КРИТИЧНО: Логируем short_description из apiRoles для отладки
+			apiRoles.forEach(role => {
+				console.log(`[ModeSelector] API Role ${role.slug}: short_description=${JSON.stringify(role.short_description)}`)
+			})
+			
+		// Получаем все режимы с ролями из API
+		// Передаем язык для правильного извлечения текста из многоязычных объектов
+			getAllModes(customModes, undefined, apiRoles, language).then((allModes) => {
+				console.log(`[ModeSelector] Total modes after API: ${allModes.length}`, allModes.map(m => m.slug).join(", "))
+				// Логируем описания для отладки
+				allModes.forEach(mode => {
+					console.log(`[ModeSelector] Mode ${mode.slug}: description="${mode.description || "(empty)"}"`)
+				})
+				// Используем функциональное обновление, чтобы сохранить описания из предыдущего состояния, если новые пустые
+				setModes((prevModes) => {
+				const updatedModes = allModes.map((mode) => {
+						// Приоритет: customModePrompts > apiRoles.short_description > API description (из getAllModes) > предыдущее описание
+					// Если есть описание из customModePrompts - используем его, иначе используем описание из API
+						// Если описание из API пустое, сохраняем предыдущее описание
+					// Use pickTextFromMultilang to extract description based on current language
+					const promptDescription = customModePrompts?.[mode.slug]?.description
+						const apiDescription = mode.description || ""
+						const prevMode = prevModes.find(m => m.slug === mode.slug)
+						const prevDescription = prevMode?.description || ""
+						
+					// ⚠️ КРИТИЧНО: Нормализуем язык для совместимости с бэкендом (ru-RU -> ru, en-US -> en)
+					const normalizedLang = language ? language.split("-")[0].toLowerCase() : "en"
+					
+					// ⚠️ КРИТИЧНО: Также проверяем short_description напрямую из apiRoles
+					const apiRole = apiRoles.find(r => r.slug.toLowerCase() === mode.slug.toLowerCase())
+					let apiRoleDescription = ""
+					if (apiRole?.short_description) {
+						const sd = apiRole.short_description
+						apiRoleDescription = sd[normalizedLang] || sd[language || "en"] || sd["en"] || sd["ru"] || Object.values(sd)[0] || ""
+						console.log(`[ModeSelector] Extracted description for ${mode.slug} from apiRole.short_description: "${apiRoleDescription}"`)
+					}
+					
+					const finalDescription = promptDescription
+						? (typeof promptDescription === "string"
+							? promptDescription
+							: (promptDescription[normalizedLang] || promptDescription[language || "en"] || promptDescription["en"] || promptDescription["ru"] || Object.values(promptDescription)[0] || ""))
+							: (apiRoleDescription || apiDescription || prevDescription)
+						
+						console.log(`[ModeSelector] Final description for ${mode.slug}: "${finalDescription}" (from customModePrompts: ${!!promptDescription}, from apiRole: ${!!apiRoleDescription}, from API: ${!!apiDescription}, from prev: ${!!prevDescription})`)
+					return {
+						...mode,
+						description: finalDescription,
+					}
+				})
+				console.log(`[ModeSelector] Setting modes with descriptions:`, updatedModes.map(m => ({ slug: m.slug, description: m.description || "(empty)" })))
+					return updatedModes
+				})
+			}).catch((error) => {
+				console.warn(`[ModeSelector] Failed to process API roles:`, error)
+			})
+		}
+	}, [apiRoles, customModes, language])
+
+	// Отдельный эффект для обновления описаний при изменении customModePrompts
+	// Не перезагружаем режимы из API, только обновляем описания в существующих режимах
+	// Важно: не обновляем описания, если режимы еще не загружены из API (нет apiRoles)
+	React.useEffect(() => {
+		// Пропускаем обновление, если режимы еще не загружены из API
+		// Это предотвращает потерю описаний при первом рендере
+		if (!apiRoles || apiRoles.length === 0) {
+			console.log(`[ModeSelector] Skipping customModePrompts update: apiRoles not loaded yet`)
+			return
+		}
+		
+		setModes((prevModes) => {
+			// Пропускаем обновление, если режимы еще не инициализированы
+			if (prevModes.length === 0) {
+				console.log(`[ModeSelector] Skipping customModePrompts update: prevModes is empty`)
+				return prevModes
+			}
+			
+			console.log(`[ModeSelector] Updating descriptions from customModePrompts, prevModes count: ${prevModes.length}`)
+			const updatedModes = prevModes.map((mode) => {
+				// Приоритет: customModePrompts > текущее описание
+				// Если в customModePrompts есть описание - используем его, иначе сохраняем текущее
+				const promptComponent = customModePrompts?.[mode.slug]
+				const promptDescription = promptComponent?.description
+				const currentDescription = mode.description || ""
+				
+				// Если в customModePrompts нет описания (undefined), сохраняем текущее описание
+				// Это важно: когда описание удаляется из customModePrompts при редактировании,
+				// мы должны сохранить описание из API
+				// Проверяем, что promptDescription действительно определено (не undefined и не пустая строка после извлечения)
+				let finalDescription = currentDescription
+				
+				if (promptDescription !== undefined) {
+					const extractedDescription = typeof promptDescription === "string"
+						? promptDescription
+						: (promptDescription[language || "en"] || promptDescription["en"] || Object.values(promptDescription)[0] || "")
+					
+					// Используем описание из customModePrompts только если оно не пустое
+					if (extractedDescription && extractedDescription.trim()) {
+						finalDescription = extractedDescription
+					}
+					// Если extractedDescription пустое, сохраняем currentDescription (описание из API)
+				}
+				// Если promptDescription === undefined, сохраняем currentDescription (описание из API)
+				
+				// Обновляем описание только если оно изменилось
+				if (finalDescription !== currentDescription) {
+					console.log(`[ModeSelector] Updating description for ${mode.slug} from customModePrompts: "${currentDescription}" -> "${finalDescription}" (hasPromptComponent: ${!!promptComponent}, hasPromptDescription: ${promptDescription !== undefined})`)
+					return {
+						...mode,
+						description: finalDescription,
+					}
+				}
+				// Логируем, если описание сохраняется
+				if (currentDescription && currentDescription.trim()) {
+					console.log(`[ModeSelector] Keeping description for ${mode.slug}: "${currentDescription}" (hasPromptComponent: ${!!promptComponent}, hasPromptDescription: ${promptDescription !== undefined})`)
+				}
+				return mode
+			})
+			return updatedModes
+		})
+	}, [customModePrompts, language, apiRoles])
 
 	// Find the selected mode
 	const selectedMode = React.useMemo(() => modes.find((mode) => mode.slug === value), [modes, value])
@@ -239,8 +384,8 @@ export const ModeSelector = ({
 										data-testid="mode-selector-item">
 										<div className="flex-1 min-w-0">
 											<div className="font-bold truncate">{mode.name}</div>
-											{mode.description && (
-												<div className="text-xs text-vscode-descriptionForeground truncate">
+											{mode.description && mode.description.trim() && (
+												<div className="text-xs text-vscode-descriptionForeground truncate mt-0.5">
 													{mode.description}
 												</div>
 											)}

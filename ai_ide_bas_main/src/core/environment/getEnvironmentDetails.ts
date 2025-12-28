@@ -10,7 +10,7 @@ import { DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT } from "@roo-code/types"
 
 import { EXPERIMENT_IDS, experiments as Experiments } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
-import { defaultModeSlug, getFullModeDetails, getModeBySlug, isToolAllowedForMode } from "../../shared/modes"
+import { defaultModeSlug, getFullModeDetails, getModeBySlug, isToolAllowedForMode, getAllModes } from "../../shared/modes"
 import { getApiMetrics } from "../../shared/getApiMetrics"
 import { listFiles } from "../../services/glob/list-files"
 import { TerminalRegistry } from "../../integrations/terminal/TerminalRegistry"
@@ -218,7 +218,15 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 
 	const currentMode = mode ?? defaultModeSlug
 
-	const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
+	// ⚠️ ВАЖНО: Загружаем allModes (включая роли из API) для получения корректного имени режима
+	// Это критично, так как environment_details используется при отправке запроса к API
+	// Аналогично тому, как это делается в Task.getSystemPrompt()
+	const provider = clineProvider
+	const allModes = provider?.context
+		? await getAllModes(customModes, provider.context, undefined, language ?? formatLanguage(vscode.env.language))
+		: customModes ?? []
+
+	const modeDetails = await getFullModeDetails(currentMode, allModes, customModePrompts, {
 		cwd: cline.cwd,
 		globalCustomInstructions,
 		language: language ?? formatLanguage(vscode.env.language),

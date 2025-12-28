@@ -5,6 +5,7 @@ import { CloudService } from "@roo-code/cloud"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import axios from "axios"
 import type { ProviderSettings } from "@roo-code/types"
+import { AIIDEBAS_API_BASE_URL_WITHOUT_PATH } from "../shared/constants"
 
 export const handleUri = async (uri: vscode.Uri) => {
 	const path = uri.path
@@ -71,7 +72,7 @@ export const handleUri = async (uri: vscode.Uri) => {
 							...apiConfiguration,
 							apiProvider: "my-deepseek",
 							myDeepSeekApiKey: deepSeekKey as string,
-							myDeepSeekBaseUrl: apiConfiguration?.myDeepSeekBaseUrl || "https://api.aiidebas.com/api/v1",
+							myDeepSeekBaseUrl: apiConfiguration?.myDeepSeekBaseUrl || AIIDEBAS_API_BASE_URL_WITHOUT_PATH + "/api/v1",
 						}
 						await visibleProvider.upsertProviderProfile(currentApiConfigName, newConfiguration)
 					} catch (err) {
@@ -86,7 +87,7 @@ export const handleUri = async (uri: vscode.Uri) => {
 			const state = query.get("state")
 			if (code) {
 				try {
-					const resp = await axios.post("https://api.aiidebas.com/api/v1/auth/callback", { code, state })
+					const resp = await axios.post(`${AIIDEBAS_API_BASE_URL_WITHOUT_PATH}/api/v1/auth/callback`, { code, state })
 					const exchangedToken = resp.data?.access_token || resp.data?.token
 					if (exchangedToken) {
 						await visibleProvider.context.secrets.store("aiidebas.token", exchangedToken)
@@ -108,7 +109,7 @@ export const handleUri = async (uri: vscode.Uri) => {
 									...apiConfiguration,
 									apiProvider: "my-deepseek",
 									myDeepSeekApiKey: deepSeekKey as string,
-									myDeepSeekBaseUrl: apiConfiguration?.myDeepSeekBaseUrl || "https://api.aiidebas.com/api/v1",
+									myDeepSeekBaseUrl: apiConfiguration?.myDeepSeekBaseUrl || AIIDEBAS_API_BASE_URL_WITHOUT_PATH + "/api/v1",
 								}
 								await visibleProvider.upsertProviderProfile(currentApiConfigName, newConfiguration)
 							} catch (err) {

@@ -58,6 +58,12 @@
 		"export": "Esporta modalità",
 		"exporting": "Esportazione..."
 	},
+	"exportAllRoleRules": {
+		"title": "Esporta regole",
+		"description": "Esporta tutte le regole dei ruoli da tutte le modalità nella cartella .roo del progetto per la personalizzazione e il controllo delle versioni.",
+		"success": "Tutte le regole dei ruoli sono state esportate nella cartella .roo del progetto",
+		"error": "Errore durante l'esportazione di tutte le regole dei ruoli"
+	},
 	"importMode": {
 		"selectLevel": "Scegli dove importare questa modalità:",
 		"import": "Importa",

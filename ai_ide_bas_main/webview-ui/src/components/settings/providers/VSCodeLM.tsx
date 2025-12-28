@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react"
 import { useEvent } from "react-use"
-import { LanguageModelChatSelector } from "vscode"
+import type { LanguageModelChatSelector } from "vscode"
 
 import type { ProviderSettings } from "@roo-code/types"
 

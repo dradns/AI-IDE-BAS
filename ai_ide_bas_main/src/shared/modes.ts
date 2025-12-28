@@ -1,4 +1,6 @@
-import * as vscode from "vscode"
+// Условный импорт vscode (доступен только в extension host, не в webview)
+// Используем type-only импорт для типов и динамический импорт для runtime
+type ExtensionContext = import("vscode").ExtensionContext
 
 import {
 	type GroupOptions,
@@ -12,6 +14,10 @@ import {
 } from "@roo-code/types"
 
 import { addCustomInstructions } from "../core/prompts/sections/custom-instructions"
+import { getAllRolesFromApi, roleToMode, setModeTargetRoles } from "../services/prompt-api-service"
+
+// Re-export for use in webview-ui
+export { getAllRolesFromApi, roleToMode }
 
 import { EXPERIMENT_IDS } from "./experiments"
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS } from "./tools"
@@ -76,7 +82,7 @@ export function getToolsForMode(groups: readonly GroupEntry[]): string[] {
 // Note: The first mode in this array is the default mode for new installations
 export const modes: readonly ModeConfig[] = [
 	{
-		slug: "code", // Business Analyst role (default) - keep original slug for compatibility
+		slug: "code",
 		name: "📋 BA (Business Analyst)",
 		roleDefinition: ``,
 		whenToUse: ``,
@@ -99,7 +105,7 @@ export const modes: readonly ModeConfig[] = [
 		groups: ["read", ["edit", { fileRegex: ".*", description: "Architecture docs" }], "browser", "mcp"],
 	},
 	{
-		slug: "ask", // System Analyst (original slug) for compatibility
+		slug: "ask",
 		name: "📝 SA (System Analyst)",
 		roleDefinition: ``,
 		whenToUse: ``,
@@ -108,7 +114,7 @@ export const modes: readonly ModeConfig[] = [
 		groups: ["read", ["edit", { fileRegex: ".*", description: "Analysis docs" }], "browser", "mcp"],
 	},
 	{
-		slug: "debug", // Reviewer (original slug) for compatibility
+		slug: "debug",
 		name: "🔍 Review (Reviewer)",
 		roleDefinition:``,
 		whenToUse:``,
@@ -172,26 +178,318 @@ export function getModeConfig(slug: string, customModes?: ModeConfig[]): ModeCon
 	return mode
 }
 
-// Get all available modes, with custom modes overriding built-in modes
-export function getAllModes(customModes?: ModeConfig[]): ModeConfig[] {
-	if (!customModes?.length) {
-		return [...modes]
+// Helper function to normalize language code to match backend format
+// Backend expects: ru, en, es, zh, ar, pt
+// Extension may provide: es-ES, zh-CN, pt-BR, etc.
+function normalizeLangForBackend(lang?: string): string | undefined {
+	if (!lang) return undefined
+	// Extract base language code (before hyphen)
+	const baseLang = lang.split("-")[0].toLowerCase()
+	// Map common variations to backend format
+	const langMap: Record<string, string> = {
+		zh: "zh", // zh-CN or zh-TW -> zh
+		pt: "pt", // pt-BR -> pt (Portuguese is now supported)
+		cn: "zh", // Handle case where only "CN" is provided
 	}
+	return langMap[baseLang] || baseLang
+}
 
-	// Start with built-in modes
-	const allModes = [...modes]
+// Helper function to extract text from multilingual value
+export function pickTextFromMultilang(value: string | Record<string, string> | undefined, lang?: string): string {
+	if (!value) return ""
+	if (typeof value === "string") return value
+	if (typeof value === "object") {
+		// Normalize language code to match backend format (zh-CN -> zh, es-ES -> es, etc.)
+		const normalizedLang = normalizeLangForBackend(lang)
+		
+		// Always log for debugging (remove excessive logging later)
+		const availableKeys = Object.keys(value).join(", ")
+		console.log(`[pickTextFromMultilang] lang="${lang || "none"}", normalizedLang="${normalizedLang || "none"}", availableKeys=[${availableKeys}]`)
+		
+		// Try normalized preferred language first
+		if (normalizedLang && value[normalizedLang]) {
+			console.log(`[pickTextFromMultilang] ✅ Found normalized key "${normalizedLang}", returning value`)
+			return pickTextFromMultilang(value[normalizedLang], undefined)
+		}
+		// Try original language code as fallback (in case backend uses full codes)
+		if (lang && value[lang]) {
+			console.log(`[pickTextFromMultilang] ✅ Found original key "${lang}", returning value`)
+			return pickTextFromMultilang(value[lang], undefined)
+		}
+		// For Chinese: try to find any key that starts with "zh" (zh-CN, zh-TW, etc.)
+		if (normalizedLang === "zh") {
+			const zhKey = Object.keys(value).find(key => key.toLowerCase().startsWith("zh"))
+			if (zhKey) {
+				console.log(`[pickTextFromMultilang] ✅ Found Chinese key "${zhKey}", returning value`)
+				return pickTextFromMultilang(value[zhKey], undefined)
+			}
+		}
+		// For Portuguese: try to find any key that starts with "pt" (pt, pt-BR, etc.)
+		if (normalizedLang === "pt") {
+			const ptKey = Object.keys(value).find(key => key.toLowerCase().startsWith("pt"))
+			if (ptKey) {
+				console.log(`[pickTextFromMultilang] ✅ Found Portuguese key "${ptKey}", returning value`)
+				return pickTextFromMultilang(value[ptKey], undefined)
+			}
+		}
+		// Then try English
+		if (value["en"]) {
+			console.log(`[pickTextFromMultilang] ⚠️ Falling back to English`)
+			return pickTextFromMultilang(value["en"], undefined)
+		}
+		// Fallback to first available
+		const firstKey = Object.keys(value)[0]
+		if (firstKey) {
+			console.log(`[pickTextFromMultilang] ⚠️ Falling back to first key "${firstKey}"`)
+			return pickTextFromMultilang(value[firstKey], undefined)
+		}
+	}
+	return ""
+}
 
-	// Process custom modes
-	customModes.forEach((customMode) => {
-		const index = allModes.findIndex((mode) => mode.slug === customMode.slug)
-		if (index !== -1) {
-			// Override existing mode
-			allModes[index] = customMode
+// Helper function to add API roles to modes array
+function addApiRolesToModes(
+	allModes: ModeConfig[],
+	apiRoles: Array<{ 
+		slug: string
+		name: string
+		emoji?: string
+		target_roles: string[]
+		role_definition?: string | Record<string, string>
+		short_description?: Record<string, string>
+		when_to_use?: Record<string, string>
+	}>,
+	language?: string
+): void {
+	console.log(`[Modes] addApiRolesToModes: processing ${apiRoles.length} roles from API, language="${language || "none"}"`)
+	apiRoles.forEach((apiRole) => {
+		// Определяем slug для режима:
+		// slug из API используется напрямую (ask, code, debug, architect, designer, pm, helper)
+		// После унификации slug = target_roles (все в нижнем регистре)
+		const mappedSlug = apiRole.slug.toLowerCase()
+		console.log(`[Modes] Using slug as-is: ${apiRole.slug} -> ${mappedSlug}`)
+		
+		console.log(`[Modes] Final mapping: ${apiRole.slug} (name: ${apiRole.name}) -> ${mappedSlug}`)
+		
+		// Проверяем, нет ли уже такой роли (по маппированному slug)
+		const existingIndex = allModes.findIndex(
+			(mode) => mode.slug.toLowerCase() === mappedSlug.toLowerCase()
+		)
+		
+		// Извлекаем role_definition из API (может быть строкой или многоязычным объектом)
+		// Используем язык для правильного извлечения текста из многоязычных объектов
+		// Язык уже нормализован в getAllModes, но нормализуем еще раз на всякий случай
+		const normalizedLang = language ? normalizeLangForBackend(language) : undefined
+		console.log(`[Modes] Language normalization for ${mappedSlug}: original="${language || "none"}", normalized="${normalizedLang || "none"}"`)
+		if (apiRole.short_description && typeof apiRole.short_description === "object") {
+			console.log(`[Modes] Available keys in short_description for ${mappedSlug}: ${Object.keys(apiRole.short_description).join(", ")}`)
+		}
+		
+		const roleDefinition = pickTextFromMultilang(apiRole.role_definition, normalizedLang)
+		const whenToUse = pickTextFromMultilang(apiRole.when_to_use, normalizedLang)
+		const description = pickTextFromMultilang(apiRole.short_description, normalizedLang)
+		
+		// Логируем short_description для отладки
+		console.log(`[Modes] Processing short_description for ${mappedSlug}: raw=${JSON.stringify(apiRole.short_description)}, language=${normalizedLang || language || "none"}, extracted="${description}"`)
+		
+		if (existingIndex === -1) {
+			// Добавляем новую роль из API (используем маппированный slug)
+			// Если есть эмодзи в API - добавляем его к имени, иначе используем имя как есть
+			const roleName = apiRole.emoji 
+				? `${apiRole.emoji} ${apiRole.name}`
+				: apiRole.name
+			
+			console.log(`[Modes] Adding new role from API: ${mappedSlug} (${roleName}, emoji: ${apiRole.emoji || "none"})`)
+			// Сохраняем target_roles в кэш для использования в loadPromptFromApi
+			if (apiRole.target_roles && apiRole.target_roles.length > 0) {
+				setModeTargetRoles(mappedSlug, apiRole.target_roles)
+			}
+			allModes.push({
+				slug: mappedSlug, // Используем маппированный slug
+				name: roleName,
+				roleDefinition: roleDefinition || ``,
+				whenToUse: whenToUse || ``,
+				description: description || "",
+				customInstructions: "",
+				groups: ["read", ["edit", { fileRegex: ".*" }], "browser", "mcp"],
+			})
+			
+			// Помечаем, что обнаружена новая роль (для последующего экспорта)
+			// Экспорт будет запущен после обработки всех ролей
+			;(allModes as any).__hasNewRole = true
 		} else {
-			// Add new mode
-			allModes.push(customMode)
+			// Обновляем существующую роль: обновляем имя, role_definition, whenToUse, description
+			// ⚠️ ВАЖНО: Если роль пришла из API, ВСЕГДА гарантируем полный набор групп
+			// Сохраняем target_roles в кэш для использования в loadPromptFromApi
+			if (apiRole.target_roles && apiRole.target_roles.length > 0) {
+				setModeTargetRoles(mappedSlug, apiRole.target_roles)
+			}
+			const existingMode = allModes[existingIndex]
+			let updatedMode = { ...existingMode }
+			
+			// Обновляем имя (всегда, даже если эмодзи нет)
+			// Удаляем существующее эмодзи из имени (если есть)
+			const nameWithoutEmoji = existingMode.name.replace(/^[^\w\u0400-\u04FF]+\s*/, '').trim() || existingMode.name.split(/\s+/).slice(1).join(' ')
+			const baseName = apiRole.name || nameWithoutEmoji || existingMode.name
+			// Если есть эмодзи в API - используем его, иначе имя без эмодзи
+			const newName = apiRole.emoji ? `${apiRole.emoji} ${baseName}` : baseName
+			
+			console.log(`[Modes] Name update check for ${mappedSlug}: existing="${existingMode.name}", new="${newName}", apiEmoji="${apiRole.emoji || "none"}", apiName="${apiRole.name || "none"}"`)
+			
+			if (existingMode.name !== newName) {
+				console.log(`[Modes] Updating name for ${mappedSlug}: "${existingMode.name}" -> "${newName}" (emoji: ${apiRole.emoji || "none"})`)
+				updatedMode.name = newName
+			} else {
+				console.log(`[Modes] Name unchanged for ${mappedSlug}: "${existingMode.name}"`)
+			}
+			
+			// Обновляем role_definition из API, если есть
+			if (roleDefinition && roleDefinition !== existingMode.roleDefinition) {
+				console.log(`[Modes] Updating roleDefinition for ${mappedSlug} from API`)
+				updatedMode.roleDefinition = roleDefinition
+			}
+			
+			// Обновляем whenToUse из API, если есть
+			if (whenToUse && whenToUse !== existingMode.whenToUse) {
+				console.log(`[Modes] Updating whenToUse for ${mappedSlug} from API`)
+				updatedMode.whenToUse = whenToUse
+			}
+			
+			// Обновляем description из API, если есть
+			if (description && description !== existingMode.description) {
+				console.log(`[Modes] Updating description for ${mappedSlug} from API: "${existingMode.description || "(empty)"}" -> "${description}"`)
+				updatedMode.description = description
+			} else if (!description && existingMode.description) {
+				console.log(`[Modes] No description from API for ${mappedSlug}, keeping existing: "${existingMode.description}"`)
+			} else if (description && description === existingMode.description) {
+				console.log(`[Modes] Description unchanged for ${mappedSlug}: "${description}"`)
+			} else {
+				console.log(`[Modes] No description from API for ${mappedSlug} and no existing description`)
+			}
+			
+			// ⚠️ КРИТИЧЕСКИ ВАЖНО: Для ролей из API ВСЕГДА устанавливаем полный набор групп
+			// Это гарантирует, что даже если роль была создана вручную без групп, она получит полный функционал
+			const defaultGroups: GroupEntry[] = ["read", ["edit", { fileRegex: ".*" }], "browser", "mcp"]
+			console.log(`[Modes] Ensuring full tool groups for role ${mappedSlug} from API (existing groups: ${JSON.stringify(existingMode.groups)})`)
+			updatedMode.groups = defaultGroups
+			console.log(`[Modes] ✅ Set full default groups for ${mappedSlug} from API: read, edit(/.*/), browser, mcp`)
+			
+			allModes[existingIndex] = updatedMode
 		}
 	})
+	console.log(`[Modes] addApiRolesToModes: final modes count: ${allModes.length}`)
+}
+
+// Synchronous version for backward compatibility (doesn't load API roles)
+export function getAllModesSync(customModes?: ModeConfig[]): ModeConfig[] {
+	// Начинаем с встроенных режимов
+	const allModes = [...modes]
+
+	// Добавляем кастомные режимы
+	if (customModes?.length) {
+		customModes.forEach((customMode) => {
+			const index = allModes.findIndex((mode) => mode.slug === customMode.slug)
+			if (index !== -1) {
+				// Override existing mode
+				allModes[index] = customMode
+			} else {
+				// Add new mode
+				allModes.push(customMode)
+			}
+		})
+	}
+
+	return allModes
+}
+
+// Get all available modes, with custom modes overriding built-in modes
+// If context is provided, also loads roles from API
+// If apiRoles is provided, uses those roles instead of loading from API
+export async function getAllModes(
+	customModes?: ModeConfig[],
+	context?: ExtensionContext,
+	apiRoles?: Array<{ 
+		slug: string
+		name: string
+		emoji?: string
+		target_roles: string[]
+		role_definition?: string | Record<string, string>
+		short_description?: Record<string, string>
+		when_to_use?: Record<string, string>
+	}>,
+	language?: string
+): Promise<ModeConfig[]> {
+	// Начинаем с синхронной версии (встроенные + кастомные режимы)
+	let allModes = getAllModesSync(customModes)
+
+	// Добавляем роли из API
+	let rolesToAdd: Array<{ 
+		slug: string
+		name: string
+		emoji?: string
+		target_roles: string[]
+		role_definition?: string | Record<string, string>
+		short_description?: Record<string, string>
+		when_to_use?: Record<string, string>
+	}> = []
+	
+	if (apiRoles) {
+		// Используем переданные роли
+		rolesToAdd = apiRoles
+	} else if (context) {
+		// Загружаем роли из API если передан context
+		// ⚠️ ВАЖНО: Не блокируем инициализацию расширения, если загрузка режимов не удалась
+		try {
+			// Определяем язык из VS Code настроек, если не передан
+			// ⚠️ ВАЖНО: В webview vscode недоступен, поэтому используем дефолтный язык
+			// В webview мы передаем apiRoles напрямую, поэтому этот код не выполняется
+			const lang = language || "ru"
+			// Загружаем роли с таймаутом, чтобы не блокировать инициализацию
+			rolesToAdd = await Promise.race([
+				getAllRolesFromApi(undefined, lang),
+				new Promise<Array<{ 
+					slug: string
+					name: string
+					emoji?: string
+					target_roles: string[]
+					role_definition?: string | Record<string, string>
+					short_description?: Record<string, string>
+					when_to_use?: Record<string, string>
+				}>>((_, reject) => 
+					setTimeout(() => reject(new Error("Timeout loading modes from API")), 5000)
+				)
+			])
+		} catch (error) {
+			// Не критичная ошибка - продолжаем работу с встроенными режимами
+			console.warn(`[Modes] Failed to load roles from API (non-critical):`, error)
+			rolesToAdd = [] // Продолжаем с пустым списком
+		}
+	}
+
+	// Добавляем роли из API
+	// Определяем язык для извлечения текста из многоязычных объектов
+	// Нормализуем язык для соответствия формату бэкенда (zh-CN -> zh, es-ES -> es, etc.)
+	const lang = language ? (normalizeLangForBackend(language) || language) : "ru" // По умолчанию русский, если язык не указан
+	console.log(`[Modes] getAllModes: language normalization - original="${language || "none"}", normalized="${lang}"`)
+	addApiRolesToModes(allModes, rolesToAdd, lang)
+
+	// Если обнаружена новая роль и передан context, запускаем экспорт в фоне
+	if ((allModes as any).__hasNewRole && context) {
+		console.log(`[Modes] 🔄 New role detected, triggering background export to ~/.roo`)
+		// Запускаем экспорт в фоне с небольшой задержкой, чтобы не блокировать инициализацию
+		setTimeout(() => {
+			import("../services/prompt-export-service").then(({ exportPromptsFromApi }) => {
+				exportPromptsFromApi(context, undefined, false).catch((error) => {
+					console.warn(`[Modes] ⚠️ Background export failed after new role detection: ${error}`)
+				})
+			}).catch((error) => {
+				console.warn(`[Modes] ⚠️ Failed to load export service: ${error}`)
+			})
+		}, 2000) // 2 секунды задержка, чтобы не блокировать инициализацию
+	}
+	
+	// Удаляем временный флаг
+	delete (allModes as any).__hasNewRole
 
 	return allModes
 }
@@ -371,11 +669,11 @@ export const defaultPrompts: Readonly<CustomModePrompts> = Object.freeze(
 )
 
 // Helper function to get all modes with their prompt overrides from extension state
-export async function getAllModesWithPrompts(context: vscode.ExtensionContext): Promise<ModeConfig[]> {
+export async function getAllModesWithPrompts(context: ExtensionContext): Promise<ModeConfig[]> {
 	const customModes = (await context.globalState.get<ModeConfig[]>("customModes")) || []
 	const customModePrompts = (await context.globalState.get<CustomModePrompts>("customModePrompts")) || {}
 
-	const allModes = getAllModes(customModes)
+	const allModes = await getAllModes(customModes, context)
 	return allModes.map((mode) => ({
 		...mode,
 		roleDefinition: customModePrompts[mode.slug]?.roleDefinition ?? mode.roleDefinition,
@@ -405,7 +703,8 @@ export async function getFullModeDetails(
 	// Get the base custom instructions
 	const baseCustomInstructions = promptComponent?.customInstructions || baseMode.customInstructions || ""
 	const baseWhenToUse = promptComponent?.whenToUse || baseMode.whenToUse || ""
-	const baseDescription = promptComponent?.description || baseMode.description || ""
+	// Use pickTextFromMultilang for description to support multilingual values
+	const baseDescription = pickTextFromMultilang(promptComponent?.description, options?.language) || baseMode.description || ""
 
 	// If we have cwd, load and combine all custom instructions
 	let fullCustomInstructions = baseCustomInstructions
@@ -440,12 +739,26 @@ export function getRoleDefinition(modeSlug: string, customModes?: ModeConfig[]):
 }
 
 // Helper function to safely get description
-export function getDescription(modeSlug: string, customModes?: ModeConfig[]): string {
+// Supports multilingual description from customModePrompts
+export function getDescription(
+	modeSlug: string, 
+	customModes?: ModeConfig[],
+	customModePrompts?: CustomModePrompts,
+	language?: string
+): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
 		console.warn(`No mode found for slug: ${modeSlug}`)
 		return ""
 	}
+	
+	// Check if there's a multilingual description in customModePrompts
+	const promptComponent = customModePrompts?.[modeSlug]
+	if (promptComponent?.description !== undefined) {
+		return pickTextFromMultilang(promptComponent.description, language)
+	}
+	
+	// Fallback to mode description
 	return mode.description ?? ""
 }
 

@@ -32,6 +32,8 @@ import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
+import { refreshAllPromptsFromApi } from "./services/prompt-api-service"
+import { promptWebSocketService } from "./services/prompt-websocket-service"
 
 import {
 	handleUri,
@@ -245,6 +247,92 @@ export async function activate(context: vscode.ExtensionContext) {
 			context.subscriptions.push(watcher)
 		})
 	}
+
+	// Автоматическое обновление промптов из API с распределенной нагрузкой
+	const BASE_REFRESH_INTERVAL_MS = 10 * 60 * 1000 + 24 * 1000 // 624 секунды базовый интервал
+	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс (300 секунд)
+	const JITTER_PERCENT = 0.15 // ±15% разброс для каждого интервала (~94 секунды)
+	
+	const language = formatLanguage(vscode.env.language)
+	
+	// Генерируем детерминированный jitter на основе machineId для стабильности
+	// Это гарантирует, что каждый клиент получает свое уникальное время обновления
+	const machineId = vscode.env.machineId
+	const machineHash = machineId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+	const initialDelay = machineHash % INITIAL_JITTER_RANGE_MS
+	
+	outputChannel.appendLine(`[AutoRefresh] Initial refresh scheduled in ${Math.round(initialDelay / 1000)}s (machineId hash-based distribution)`)
+	
+	let refreshTimeoutHandle: NodeJS.Timeout | undefined
+	
+	// Планирование следующего обновления с jitter
+	const scheduleNextRefresh = () => {
+		// Добавляем случайный jitter к базовому интервалу для распределения нагрузки
+		// Math.random() - 0.5 дает диапазон [-0.5, 0.5], умножаем на 2 * JITTER_PERCENT для получения ±15%
+		const jitter = (Math.random() - 0.5) * 2 * JITTER_PERCENT * BASE_REFRESH_INTERVAL_MS
+		const nextInterval = BASE_REFRESH_INTERVAL_MS + jitter
+		
+		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
+		
+		refreshTimeoutHandle = setTimeout(() => {
+			outputChannel.appendLine(`[AutoRefresh] Starting automatic refresh...`)
+			refreshAllPromptsFromApi(context, language)
+				.catch((error) => {
+					outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts: ${error.message || error}`)
+				})
+				.finally(() => {
+					// Планируем следующее обновление после завершения текущего
+					scheduleNextRefresh()
+				})
+		}, nextInterval)
+	}
+	
+	// Первая загрузка с детерминированной задержкой (распределяем пользователей по времени)
+	const initialRefreshHandle = setTimeout(() => {
+		outputChannel.appendLine(`[AutoRefresh] Starting initial refresh...`)
+		refreshAllPromptsFromApi(context, language)
+			.catch((error) => {
+				outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts on activation: ${error.message || error}`)
+			})
+			.finally(() => {
+				// Запускаем цикл обновлений после первого обновления
+				scheduleNextRefresh()
+			})
+	}, initialDelay)
+	
+	// Добавляем очистку таймеров при деактивации
+	context.subscriptions.push({
+		dispose: () => {
+			if (initialRefreshHandle) {
+				clearTimeout(initialRefreshHandle)
+			}
+			if (refreshTimeoutHandle) {
+				clearTimeout(refreshTimeoutHandle)
+			}
+		}
+	})
+	
+	outputChannel.appendLine(`[AutoRefresh] ✅ Automatic prompt refresh enabled with load distribution`)
+	outputChannel.appendLine(`[AutoRefresh] Base interval: ${BASE_REFRESH_INTERVAL_MS / 1000}s (${Math.round(BASE_REFRESH_INTERVAL_MS / 60000)}min)`)
+	outputChannel.appendLine(`[AutoRefresh] Jitter range: ±${Math.round(JITTER_PERCENT * 100)}% (~${Math.round(BASE_REFRESH_INTERVAL_MS * JITTER_PERCENT / 1000)}s)`)
+	outputChannel.appendLine(`[AutoRefresh] Effective interval: ${Math.round(BASE_REFRESH_INTERVAL_MS * (1 - JITTER_PERCENT) / 60000)}-${Math.round(BASE_REFRESH_INTERVAL_MS * (1 + JITTER_PERCENT) / 60000)}min`)
+
+	// Initialize WebSocket for real-time prompt updates (silent background updates)
+	// This allows instant prompt updates when admin publishes without waiting for polling
+	// ⚠️ ВАЖНО: initialize теперь async, запускаем в фоне
+	promptWebSocketService.initialize(context, language).then(() => {
+		context.subscriptions.push({ dispose: () => promptWebSocketService.dispose() })
+		outputChannel.appendLine(`[PromptWS] ✅ WebSocket real-time updates enabled`)
+	}).catch((error) => {
+		outputChannel.appendLine(`[PromptWS] ⚠️ Failed to initialize WebSocket: ${error instanceof Error ? error.message : String(error)}`)
+	})
+
+	// Export prompts on first install or update (non-blocking)
+	// This populates both ~/.roo and dist/prompts directories
+	const { exportPromptsOnFirstInstall } = await import("./services/prompt-export-service")
+	exportPromptsOnFirstInstall(context).catch((error) => {
+		outputChannel.appendLine(`[Extension] ⚠️ Failed to export prompts on first install: ${error.message || error}`)
+	})
 
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }

@@ -50,7 +50,11 @@ if (!isTestEnv) {
 				})
 			})
 
-			console.log(`Loaded translations for languages: ${Object.keys(translations).join(", ")}`)
+			// Log loaded namespaces for each language
+			Object.keys(translations).forEach((lang) => {
+				const namespaces = Object.keys(translations[lang])
+				console.log(`Loaded translations for ${lang}: namespaces=${namespaces.join(", ")}`)
+			})
 		} catch (dirError) {
 			console.error(`Error processing directory ${localesDir}:`, dirError)
 		}
@@ -68,6 +72,19 @@ i18next.init({
 	interpolation: {
 		escapeValue: false,
 	},
+	// Enable namespace support
+	nsSeparator: ":",
+	keySeparator: ".",
+	// Support for language variants (pt-BR -> pt-BR, fallback to pt, then en)
+	load: "languageOnly",
+	cleanCode: true,
+	// Return empty string if translation not found (instead of key)
+	returnEmptyString: false,
+	returnNull: false,
+	// Default namespace (optional, but helps with fallback)
+	defaultNS: "common",
+	// Fallback namespace if translation not found in specified namespace
+	fallbackNS: ["common"],
 })
 
 export default i18next

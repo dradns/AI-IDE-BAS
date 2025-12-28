@@ -10,5 +10,28 @@
 	"cloudBenefitHistory": "Histórico de tarefas online",
 	"cloudBenefitSharing": "Recursos de compartilhamento e colaboração",
 	"cloudBenefitMetrics": "Métricas de uso baseadas em tarefas, tokens e custos",
-	"visitCloudWebsite": "Visitar AI IDE BAS Cloud"
+	"visitCloudWebsite": "Visitar AI IDE BAS Cloud",
+	"sendFeedback": "Enviar Feedback",
+	"feedback": {
+		"title": "Enviar Feedback",
+		"description": "Ajude-nos a melhorar compartilhando sua experiência com a extensão.",
+		"rating": "Avaliação",
+		"ratingRequired": "Avaliação *",
+		"comment": "Comentário",
+		"commentOptional": "Comentário (opcional)",
+		"placeholder": "Conte-nos mais sobre sua experiência...",
+		"submit": "Enviar Feedback",
+		"submitting": "Enviando...",
+		"cancel": "Cancelar",
+		"close": "Fechar",
+		"submittedTitle": "Feedback Enviado",
+		"submittedDescription": "Obrigado pelo seu feedback!",
+		"submittedMessage": "Seu feedback foi enviado com sucesso e nos ajuda a melhorar a extensão.",
+		"loginRequired": "Por favor, faça login para enviar feedback",
+		"selectRating": "Por favor, selecione uma avaliação",
+		"submitFailed": "Falha ao enviar feedback",
+		"rateLimitExceeded": "Limite de taxa excedido. Máximo de 5 feedbacks por 10 minutos",
+		"rateStars": "Avaliar {{count}} estrela",
+		"rateStars_plural": "Avaliar {{count}} estrelas"
+	}
 }

@@ -10,8 +10,15 @@
 !package.json
 !package.nls.*
 
-# Include the built extension
+# Include the built extension (but exclude dist/prompts)
 !dist
+!dist/**
+!dist/**/*
+
+# Exclude dist/prompts (will be populated from API on first install)
+# This must come AFTER !dist/** to override the inclusion
+dist/prompts
+dist/prompts/**
 
 # Include the built webview
 !**/*.map
@@ -34,3 +41,10 @@
 
 # Include .env file for telemetry
 !.env
+
+# Exclude all node_modules (dependencies are bundled in dist/extension.js)
+# But include ws module (native module, cannot be bundled, copied by vscode:prepublish script)
+!node_modules
+node_modules/*
+!node_modules/ws
+!node_modules/ws/**

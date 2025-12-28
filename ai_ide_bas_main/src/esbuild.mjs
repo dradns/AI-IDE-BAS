@@ -78,10 +78,22 @@ async function main() {
 			name: "copyPrompts",
 			setup(build) {
 				build.onEnd(() => {
+					// NOTE: Prompts are now loaded from API on first install, not from dist/prompts
+					// This plugin is kept for backward compatibility but dist/prompts is excluded from VSIX
+					// Prompts will be populated by exportPromptsOnFirstInstall() at runtime
+					
+					// Skip copying prompts during production build (for VSIX packaging)
+					// Prompts will be loaded from API and saved to dist/prompts at runtime
+					if (production) {
+						console.log(`[copyPrompts] Skipping prompts copy in production build - will be loaded from API on first install`)
+						return
+					}
+					
+					// Only copy prompts during development (non-production builds)
 					// Copy built-in prompts first, then overlay optional sources
 						copyPaths(
 						[
-								["../roo-code/src/prompts", "prompts"],
+								["../roo-code/src/prompts", "prompts", { optional: true }],
 							// Optionally include repository-level Modes directory with role subfolders
 							["../../Modes", "prompts", { optional: true }],
 							// Include repository-level .roo directory with rules (required for export)
@@ -97,31 +109,38 @@ async function main() {
 						distDir,
 					)
 
-						// Manually copy .txt prompts to root and en/ subfolder
+						// Manually copy .txt prompts to root and en/ subfolder (if source exists)
 						const promptsSourceDir = path.join(srcDir, "../roo-code/src/prompts")
-						const promptFiles = fs.readdirSync(promptsSourceDir).filter(f => f.endsWith('.txt'))
-						
-						// Copy to root (legacy)
-						const promptsRootDir = path.join(distDir, "prompts")
-						for (const file of promptFiles) {
-							fs.copyFileSync(
-								path.join(promptsSourceDir, file),
-								path.join(promptsRootDir, file)
-							)
+						if (fs.existsSync(promptsSourceDir)) {
+							const promptFiles = fs.readdirSync(promptsSourceDir).filter(f => f.endsWith('.txt'))
+							
+							// Copy to root (legacy)
+							const promptsRootDir = path.join(distDir, "prompts")
+							if (!fs.existsSync(promptsRootDir)) {
+								fs.mkdirSync(promptsRootDir, { recursive: true })
+							}
+							for (const file of promptFiles) {
+								fs.copyFileSync(
+									path.join(promptsSourceDir, file),
+									path.join(promptsRootDir, file)
+								)
+							}
+							
+							// Copy to en/ subfolder (language fallback - ALWAYS available)
+							const promptsEnDir = path.join(distDir, "prompts", "en")
+							if (!fs.existsSync(promptsEnDir)) {
+								fs.mkdirSync(promptsEnDir, { recursive: true })
+							}
+							for (const file of promptFiles) {
+								fs.copyFileSync(
+									path.join(promptsSourceDir, file),
+									path.join(promptsEnDir, file)
+								)
+							}
+							console.log(`[copyPrompts] Copied ${promptFiles.length} .txt files to prompts/ and prompts/en/ (always available)`)
+						} else {
+							console.log(`[copyPrompts] Source directory ${promptsSourceDir} not found, skipping .txt file copy`)
 						}
-						
-						// Copy to en/ subfolder (language fallback - ALWAYS available)
-						const promptsEnDir = path.join(distDir, "prompts", "en")
-						if (!fs.existsSync(promptsEnDir)) {
-							fs.mkdirSync(promptsEnDir, { recursive: true })
-						}
-						for (const file of promptFiles) {
-							fs.copyFileSync(
-								path.join(promptsSourceDir, file),
-								path.join(promptsEnDir, file)
-							)
-						}
-						console.log(`[copyPrompts] Copied ${promptFiles.length} .txt files to prompts/ and prompts/en/ (always available)`) 
 				})
 			},
 		},
@@ -151,7 +170,7 @@ async function main() {
 		plugins,
 		entryPoints: ["extension.ts"],
 		outfile: "dist/extension.js",
-		external: ["vscode"],
+		external: ["vscode", "ws"],
 	}
 
 	/**

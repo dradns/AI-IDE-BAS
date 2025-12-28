@@ -68,6 +68,7 @@ export interface WebviewMessage {
 		| "requestLmStudioModels"
 		| "requestVsCodeLmModels"
 		| "requestHuggingFaceModels"
+		| "requestApiRoles"
 		| "openImage"
 		| "saveImage"
 		| "openFile"
@@ -136,9 +137,11 @@ export interface WebviewMessage {
 		| "mode"
 		| "updatePrompt"
 		| "updateSupportPrompt"
+		| "checkPromptsUpdate"
 		| "getSystemPrompt"
 		| "copySystemPrompt"
 		| "systemPrompt"
+		| "saveSystemPromptForMode"
 		| "enhancementApiConfigId"
 		| "updateExperimental"
 		| "autoApprovalEnabled"
@@ -194,6 +197,8 @@ export interface WebviewMessage {
 		| "files:download"
 		| "files:share"
 		| "files:me"
+		| "feedback:submit"
+		| "feedback:dismissed"
 		| "filterMarketplaceItems"
 		| "marketplaceButtonClicked"
 		| "installMarketplaceItem"
@@ -222,6 +227,7 @@ export interface WebviewMessage {
 		| "createCommand"
 		| "insertTextIntoTextarea"
 	text?: string
+	language?: string
 	editedMessageContent?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account"
 	disabled?: boolean
@@ -264,6 +270,12 @@ export interface WebviewMessage {
 	visibility?: ShareVisibility // For share visibility
 	hasContent?: boolean // For checkRulesDirectoryResult
 	checkOnly?: boolean // For deleteCustomMode check
+	feedback?: {
+		rating: number
+		comment?: string | null
+		session_id?: string | null
+		source?: "manual" | "automatic" // "manual" = from profile, "automatic" = from task completion
+	}
 	codeIndexSettings?: {
 		// Global state settings
 		codebaseIndexEnabled: boolean

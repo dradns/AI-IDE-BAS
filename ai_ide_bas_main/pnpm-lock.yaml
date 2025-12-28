@@ -778,6 +778,9 @@ importers:
       workerpool:
         specifier: ^9.2.0
         version: 9.2.0
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.2
       yaml:
         specifier: ^2.8.0
         version: 2.8.0
@@ -842,6 +845,9 @@ importers:
       '@types/vscode':
         specifier: ^1.84.0
         version: 1.100.0
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.18.1
       '@vscode/test-electron':
         specifier: ^2.5.2
         version: 2.5.2
@@ -13335,7 +13341,6 @@ snapshots:
   '@types/ws@8.18.1':
     dependencies:
       '@types/node': 20.19.1
-    optional: true
 
   '@types/yargs-parser@21.0.3': {}
 

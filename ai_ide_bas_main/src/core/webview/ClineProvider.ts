@@ -41,7 +41,7 @@ import { findLast } from "../../shared/array"
 import { supportPrompt } from "../../shared/support-prompt"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { ExtensionMessage, MarketplaceInstalledMetadata } from "../../shared/ExtensionMessage"
-import { Mode, defaultModeSlug, getModeBySlug } from "../../shared/modes"
+import { Mode, defaultModeSlug, getModeBySlug, getAllModes } from "../../shared/modes"
 import { experimentDefault, experiments, EXPERIMENT_IDS } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
 import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
@@ -58,6 +58,7 @@ import type { IndexProgressUpdate } from "../../services/code-index/interfaces/m
 import { MdmService } from "../../services/mdm/MdmService"
 import { fileExistsAtPath } from "../../utils/fs"
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
+import { checkAndRefreshAllPrompts } from "../../services/prompt-refresh-service"
 import { ContextProxy } from "../config/ContextProxy"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 import { CustomModesManager } from "../config/CustomModesManager"
@@ -411,6 +412,13 @@ export class ClineProvider
 	async resolveWebviewView(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
 		this.log("Resolving webview view")
 
+		// Проверяем обновления промптов при активации/reload расширения (в фоне)
+		this.getState().then(state => {
+			checkAndRefreshAllPrompts(this.context, state?.language).catch(err => {
+				console.debug(`[resolveWebviewView] Prompt refresh failed:`, err)
+			})
+		})
+
 		this.view = webviewView
 
 		// Set panel reference according to webview type
@@ -586,7 +594,32 @@ export class ClineProvider
 			rootTask: this.clineStack.length > 0 ? this.clineStack[0] : undefined,
 			parentTask,
 			taskNumber: this.clineStack.length + 1,
-			onCreated: (cline) => this.emit("clineCreated", cline),
+			onCreated: (cline) => {
+				this.emit("clineCreated", cline)
+				// Listen for task completion to show feedback dialog
+				cline.on("taskCompleted", async (taskId) => {
+					this.outputChannel.appendLine(`[Feedback] Task completed: ${taskId}, parentTask: ${cline.parentTask ? 'yes' : 'no'}`)
+					// Only show feedback for root tasks (not subtasks)
+					if (!cline.parentTask) {
+						// Check if we should show feedback dialog (respect user preferences)
+						const shouldShow = await this.shouldShowFeedbackDialog()
+						if (shouldShow) {
+							this.outputChannel.appendLine(`[Feedback] Sending showFeedbackDialog message to webview`)
+							// Delay slightly to let completion UI render
+							setTimeout(async () => {
+								await this.postMessageToWebview({
+									type: "showFeedbackDialog",
+									taskId: taskId,
+								})
+							}, 1000)
+						} else {
+							this.outputChannel.appendLine(`[Feedback] Dialog not shown due to frequency rules`)
+						}
+					} else {
+						this.outputChannel.appendLine(`[Feedback] Skipped: this is a subtask, not a root task`)
+					}
+				})
+			},
 			...options,
 		})
 
@@ -604,9 +637,14 @@ export class ClineProvider
 
 		// If the history item has a saved mode, restore it and its associated API configuration
 		if (historyItem.mode) {
-			// Validate that the mode still exists
+			// Validate that the mode still exists (including API roles)
 			const customModes = await this.customModesManager.getCustomModes()
-			const modeExists = getModeBySlug(historyItem.mode, customModes) !== undefined
+			const state = await this.getState()
+			const language = state.language
+			
+			// Use getAllModes to check if mode exists, including API roles
+			const allModes = await getAllModes(customModes, this.context, undefined, language)
+			const modeExists = allModes.some(mode => mode.slug === historyItem.mode)
 
 			if (!modeExists) {
 				// Mode no longer exists, fall back to default mode
@@ -665,7 +703,9 @@ export class ClineProvider
 			rootTask: historyItem.rootTask,
 			parentTask: historyItem.parentTask,
 			taskNumber: historyItem.number,
-			onCreated: (cline) => this.emit("clineCreated", cline),
+			onCreated: (cline) => {
+				this.emit("clineCreated", cline)
+			},
 		})
 
 		await this.addClineToStack(cline)
@@ -749,7 +789,7 @@ export class ClineProvider
 			`img-src ${webview.cspSource} https: data:`,
 			`media-src ${webview.cspSource}`,
 			`script-src 'unsafe-eval' ${webview.cspSource} https://* https://*.posthog.com http://${localServerUrl} http://0.0.0.0:${localPort} 'nonce-${nonce}'`,
-			`connect-src ${webview.cspSource} https://* https://*.posthog.com ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort}`,
+			`connect-src ${webview.cspSource} https://* https://*.posthog.com https://api-test.aiidebas.com https://api.aiidebas.com ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort}`,
 		]
 
 		return /*html*/ `
@@ -831,7 +871,7 @@ export class ClineProvider
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
             <meta name="theme-color" content="#000000">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:; media-src ${webview.cspSource}; script-src ${webview.cspSource} 'wasm-unsafe-eval' 'nonce-${nonce}' https://us-assets.i.posthog.com 'strict-dynamic'; connect-src ${webview.cspSource} https://openrouter.ai https://api.requesty.ai https://us.i.posthog.com https://us-assets.i.posthog.com;">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com data:; media-src ${webview.cspSource}; script-src ${webview.cspSource} 'wasm-unsafe-eval' 'nonce-${nonce}' https://us-assets.i.posthog.com 'strict-dynamic'; connect-src ${webview.cspSource} https://openrouter.ai https://api.requesty.ai https://us.i.posthog.com https://us-assets.i.posthog.com https://api-test.aiidebas.com https://api.aiidebas.com;">
             <link rel="stylesheet" type="text/css" href="${stylesUri}">
 			<link href="${codiconsUri}" rel="stylesheet" />
 			<script nonce="${nonce}">
@@ -1111,17 +1151,53 @@ export class ClineProvider
 	// MCP
 
 	async ensureMcpServersDirectoryExists(): Promise<string> {
-		// Get platform-specific application data directory
-		let mcpServersDir: string
-		if (process.platform === "win32") {
-			// Windows: %APPDATA%\Roo-Code\MCP
-			mcpServersDir = path.join(os.homedir(), "AppData", "Roaming", "Roo-Code", "MCP")
-		} else if (process.platform === "darwin") {
-			// macOS: ~/Documents/Cline/MCP
-			mcpServersDir = path.join(os.homedir(), "Documents", "Cline", "MCP")
+		// Use VS Code's global storage directory for all platforms
+		// This ensures no permission prompts and consistent behavior across OS
+		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
+		const mcpServersDir = path.join(globalStoragePath, "MCP")
+		
+		// Migration: Check if old platform-specific directories exist and log a message
+		// (We don't auto-migrate to avoid breaking existing server configurations)
+		if (process.platform === "darwin") {
+			const oldDir = path.join(os.homedir(), "Documents", "Cline", "MCP")
+			try {
+				const oldDirExists = await fs.access(oldDir).then(() => true).catch(() => false)
+				if (oldDirExists) {
+					const oldDirContents = await fs.readdir(oldDir).catch(() => [])
+					if (oldDirContents.length > 0) {
+						console.log(`[MCP] Note: Old MCP directory found at ${oldDir} with ${oldDirContents.length} items. New servers will be created in ${mcpServersDir}`)
+					}
+				}
+			} catch (error) {
+				// Ignore errors during migration check
+			}
+		} else if (process.platform === "win32") {
+			const oldDir = path.join(os.homedir(), "AppData", "Roaming", "Roo-Code", "MCP")
+			try {
+				const oldDirExists = await fs.access(oldDir).then(() => true).catch(() => false)
+				if (oldDirExists) {
+					const oldDirContents = await fs.readdir(oldDir).catch(() => [])
+					if (oldDirContents.length > 0) {
+						console.log(`[MCP] Note: Old MCP directory found at ${oldDir} with ${oldDirContents.length} items. New servers will be created in ${mcpServersDir}`)
+					}
+				}
+			} catch (error) {
+				// Ignore errors during migration check
+			}
 		} else {
-			// Linux: ~/.local/share/Cline/MCP
-			mcpServersDir = path.join(os.homedir(), ".local", "share", "Roo-Code", "MCP")
+			// Linux
+			const oldDir = path.join(os.homedir(), ".local", "share", "Roo-Code", "MCP")
+			try {
+				const oldDirExists = await fs.access(oldDir).then(() => true).catch(() => false)
+				if (oldDirExists) {
+					const oldDirContents = await fs.readdir(oldDir).catch(() => [])
+					if (oldDirContents.length > 0) {
+						console.log(`[MCP] Note: Old MCP directory found at ${oldDir} with ${oldDirContents.length} items. New servers will be created in ${mcpServersDir}`)
+					}
+				}
+			} catch (error) {
+				// Ignore errors during migration check
+			}
 		}
 
 		try {
@@ -1551,6 +1627,7 @@ export class ClineProvider
 			followupAutoApproveTimeoutMs,
 			includeDiagnosticMessages,
 			maxDiagnosticMessages,
+			cachedApiRoles,
 		} = await this.getState()
 
 		const telemetryKey = process.env.POSTHOG_API_KEY
@@ -1675,6 +1752,8 @@ export class ClineProvider
 			followupAutoApproveTimeoutMs: followupAutoApproveTimeoutMs ?? 60000,
 			includeDiagnosticMessages: includeDiagnosticMessages ?? true,
 			maxDiagnosticMessages: maxDiagnosticMessages ?? 50,
+			// Cached API roles for instant initial load without fallback flash
+			cachedApiRoles,
 		}
 	}
 
@@ -1845,6 +1924,8 @@ export class ClineProvider
 			// Add diagnostic message settings
 			includeDiagnosticMessages: stateValues.includeDiagnosticMessages ?? true,
 			maxDiagnosticMessages: stateValues.maxDiagnosticMessages ?? 50,
+			// Cached API roles for instant initial load without fallback flash
+			cachedApiRoles: stateValues.cachedApiRoles,
 		}
 	}
 
@@ -1888,6 +1969,81 @@ export class ClineProvider
 
 	public async setValues(values: RooCodeSettings) {
 		await this.contextProxy.setValues(values)
+	}
+
+	/**
+	 * Check if feedback dialog should be shown based on user preferences and timing
+	 * Rules:
+	 * - If user dismissed (closed without submitting) in last 24 hours: don't show
+	 * - If user submitted feedback in last 7 days: don't show
+	 * - Don't show more than once per hour (to avoid spam)
+	 * - Always show if none of the above conditions are met
+	 */
+	private async shouldShowFeedbackDialog(): Promise<boolean> {
+		const now = Date.now()
+		const ONE_HOUR_MS = 60 * 60 * 1000
+		const ONE_DAY_MS = 24 * 60 * 60 * 1000
+		const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+
+		// Get stored timestamps from workspaceState
+		const lastDismissedAt = this.context.workspaceState.get<number>("feedback.lastDismissedAt")
+		const lastSubmittedAt = this.context.workspaceState.get<number>("feedback.lastSubmittedAt")
+		const lastShownAt = this.context.workspaceState.get<number>("feedback.lastShownAt")
+
+		this.outputChannel.appendLine(`[Feedback] Checking if dialog should be shown:`)
+		this.outputChannel.appendLine(`  - lastDismissedAt: ${lastDismissedAt ? new Date(lastDismissedAt).toISOString() : 'none'} (${lastDismissedAt ? Math.round((now - lastDismissedAt) / (60 * 60 * 1000)) : 0} hours ago)`)
+		this.outputChannel.appendLine(`  - lastSubmittedAt: ${lastSubmittedAt ? new Date(lastSubmittedAt).toISOString() : 'none'} (${lastSubmittedAt ? Math.round((now - lastSubmittedAt) / (24 * 60 * 60 * 1000)) : 0} days ago)`)
+		this.outputChannel.appendLine(`  - lastShownAt: ${lastShownAt ? new Date(lastShownAt).toISOString() : 'none'} (${lastShownAt ? Math.round((now - lastShownAt) / (60 * 60 * 1000)) : 0} hours ago)`)
+
+		// Rule 1: If dismissed in last 24 hours, don't show
+		if (lastDismissedAt && now - lastDismissedAt < ONE_DAY_MS) {
+			this.outputChannel.appendLine(`[Feedback] Blocked: dismissed ${Math.round((now - lastDismissedAt) / (60 * 60 * 1000))} hours ago (< 24h)`)
+			return false
+		}
+
+		// Rule 2: If submitted in last 7 days, don't show
+		if (lastSubmittedAt && now - lastSubmittedAt < SEVEN_DAYS_MS) {
+			this.outputChannel.appendLine(`[Feedback] Blocked: submitted ${Math.round((now - lastSubmittedAt) / (24 * 60 * 60 * 1000))} days ago (< 7 days)`)
+			return false
+		}
+
+		// Rule 3: Don't show more than once per hour
+		if (lastShownAt && now - lastShownAt < ONE_HOUR_MS) {
+			this.outputChannel.appendLine(`[Feedback] Blocked: shown ${Math.round((now - lastShownAt) / (60 * 1000))} minutes ago (< 1h)`)
+			return false
+		}
+
+		// All checks passed, show the dialog
+		// Store the current time as lastShownAt
+		await this.context.workspaceState.update("feedback.lastShownAt", now)
+		this.outputChannel.appendLine(`[Feedback] All checks passed, showing dialog`)
+		return true
+	}
+
+	/**
+	 * Mark feedback dialog as dismissed (closed without submitting)
+	 */
+	public async markFeedbackDismissed(): Promise<void> {
+		await this.context.workspaceState.update("feedback.lastDismissedAt", Date.now())
+	}
+
+	/**
+	 * Mark feedback as submitted
+	 */
+	public async markFeedbackSubmitted(): Promise<void> {
+		await this.context.workspaceState.update("feedback.lastSubmittedAt", Date.now())
+		// Clear dismissed timestamp when feedback is submitted
+		await this.context.workspaceState.update("feedback.lastDismissedAt", undefined)
+	}
+
+	/**
+	 * Clear all feedback state (for testing/debugging)
+	 */
+	public async clearFeedbackState(): Promise<void> {
+		await this.context.workspaceState.update("feedback.lastDismissedAt", undefined)
+		await this.context.workspaceState.update("feedback.lastSubmittedAt", undefined)
+		await this.context.workspaceState.update("feedback.lastShownAt", undefined)
+		this.outputChannel.appendLine("[Feedback] Cleared all feedback state")
 	}
 
 	// cwd

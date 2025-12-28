@@ -2,7 +2,7 @@ import delay from "delay"
 
 import { ToolUse, AskApproval, HandleError, PushToolResult, RemoveClosingTag } from "../../shared/tools"
 import { Task } from "../task/Task"
-import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
+import { defaultModeSlug, getModeBySlug, getAllModes } from "../../shared/modes"
 import { formatResponse } from "../prompts/responses"
 import { t } from "../../i18n"
 
@@ -47,8 +47,16 @@ export async function newTaskTool(
 			// Un-escape one level: \\@ -> \@ (removes one backslash for hierarchical subtasks)
 			const unescapedMessage = message.replace(/\\\\@/g, "\\@")
 
-			// Verify the mode exists
-			const targetMode = getModeBySlug(mode, (await cline.providerRef.deref()?.getState())?.customModes)
+			// Verify the mode exists (including API roles)
+			const provider = cline.providerRef.deref()
+			if (!provider) {
+				pushToolResult(formatResponse.toolError(`Provider not available`))
+				return
+			}
+			const state = await provider.getState()
+			const customModes = state.customModes
+			const allModes = await getAllModes(customModes, provider.context, undefined, state.language)
+			const targetMode = allModes.find(m => m.slug === mode)
 
 			if (!targetMode) {
 				pushToolResult(formatResponse.toolError(`Invalid mode: ${mode}`))
@@ -67,11 +75,7 @@ export async function newTaskTool(
 				return
 			}
 
-			const provider = cline.providerRef.deref()
-
-			if (!provider) {
-				return
-			}
+			// provider уже объявлен выше, используем его
 
 			if (cline.enableCheckpoints) {
 				cline.checkpointSave(true)

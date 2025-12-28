@@ -23,6 +23,7 @@ import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { DeleteMessageDialog, EditMessageDialog } from "./components/chat/MessageModificationConfirmationDialog"
 import ErrorBoundary from "./components/ErrorBoundary"
 import { AccountView } from "./components/account/AccountView"
+import { FeedbackForm } from "./components/account/FeedbackForm"
 import { TooltipProvider } from "./components/ui/tooltip"
 import { STANDARD_TOOLTIP_DELAY } from "./components/ui/standard-tooltip"
 
@@ -45,6 +46,7 @@ interface EditMessageDialogState {
 	text: string
 	images?: string[]
 }
+
 
 // Memoize dialog components to prevent unnecessary re-renders
 const MemoizedDeleteMessageDialog = React.memo(DeleteMessageDialog)
@@ -100,6 +102,9 @@ const App = () => {
 		text: "",
 		images: [],
 	})
+
+
+	const [isFilesAuthorized, setIsFilesAuthorized] = useState<boolean>(false)
 
 	const settingsRef = useRef<SettingsViewRef>(null)
 	const chatViewRef = useRef<ChatViewRef>(null)
@@ -169,6 +174,11 @@ const App = () => {
 				})
 			}
 
+
+			if (message.type === "files:authChanged") {
+				setIsFilesAuthorized(Boolean(message.isAuthorized))
+			}
+
 			if (message.type === "acceptInput") {
 				chatViewRef.current?.acceptInput()
 			}
@@ -195,6 +205,9 @@ const App = () => {
 	useEffect(() => {
 		vscode.postMessage({ type: "webviewDidLaunch" })
 		vscode.postMessage({ type: "files:status" })
+		// Also check auth status on mount
+		const checkAuth = () => vscode.postMessage({ type: "files:status" })
+		checkAuth()
 	}, [])
 
 	// Initialize source map support for better error reporting

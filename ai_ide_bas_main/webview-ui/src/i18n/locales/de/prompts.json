@@ -58,6 +58,12 @@
 		"export": "Modus exportieren",
 		"exporting": "Exportieren..."
 	},
+	"exportAllRoleRules": {
+		"title": "Regeln exportieren",
+		"description": "Exportiere alle Rollenregeln aus allen Modi in den Projektordner .roo zur Anpassung und Versionskontrolle.",
+		"success": "Alle Rollenregeln wurden in den Projektordner .roo exportiert",
+		"error": "Fehler beim Exportieren aller Rollenregeln"
+	},
 	"importMode": {
 		"selectLevel": "Wähle, wo dieser Modus importiert werden soll:",
 		"import": "Importieren",

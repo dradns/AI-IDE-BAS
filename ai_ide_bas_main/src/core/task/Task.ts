@@ -41,7 +41,7 @@ import { t } from "../../i18n"
 import { ClineApiReqCancelReason, ClineApiReqInfo } from "../../shared/ExtensionMessage"
 import { getApiMetrics } from "../../shared/getApiMetrics"
 import { ClineAskResponse } from "../../shared/WebviewMessage"
-import { defaultModeSlug } from "../../shared/modes"
+import { defaultModeSlug, getAllModes } from "../../shared/modes"
 import { DiffStrategy } from "../../shared/tools"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { getModelMaxOutputTokens } from "../../shared/api"
@@ -66,6 +66,7 @@ import { getWorkspacePath } from "../../utils/path"
 // prompts
 import { formatResponse } from "../prompts/responses"
 import { SYSTEM_PROMPT } from "../prompts/system"
+import { checkAndRefreshPromptForMode } from "../../services/prompt-refresh-service"
 
 // core modules
 import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
@@ -1812,12 +1813,24 @@ export class Task extends EventEmitter<ClineEvents> {
 			apiConfiguration,
 		} = state ?? {}
 
+		// Проверяем обновления промпта для текущего режима перед генерацией системного промпта
+		if (mode) {
+			const provider = this.providerRef.deref()
+			if (provider) {
+				await checkAndRefreshPromptForMode(provider.context, mode, language)
+			}
+		}
+
 		return await (async () => {
 			const provider = this.providerRef.deref()
 
 			if (!provider) {
 				throw new Error("Provider not available")
 			}
+
+			// ⚠️ ВАЖНО: Загружаем allModes (включая роли из API) для генерации системного промпта
+			// Это критично, так как системный промпт используется при отправке запроса к API
+			const allModes = await getAllModes(customModes, provider.context, undefined, language)
 
 			return SYSTEM_PROMPT(
 				provider.context,
@@ -1828,7 +1841,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				browserViewportSize,
 				mode,
 				customModePrompts,
-				customModes,
+				allModes, // Используем allModes вместо customModes, чтобы включить роли из API
 				customInstructions,
 				this.diffEnabled,
 				experiments,
@@ -1840,6 +1853,7 @@ export class Task extends EventEmitter<ClineEvents> {
 					maxConcurrentFileReads: maxConcurrentFileReads ?? 5,
 					todoListEnabled: apiConfiguration?.todoListEnabled ?? true,
 					useAgentRules: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useAgentRules") ?? true,
+					useRooRulesOnly: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useRooRulesOnly") ?? false,
 				},
 			)
 		})()

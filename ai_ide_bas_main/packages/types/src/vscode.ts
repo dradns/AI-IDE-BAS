@@ -65,6 +65,12 @@ export const commandIds = [
 	"exportAllRoleRules",
 	// Load mode info from rules
 	"loadModeInfo",
+	// Clear feedback state (for testing)
+	"clearFeedbackState",
+	// Clear prompt cache to force refresh from API
+	"clearPromptCache",
+	// Force refresh a specific prompt (bypass cache completely)
+	"forceRefreshPrompt",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]

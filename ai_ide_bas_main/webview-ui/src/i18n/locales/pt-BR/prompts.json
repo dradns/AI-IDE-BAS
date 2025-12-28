@@ -58,6 +58,13 @@
 		"export": "Exportar modo",
 		"exporting": "Exportando..."
 	},
+	"exportAllRoleRules": {
+		"title": "Exportar regras",
+		"description": "Exportar todas as regras de função de todos os modos para a pasta .roo do projeto para personalização e controle de versão.",
+		"success": "Todas as regras de função foram exportadas para a pasta .roo do projeto",
+		"error": "Falha ao exportar todas as regras de função",
+		"warning": "Falha ao carregar prompts da API. Por favor, verifique sua conexão com a internet."
+	},
 	"importMode": {
 		"selectLevel": "Escolha onde importar este modo:",
 		"import": "Importar",

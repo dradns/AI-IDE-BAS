@@ -143,6 +143,15 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setIncludeDiagnosticMessages: (value: boolean) => void
 	maxDiagnosticMessages?: number
 	setMaxDiagnosticMessages: (value: number) => void
+	apiRoles?: Array<{
+		slug: string
+		name: string
+		emoji?: string
+		target_roles: string[]
+		role_definition?: string | Record<string, string>
+		short_description?: Record<string, string>
+		when_to_use?: Record<string, string>
+	}>
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -282,7 +291,15 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			switch (message.type) {
 				case "state": {
 					const newState = message.state!
-					setState((prevState) => mergeExtensionState(prevState, newState))
+					setState((prevState) => {
+						const merged = mergeExtensionState(prevState, newState)
+						// Use cached API roles if apiRoles is not set yet
+						// This provides instant display of roles on initial load
+						if (!(prevState as any).apiRoles && (newState as any).cachedApiRoles) {
+							return { ...merged, apiRoles: (newState as any).cachedApiRoles }
+						}
+						return merged
+					})
 					// Do not block on welcome; always allow proceeding into the app UI
 					setShowWelcome(false)
 					setDidHydrateState(true)
@@ -358,6 +375,27 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					if (message.marketplaceInstalledMetadata !== undefined) {
 						setMarketplaceInstalledMetadata(message.marketplaceInstalledMetadata)
 					}
+					break
+				}
+				case "apiRoles": {
+					// Сохраняем роли из API в state для использования в компонентах
+					if (message.apiRoles !== undefined) {
+						setState((prevState) => ({
+							...prevState,
+							apiRoles: message.apiRoles,
+						}))
+					}
+					break
+				}
+				case "promptsUpdated": {
+					// Промпты были обновлены из админки через WebSocket
+					// Обновляем timestamp для инвалидации кэша компонентов
+					setState((prevState) => ({
+						...prevState,
+						promptsUpdatedAt: message.timestamp ?? Date.now(),
+					}))
+					// Тихо перезапрашиваем список ролей (для обновления удалённых/добавленных ролей)
+					vscode.postMessage({ type: "requestApiRoles" })
 					break
 				}
 			}

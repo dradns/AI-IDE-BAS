@@ -58,6 +58,13 @@
 		"export": "导出模式",
 		"exporting": "正在导出..."
 	},
+	"exportAllRoleRules": {
+		"title": "导出规则",
+		"description": "将所有模式的所有角色规则导出到项目的 .roo 文件夹，以便进行自定义和版本控制。",
+		"success": "所有角色规则已导出到项目的 .roo 文件夹",
+		"error": "导出所有角色规则失败",
+		"warning": "无法从 API 加载提示。请检查您的互联网连接。"
+	},
 	"importMode": {
 		"selectLevel": "选择导入模式的位置：",
 		"import": "导入",

@@ -2,9 +2,14 @@ import axios, { AxiosInstance } from "axios"
 import FormData from "form-data"
 import * as vscode from "vscode"
 
-import { AIIDEBAS_EXTENSION_URI_SCHEME, AIIDEBAS_PLATFORM_STORAGE_KEY } from "../../shared/constants"
+import {
+	AIIDEBAS_EXTENSION_URI_SCHEME,
+	AIIDEBAS_PLATFORM_STORAGE_KEY,
+	AIIDEBAS_API_BASE_URL,
+	AIIDEBAS_API_BASE_URL_WITHOUT_PATH,
+} from "../../shared/constants"
 
-const BASE_URL = "https://api.aiidebas.com/api/v1"
+const BASE_URL = AIIDEBAS_API_BASE_URL
 
 export type FileItem = { id?: string; filename: string; public_url?: string | null; project?: string | null }
 
@@ -17,7 +22,7 @@ export class AiIdeBasFilesClient {
 		this.http.interceptors.request.use(async (config) => {
 			const token = await this.getToken()
 			if (token) {
-				config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` }
+				config.headers.Authorization = `Bearer ${token}`
 			}
 			return config
 		})
@@ -50,7 +55,7 @@ export class AiIdeBasFilesClient {
 		const s = state ? `&state=${encodeURIComponent(state)}` : ""
 		const platform = this.getPlatform()
 		const platformQuery = platform ? `&platform=${encodeURIComponent(platform)}` : ""
-		return `https://api.aiidebas.com/api/v1/login?redirect_uri=${cb}${s}${platformQuery}`
+		return `${AIIDEBAS_API_BASE_URL_WITHOUT_PATH}/api/v1/login?redirect_uri=${cb}${s}${platformQuery}`
 	}
 
 	public async logout(): Promise<void> {

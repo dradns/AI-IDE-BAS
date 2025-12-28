@@ -3,7 +3,7 @@ import delay from "delay"
 import { Task } from "../task/Task"
 import { ToolUse, AskApproval, HandleError, PushToolResult, RemoveClosingTag } from "../../shared/tools"
 import { formatResponse } from "../prompts/responses"
-import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
+import { defaultModeSlug, getModeBySlug, getAllModes } from "../../shared/modes"
 
 export async function switchModeTool(
 	cline: Task,
@@ -36,8 +36,17 @@ export async function switchModeTool(
 
 			cline.consecutiveMistakeCount = 0
 
-			// Verify the mode exists
-			const targetMode = getModeBySlug(mode_slug, (await cline.providerRef.deref()?.getState())?.customModes)
+			// Verify the mode exists (including API roles)
+			const provider = cline.providerRef.deref()
+			if (!provider) {
+				cline.recordToolError("switch_mode")
+				pushToolResult(formatResponse.toolError(`Provider not available`))
+				return
+			}
+			const state = await provider.getState()
+			const customModes = state.customModes
+			const allModes = await getAllModes(customModes, provider.context, undefined, state.language)
+			const targetMode = allModes.find(m => m.slug === mode_slug)
 
 			if (!targetMode) {
 				cline.recordToolError("switch_mode")

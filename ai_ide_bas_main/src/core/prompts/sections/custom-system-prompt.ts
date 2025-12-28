@@ -56,16 +56,17 @@ export function getSystemPromptFilePath(cwd: string, mode: Mode, language?: stri
 }
 
 // Map mode slugs to built-in prompt filenames
+// ⚠️ ВАЖНО: Имена файлов соответствуют slug из БД (code, ask, debug и т.д.)
 function getBuiltinPromptFilename(mode: Mode): string | undefined {
     switch (mode) {
         case "code":
-            return "ba.txt"
+            return "code.txt"
         case "architect":
             return "architect.txt"
         case "ask":
-            return "sa.txt"
+            return "ask.txt"
         case "debug":
-            return "reviewer.txt"
+            return "debug.txt"
         case "designer":
             return "designer.txt"
         case "helper":

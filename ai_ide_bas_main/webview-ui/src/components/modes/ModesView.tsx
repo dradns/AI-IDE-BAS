@@ -18,6 +18,7 @@ import {
 	getWhenToUse,
 	getDescription,
 	getCustomInstructions,
+	getAllModesSync,
 	getAllModes,
 	findModeBySlug as findCustomModeBySlug,
 } from "@roo/modes"
@@ -75,6 +76,8 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 		customInstructions,
 		setCustomInstructions,
 		customModes,
+		apiRoles,
+		language,
 	} = useExtensionState()
 
 	// Use a local state to track the visually active mode
@@ -102,8 +105,29 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 		}
 	}, [visualMode, loadedModeInfo, loadModeInfoFromRules])
 
-	// Memoize modes to preserve array order
-	const modes = useMemo(() => getAllModes(customModes), [customModes])
+	// Загружаем режимы, включая роли из API
+	const [modes, setModes] = useState<ModeConfig[]>(() => getAllModesSync(customModes))
+
+	// Запрашиваем роли из API при монтировании компонента
+	useEffect(() => {
+		vscode.postMessage({ type: "requestApiRoles", language })
+	}, [language])
+
+	// Обновляем режимы когда получаем роли из API
+	useEffect(() => {
+		if (apiRoles && apiRoles.length > 0) {
+			getAllModes(customModes, undefined, apiRoles).then((allModes) => {
+				setModes(allModes)
+			}).catch((error) => {
+				console.warn(`[ModesView] Failed to process API roles:`, error)
+				// Fallback на синхронную версию
+				setModes(getAllModesSync(customModes))
+			})
+		} else {
+			// Если ролей из API нет, используем синхронную версию
+			setModes(getAllModesSync(customModes))
+		}
+	}, [apiRoles, customModes])
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
 	const [selectedPromptContent, setSelectedPromptContent] = useState("")
@@ -140,13 +164,21 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 			const updatedPrompt = { ...existingPrompt, ...promptData }
 
 			// Only include properties that differ from defaults
-			if (updatedPrompt.roleDefinition === getRoleDefinition(mode)) {
+			// Use updated modes from local state (which includes API data) instead of customModes from props
+			if (updatedPrompt.roleDefinition === getRoleDefinition(mode, modes)) {
 				delete updatedPrompt.roleDefinition
 			}
-			if (updatedPrompt.description === getDescription(mode)) {
-				delete updatedPrompt.description
+			// IMPORTANT: Description (short description) is a separate field like name and emoji
+			// It should ALWAYS be preserved if it was set, even if it matches the default
+			// Description is NOT part of the prompt - it's metadata that users should always see
+			// NEVER delete description from customModePrompts - always keep it if it exists
+			// This ensures descriptions remain visible even when they match API defaults
+			if (updatedPrompt.description !== undefined) {
+				console.log(`[ModesView] Keeping description for ${mode} (description is metadata, always preserved)`)
+				// Description is always kept - it's metadata like name and emoji
 			}
-			if (updatedPrompt.whenToUse === getWhenToUse(mode)) {
+			// Use updated modes from local state (which includes API data) instead of customModes from props
+			if (updatedPrompt.whenToUse === getWhenToUse(mode, modes)) {
 				delete updatedPrompt.whenToUse
 			}
 
@@ -156,7 +188,7 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 				customPrompt: updatedPrompt,
 			})
 		},
-		[customModePrompts],
+		[customModePrompts, modes, language],
 	)
 
 	const updateCustomMode = useCallback((slug: string, modeConfig: ModeConfig) => {
@@ -393,6 +425,7 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 		}
 
 		updateCustomMode(newModeSlug, newMode)
+		
 		switchMode(newModeSlug)
 		setIsCreateModeDialogOpen(false)
 		resetFormState()
@@ -521,6 +554,18 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 					})
 					setShowDeleteConfirm(true)
 				}
+			} else if (message.type === "promptsUpdated") {
+				// Промпты были обновлены из админки через WebSocket
+				// Тихо перезапрашиваем список ролей (для обновления удалённых/добавленных ролей)
+				vscode.postMessage({ type: "requestApiRoles", language })
+				
+				// Если открыт диалог системного промпта, обновляем его содержимое
+				if (isDialogOpen && mode) {
+					vscode.postMessage({
+						type: "getSystemPrompt",
+						mode: mode,
+					})
+				}
 			}
 		}
 
@@ -648,6 +693,17 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 					</div>
 
 					<div className="flex items-center gap-1 mb-3">
+						{/* Кнопка обновления ролей из API */}
+						<StandardTooltip content={t("prompts:modes.refreshRoles") || "Обновить роли из API"}>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => {
+									vscode.postMessage({ type: "requestApiRoles", language })
+								}}>
+								<span className="codicon codicon-refresh"></span>
+							</Button>
+						</StandardTooltip>
 						<Popover open={open} onOpenChange={onOpenChange}>
 							<PopoverTrigger asChild>
 								<Button
@@ -985,7 +1041,7 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 						{/* Export button - visible when any mode is selected */}
 						{getCurrentMode() && (
 							<Button
-								variant="secondary"
+								variant="default"
 								onClick={() => {
 									const currentMode = getCurrentMode()
 									if (currentMode?.slug && !isExporting) {
@@ -1006,7 +1062,7 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 						
 						{/* Export All Role Rules button - always visible */}
 						<Button
-							variant="default"
+							variant="secondary"
 							onClick={() => {
 								vscode.postMessage({
 									type: "exportAllRoleRules",

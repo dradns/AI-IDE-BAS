@@ -1,0 +1,10 @@
+{
+	"exportAllRoleRules": {
+		"title": "Export Rules",
+		"description": "Export all role rules from all modes to project .roo folder for customization and version control.",
+		"success": "All role rules have been exported to the project .roo folder",
+		"error": "Failed to export all role rules",
+		"warning": "Failed to load prompts from API. Please check your internet connection."
+	}
+}
+
