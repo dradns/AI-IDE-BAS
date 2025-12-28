@@ -31,6 +31,7 @@
 	"emailSent": "Invitación enviada",
 	"emailSendError": "No se pudo enviar la invitación",
 	"referralGenericError": "No se pudo completar la operación. Inténtalo más tarde.",
+	"referralErrorSelf": "No puedes invitarte a ti mismo",
 	"statsTitle": "Estadísticas",
 	"loading": "Cargando...",
 	"invitedFriendsLabel": "Amigos invitados",

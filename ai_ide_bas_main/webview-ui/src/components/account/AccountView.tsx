@@ -127,9 +127,13 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			}
 
 			setIsSubmitting(true)
-			vscode.postMessage({ type: "referral:send", text: inviteEmail.trim() })
+			vscode.postMessage({
+				type: "referral:send",
+				text: inviteEmail.trim(),
+				values: { language: i18n.language },
+			})
 		},
-		[inviteEmail, addToast, t],
+		[inviteEmail, addToast, t, i18n.language],
 	)
 
 	// Resolve local images base URI exposed by the extension host
@@ -186,12 +190,12 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			} else if (message?.type === "referral:send:result") {
 				setIsSubmitting(false)
 				if (message.ok) {
-					addToast(message.message || t("account:emailSent"), "success")
+					addToast(t("account:emailSent"), "success")
 					setInviteEmail("")
 					// Обновляем статистику
 					vscode.postMessage({ type: "referral:stats" })
 				} else {
-					addToast(message.message || t("account:emailSendError"), "error")
+					addToast(t("account:emailSendError"), "error")
 				}
 			} else if (message?.type === "referral:stats:result") {
 				setIsLoadingStats(false)
@@ -202,11 +206,15 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 			} else if (message?.type === "referral:error") {
 				setIsSubmitting(false)
 				setIsLoadingStats(false)
-				const errorMsg =
+				const detail =
 					typeof message.error === "string"
 						? message.error
-						: message.error?.message || t("account:referralGenericError")
-				addToast(errorMsg, "error")
+						: message.error?.message || ""
+				const localized =
+					detail.toLowerCase().includes("self") || detail.includes("сам")
+						? t("account:referralErrorSelf")
+						: t("account:referralGenericError")
+				addToast(detail ? `${localized} (${detail})` : localized, "error")
 			}
 		}
 

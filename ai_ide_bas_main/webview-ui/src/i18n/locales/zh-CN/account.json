@@ -31,6 +31,7 @@
 	"emailSent": "邀请已发送",
 	"emailSendError": "无法发送邀请",
 	"referralGenericError": "操作未完成，请稍后重试。",
+	"referralErrorSelf": "不能邀请自己",
 	"statsTitle": "统计",
 	"loading": "加载中...",
 	"invitedFriendsLabel": "已邀请的朋友",

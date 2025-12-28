@@ -209,7 +209,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		maxWorkspaceFiles: 200,
 		cwd: "",
 		browserToolEnabled: true,
-		telemetrySetting: "unset",
+		telemetrySetting: "enabled",
 		showRooIgnoredFiles: true, // Default to showing .rooignore'd files with lock symbol (current behavior).
 		renderContext: "sidebar",
 		maxReadFileLine: -1, // Default max read file line limit

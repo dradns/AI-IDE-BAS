@@ -781,6 +781,7 @@ export const webviewMessageHandler = async (
 		case "referral:sendInvite": {
 			const client = new AiIdeBasFilesClient(provider.context)
 			const email = (message.values?.email ?? message.text ?? "").trim()
+			const language: string | undefined = message.values?.language
 			if (!email) {
 				await provider.postMessageToWebview({
 					type: "referral:error",
@@ -791,7 +792,7 @@ export const webviewMessageHandler = async (
 			}
 
 			try {
-				await client.sendReferralInvite(email)
+				await client.sendReferralInvite(email, language)
 				await provider.postMessageToWebview({
 					type: "referral:send:result",
 					email,
@@ -896,7 +897,8 @@ export const webviewMessageHandler = async (
 			const client = new AiIdeBasFilesClient(provider.context)
 			try {
 				const email: string = message.text!
-				const result = await client.sendReferralInvite(email)
+				const language: string | undefined = message.values?.language
+				const result = await client.sendReferralInvite(email, language)
 				await provider.postMessageToWebview({ type: "referral:send:result", ...result })
 			} catch (error) {
 				const anyErr = error as any

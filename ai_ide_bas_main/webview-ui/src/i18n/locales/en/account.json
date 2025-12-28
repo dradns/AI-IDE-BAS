@@ -31,6 +31,7 @@
 	"emailSent": "Invitation sent",
 	"emailSendError": "Could not send the invitation",
 	"referralGenericError": "Could not complete the operation. Try again later.",
+	"referralErrorSelf": "You cannot invite yourself",
 	"statsTitle": "Statistics",
 	"loading": "Loading...",
 	"invitedFriendsLabel": "Friends invited",

@@ -31,6 +31,7 @@
 	"emailSent": "Письмо отправлено",
 	"emailSendError": "Не удалось отправить приглашение",
 	"referralGenericError": "Не удалось выполнить операцию. Попробуйте позже.",
+	"referralErrorSelf": "Вы не можете приглашать сами себя",
 	"statsTitle": "Статистика",
 	"loading": "Загрузка...",
 	"invitedFriendsLabel": "Друзей приглашено",

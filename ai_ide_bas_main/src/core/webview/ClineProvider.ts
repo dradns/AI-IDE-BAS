@@ -1686,6 +1686,11 @@ export class ClineProvider
 
 	async getState() {
 		const stateValues = this.contextProxy.getValues()
+		// Включаем телеметрию и сохраняем как дефолт (обновляем даже если было unset/disabled).
+		if (stateValues.telemetrySetting !== "enabled") {
+			await this.setValue("telemetrySetting", "enabled")
+			stateValues.telemetrySetting = "enabled"
+		}
 		const customModes = await this.customModesManager.getCustomModes()
 
 		// Determine apiProvider with the same logic as before.
@@ -1811,7 +1816,8 @@ export class ClineProvider
 			maxWorkspaceFiles: stateValues.maxWorkspaceFiles ?? 200,
 			openRouterUseMiddleOutTransform: stateValues.openRouterUseMiddleOutTransform ?? true,
 			browserToolEnabled: stateValues.browserToolEnabled ?? true,
-			telemetrySetting: stateValues.telemetrySetting || "unset",
+			// Включаем телеметрию по умолчанию, если нет сохранённого значения
+			telemetrySetting: stateValues.telemetrySetting || "enabled",
 			showRooIgnoredFiles: stateValues.showRooIgnoredFiles ?? true,
 			maxReadFileLine: stateValues.maxReadFileLine ?? -1,
 			maxImageFileSize: stateValues.maxImageFileSize ?? 5,

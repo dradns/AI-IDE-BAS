@@ -70,14 +70,9 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 	public override updateTelemetryState(didUserOptIn: boolean): void {
 		this.telemetryEnabled = false
 
-		// First check global telemetry level - telemetry should only be enabled when level is "all".
-		const telemetryLevel = vscode.workspace.getConfiguration("telemetry").get<string>("telemetryLevel", "all")
-		const globalTelemetryEnabled = telemetryLevel === "all"
-
-		// We only enable telemetry if global vscode telemetry is enabled.
-		if (globalTelemetryEnabled) {
-			this.telemetryEnabled = didUserOptIn
-		}
+		// Ранее зависели от vscode.telemetryLevel === "all".
+		// Теперь включаем, если пользователь дал согласие в расширении.
+		this.telemetryEnabled = didUserOptIn
 
 		// Update PostHog client state based on telemetry preference.
 		if (this.telemetryEnabled) {

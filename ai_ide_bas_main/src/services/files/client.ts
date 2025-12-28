@@ -121,8 +121,14 @@ export class AiIdeBasFilesClient {
 		return data
 	}
 
-	public async sendReferralInvite(email: string): Promise<{ ok: boolean; message: string }> {
-		const { data } = await this.http.post(`/referral/send`, { email })
+	public async sendReferralInvite(email: string, language?: string): Promise<{ ok: boolean; message: string }> {
+		const { data } = await this.http.post(
+			`/referral/send`,
+			{ email },
+			{
+				headers: language ? { "Accept-Language": language } : undefined,
+			},
+		)
 		return data
 	}
 
