@@ -261,11 +261,11 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			// Import copy function
 			const { copyPromptsFromGlobalToProject } = await import("../services/prompt-export-service")
 			
-			// Copy prompts from global ~/.roo to project .roo directory
-			// ВАЖНО: Копируем из глобальной директории только текущий язык пользователя
+			// Copy prompts from dist/prompts to project .roo directory
+			// ВАЖНО: Копируем из dist/prompts только текущий язык пользователя
 			// Это позволяет выгружать только нужный язык при локальной выгрузке
-			console.log(`[exportAllRoleRules] Copying prompts from global ~/.roo to project .roo: ${workspaceRoot}/.roo (language: ${actualLang})`)
-			const result = await copyPromptsFromGlobalToProject(workspaceRoot, actualLang)
+			console.log(`[exportAllRoleRules] Copying prompts from dist/prompts to project .roo: ${workspaceRoot}/.roo (language: ${actualLang})`)
+			const result = await copyPromptsFromGlobalToProject(workspaceRoot, actualLang, context)
 			
 			if (result.totalCopied > 0) {
 				const successMessage = t("prompts:exportAllRoleRules.success")

@@ -732,7 +732,7 @@ export class CustomModesManager {
 
 			// Загружаем встроенные правила для fallback (если нужно)
 			const loadBuiltInModeRulesFn = context 
-				? (mode: string) => loadBuiltInModeRules(context, mode)
+				? (mode: string) => loadBuiltInModeRules(mode)
 				: undefined
 
 			// Генерируем секцию с учетом всех изменений
@@ -748,6 +748,8 @@ export class CustomModesManager {
 					language: language ? formatLanguage(language) : undefined,
 					settings: {
 						useAgentRules: true, // Включаем AGENTS.md по умолчанию
+						maxConcurrentFileReads: 5,
+						todoListEnabled: true,
 					},
 					loadBuiltInModeRules: loadBuiltInModeRulesFn,
 					artifactsInstructions: apiArtifactsInstructions || "",

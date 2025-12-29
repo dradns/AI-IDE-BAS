@@ -1,13 +1,14 @@
 {
 	"compilerOptions": {
 		"types": ["vitest/globals"],
-		"target": "es5",
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"target": "ES2022",
+		"lib": ["dom", "dom.iterable", "ES2023"],
 		"allowJs": true,
 		"skipLibCheck": true,
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"strict": true,
+		"useUnknownInCatchVariables": false,
 		"forceConsistentCasingInFileNames": true,
 		"noFallthroughCasesInSwitch": true,
 		"module": "esnext",

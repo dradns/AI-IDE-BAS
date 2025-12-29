@@ -473,14 +473,14 @@ export async function getAllModes(
 	console.log(`[Modes] getAllModes: language normalization - original="${language || "none"}", normalized="${lang}"`)
 	addApiRolesToModes(allModes, rolesToAdd, lang)
 
-	// Если обнаружена новая роль и передан context, запускаем экспорт в фоне
+	// Если обнаружена новая роль и передан context, запускаем экспорт в фоне (ТОЛЬКО в dist/prompts)
 	if ((allModes as any).__hasNewRole && context) {
-		console.log(`[Modes] 🔄 New role detected, triggering background export to ~/.roo`)
+		console.log(`[Modes] 🔄 New role detected, triggering background export to dist/prompts`)
 		// Запускаем экспорт в фоне с небольшой задержкой, чтобы не блокировать инициализацию
 		setTimeout(() => {
-			import("../services/prompt-export-service").then(({ exportPromptsFromApi }) => {
-				exportPromptsFromApi(context, undefined, false).catch((error) => {
-					console.warn(`[Modes] ⚠️ Background export failed after new role detection: ${error}`)
+			import("../services/prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
+				exportPromptsToExtensionDist(context).catch((error) => {
+					console.warn(`[Modes] ⚠️ Background export to dist/prompts failed after new role detection: ${error}`)
 				})
 			}).catch((error) => {
 				console.warn(`[Modes] ⚠️ Failed to load export service: ${error}`)

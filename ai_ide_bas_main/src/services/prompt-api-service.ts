@@ -715,19 +715,16 @@ export async function loadPromptFromApiSeparated(
 				})
 				console.log(`[PromptAPI] Cached for mode=${mode}, status=${prompt.status}`)
 
-				// Trigger background export on new role or update
+				// Trigger background export on new role or update (ONLY to dist/prompts, NOT to ~/.roo)
 				const isNewRole = !cached
 				if ((wasUpdated || isNewRole) && !useDraft) {
 					const reason = isNewRole ? "new role" : "prompt update"
-					console.log(`[PromptAPI] Scheduling export (${reason})`)
+					console.log(`[PromptAPI] Scheduling export to dist/prompts (${reason})`)
 					if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
 					exportDebounceTimer = setTimeout(() => {
 						exportDebounceTimer = null
-						console.log(`[PromptAPI] Executing export after ${reason}`)
-						import("./prompt-export-service").then(({ exportPromptsFromApi, exportPromptsToExtensionDist }) => {
-							exportPromptsFromApi(context, undefined, false).catch((error) => {
-								console.warn(`[PromptAPI] Export to ~/.roo failed: ${error}`)
-							})
+						console.log(`[PromptAPI] Executing export to dist/prompts after ${reason}`)
+						import("./prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
 							exportPromptsToExtensionDist(context).catch((error: any) => {
 								console.warn(`[PromptAPI] Export to dist/prompts failed: ${error}`)
 							})
@@ -1144,15 +1141,12 @@ async function checkForUpdatesSeparatedInBackground(
 					})
 					console.log(`[PromptAPI] Background cache updated for mode=${mode}`)
 
-					// Schedule background export
+					// Schedule background export (ONLY to dist/prompts, NOT to ~/.roo)
 					if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
 					exportDebounceTimer = setTimeout(() => {
 						exportDebounceTimer = null
-						console.log(`[PromptAPI] Executing export after background update`)
-						import("./prompt-export-service").then(({ exportPromptsFromApi, exportPromptsToExtensionDist }) => {
-							exportPromptsFromApi(context, undefined, false).catch((error) => {
-								console.warn(`[PromptAPI] Export failed: ${error}`)
-							})
+						console.log(`[PromptAPI] Executing export to dist/prompts after background update`)
+						import("./prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
 							exportPromptsToExtensionDist(context).catch((error: any) => {
 								console.warn(`[PromptAPI] Dist export failed: ${error}`)
 							})
@@ -1266,30 +1260,12 @@ export async function refreshAllPromptsFromApi(
 	await Promise.allSettled(refreshPromises)
 	console.log(`[PromptAPI] Refresh completed for ${allModes.length} modes`)
 
-	// Notify webview with updated roles list
-	try {
-		const { ClineProvider } = await import("../core/webview/ClineProvider")
-		const visibleProvider = ClineProvider.getVisibleInstance()
-		if (visibleProvider) {
-			const apiRoles = await getAllRolesFromApi(apiBaseUrl, language)
-			await visibleProvider.contextProxy.setValue("cachedApiRoles", apiRoles)
-			visibleProvider.postMessageToWebview({ type: "apiRoles", apiRoles })
-			visibleProvider.postMessageToWebview({ type: "promptsUpdated", timestamp: Date.now() })
-			console.log(`[PromptAPI] Sent ${apiRoles.length} roles to webview after refresh`)
-		}
-	} catch (error) {
-		console.debug(`[PromptAPI] Failed to notify webview with roles:`, error)
-	}
-
-	// Schedule export after refresh
+	// Schedule export after refresh (ONLY to dist/prompts, NOT to ~/.roo)
 	if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
 	exportDebounceTimer = setTimeout(() => {
 		exportDebounceTimer = null
-		console.log(`[PromptAPI] Executing export after refresh`)
-		import("./prompt-export-service").then(({ exportPromptsFromApi, exportPromptsToExtensionDist }) => {
-			exportPromptsFromApi(context, undefined, false).catch((error) => {
-				console.warn(`[PromptAPI] Export failed: ${error}`)
-			})
+		console.log(`[PromptAPI] Executing export to dist/prompts after refresh`)
+		import("./prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
 			exportPromptsToExtensionDist(context).catch((error) => {
 				console.warn(`[PromptAPI] Dist export failed: ${error}`)
 			})

@@ -1,2 +1,2 @@
-declare module 'puppeteer-chromium-resolver';
+declare module "puppeteer-chromium-resolver"
 

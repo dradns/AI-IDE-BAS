@@ -7,7 +7,7 @@ import {
 	roleToMode,
 	loadPromptsBatchFromApi,
 } from "./prompt-api-service"
-import { getGlobalRooDirectory, getProjectRooDirectoryForCwd, clearGlobalRooCache } from "./roo-config"
+import { getProjectRooDirectoryForCwd } from "./roo-config"
 import { modes } from "../shared/modes"
 
 // Supported languages for API export
@@ -357,14 +357,21 @@ function findRoleDataInBatch(
 	return null
 }
 
-// Export prompts from API to file system
+// Export prompts from API to project .roo directory
+// NOTE: This function now ONLY exports to project .roo, NOT to global ~/.roo
+// For dist/prompts export, use exportPromptsToExtensionDist
 export async function exportPromptsFromApi(
 	context: vscode.ExtensionContext,
 	workspaceRoot?: string,
 	showProgress: boolean = true
 ): Promise<{ totalExported: number; totalModes: number; totalLanguages: number }> {
-	const globalRooDir = getGlobalRooDirectory()
-	const projectRooDir = workspaceRoot ? getProjectRooDirectoryForCwd(workspaceRoot) : null
+	// IMPORTANT: Reject export to global ~/.roo - only allow project .roo export
+	if (!workspaceRoot) {
+		console.log(`[exportPromptsFromApi] Skipping - global ~/.roo export is disabled, use exportPromptsToExtensionDist instead`)
+		return { totalExported: 0, totalModes: 0, totalLanguages: 0 }
+	}
+
+	const projectRooDir = getProjectRooDirectoryForCwd(workspaceRoot)
 
 	let totalExported = 0
 	let totalModes = 0
@@ -408,20 +415,11 @@ export async function exportPromptsFromApi(
 
 		const validModeSlugs = new Set<string>(allModes.map((mode) => mode.slug))
 
-		// Setup target directories
-		const rooDirs: string[] = []
-		if (workspaceRoot && projectRooDir) {
-			rooDirs.push(projectRooDir)
-			await cleanupRooDirectory(projectRooDir, true, validModeSlugs)
-			await fs.mkdir(projectRooDir, { recursive: true })
-			console.log(`[exportPromptsFromApi] Exporting to project .roo: ${projectRooDir}`)
-		} else {
-			rooDirs.push(globalRooDir)
-			await cleanupRooDirectory(globalRooDir, false, validModeSlugs)
-			await fs.mkdir(globalRooDir, { recursive: true })
-			clearGlobalRooCache()
-			console.log(`[exportPromptsFromApi] Exporting to global ~/.roo: ${globalRooDir}`)
-		}
+		// Setup target directory (project .roo only)
+		const rooDirs: string[] = [projectRooDir]
+		await cleanupRooDirectory(projectRooDir, true, validModeSlugs)
+		await fs.mkdir(projectRooDir, { recursive: true })
+		console.log(`[exportPromptsFromApi] Exporting to project .roo: ${projectRooDir}`)
 
 		// Try batch endpoint first
 		const roleSlugs = allModes.map((m) => m.slug)
@@ -957,6 +955,7 @@ export async function exportPromptsToExtensionDist(
 }
 
 // Check if prompts have been exported and export if needed
+// Exports ONLY to dist/prompts directory (NOT to ~/.roo)
 export async function exportPromptsOnFirstInstall(
 	context: vscode.ExtensionContext,
 	_workspaceRoot?: string
@@ -965,8 +964,7 @@ export async function exportPromptsOnFirstInstall(
 	const lastExportedVersion = context.globalState.get<string>("lastExportedExtensionVersion")
 	const currentVersion = context.extension.packageJSON.version
 
-	const { getGlobalRooDirectory } = await import("./roo-config")
-	const globalRooPath = getGlobalRooDirectory()
+	const distPromptsPath = path.join(context.extensionPath, "dist", "prompts")
 
 	const isExtensionUpdate = lastExportedVersion && lastExportedVersion !== currentVersion
 	if (isExtensionUpdate) {
@@ -978,24 +976,24 @@ export async function exportPromptsOnFirstInstall(
 	let needsExport = !hasExportedBefore || isExtensionUpdate
 	if (hasExportedBefore && !isExtensionUpdate) {
 		try {
-			const stats = await fs.stat(globalRooPath).catch(() => null)
+			const stats = await fs.stat(distPromptsPath).catch(() => null)
 			if (!stats || !stats.isDirectory()) {
-				console.log(`[exportPromptsOnFirstInstall] Global .roo directory doesn't exist, will export`)
+				console.log(`[exportPromptsOnFirstInstall] dist/prompts directory doesn't exist, will export`)
 				needsExport = true
 			} else {
-				const contents = await fs.readdir(globalRooPath).catch(() => [])
+				const contents = await fs.readdir(distPromptsPath).catch(() => [])
 				const hasLanguageFolders = contents.some((item) => {
 					return ["ru", "en", "es", "zh", "ar", "pt"].includes(item)
 				})
 				if (!hasLanguageFolders) {
-					console.log(`[exportPromptsOnFirstInstall] Global .roo directory is empty, will export`)
+					console.log(`[exportPromptsOnFirstInstall] dist/prompts directory is empty, will export`)
 					needsExport = true
 				} else {
-					console.log(`[exportPromptsOnFirstInstall] Global .roo directory exists with content, skipping export`)
+					console.log(`[exportPromptsOnFirstInstall] dist/prompts directory exists with content, skipping export`)
 				}
 			}
 		} catch (err) {
-			console.warn(`[exportPromptsOnFirstInstall] Failed to check global .roo directory: ${err}`)
+			console.warn(`[exportPromptsOnFirstInstall] Failed to check dist/prompts directory: ${err}`)
 			needsExport = true
 		}
 	}
@@ -1008,41 +1006,14 @@ export async function exportPromptsOnFirstInstall(
 	try {
 		console.log("[exportPromptsOnFirstInstall] Exporting prompts from API...")
 
-		// Export to extension's dist/prompts directory
+		// Export ONLY to extension's dist/prompts directory (NOT to ~/.roo)
 		console.log("[exportPromptsOnFirstInstall] Exporting to dist/prompts...")
 		const distResult = await exportPromptsToExtensionDist(context)
 
-		// Export to global .roo directory
-		console.log("[exportPromptsOnFirstInstall] Exporting to global .roo directory...")
-		console.log(`[exportPromptsOnFirstInstall] Global .roo path: ${globalRooPath}`)
-
-		const globalRooResult = await exportPromptsFromApi(context, undefined, false)
-
-		// Verify directory was created
-		try {
-			const stats = await fs.stat(globalRooPath)
-			if (stats.isDirectory()) {
-				console.log(`[exportPromptsOnFirstInstall] Verified global .roo directory exists: ${globalRooPath}`)
-				const contents = await fs.readdir(globalRooPath)
-				console.log(`[exportPromptsOnFirstInstall] Global .roo directory contents: ${contents.join(", ")}`)
-			}
-		} catch (err) {
-			console.error(`[exportPromptsOnFirstInstall] Failed to verify global .roo directory: ${err}`)
-		}
-
-		const totalExported = distResult.totalExported + globalRooResult.totalExported
-		const totalLanguages = distResult.totalLanguages + globalRooResult.totalLanguages
-
-		if (totalExported > 0) {
+		if (distResult.totalExported > 0) {
 			await context.globalState.update("promptsExportedFromApi", true)
 			await context.globalState.update("lastExportedExtensionVersion", currentVersion)
-			console.log(`[exportPromptsOnFirstInstall] Exported ${totalExported} modes, ${totalLanguages} languages`)
-			console.log(
-				`[exportPromptsOnFirstInstall]   - dist/prompts: ${distResult.totalExported} modes, ${distResult.totalLanguages} languages`
-			)
-			console.log(
-				`[exportPromptsOnFirstInstall]   - ~/.roo: ${globalRooResult.totalExported} modes, ${globalRooResult.totalLanguages} languages`
-			)
+			console.log(`[exportPromptsOnFirstInstall] Exported ${distResult.totalExported} modes, ${distResult.totalLanguages} languages to dist/prompts`)
 			if (isExtensionUpdate) {
 				console.log(
 					`[exportPromptsOnFirstInstall] Prompts updated after extension update (${lastExportedVersion} -> ${currentVersion})`
@@ -1074,27 +1045,37 @@ function normalizeLangForDirectory(lang?: string): string {
 	return langMap[baseLang] || "ru"
 }
 
-// Copy prompts from global ~/.roo to project .roo directory
+// Copy prompts from dist/prompts to project .roo directory
+// NOTE: Previously copied from ~/.roo, now copies from extension's dist/prompts
 export async function copyPromptsFromGlobalToProject(
 	workspaceRoot: string,
-	currentLanguage?: string
+	currentLanguage?: string,
+	context?: vscode.ExtensionContext
 ): Promise<{ totalCopied: number; totalModes: number; totalLanguages: number }> {
-	const globalRooDir = getGlobalRooDirectory()
+	// Determine source directory: dist/prompts if context available, otherwise try to find extension path
+	let sourceDir: string
+	if (context) {
+		sourceDir = path.join(context.extensionPath, "dist", "prompts")
+	} else {
+		// Fallback: try to find dist/prompts relative to this file
+		sourceDir = path.join(__dirname, "..", "prompts")
+	}
+	
 	const projectRooDir = getProjectRooDirectoryForCwd(workspaceRoot)
 
 	const normalizedLang = normalizeLangForDirectory(currentLanguage)
 
-	console.log(`[copyPromptsFromGlobalToProject] Copying from global ~/.roo to project .roo`)
-	console.log(`[copyPromptsFromGlobalToProject]   Source: ${globalRooDir}`)
+	console.log(`[copyPromptsFromGlobalToProject] Copying from dist/prompts to project .roo`)
+	console.log(`[copyPromptsFromGlobalToProject]   Source: ${sourceDir}`)
 	console.log(`[copyPromptsFromGlobalToProject]   Target: ${projectRooDir}`)
 	console.log(`[copyPromptsFromGlobalToProject]   Language filter: ${normalizedLang}`)
 
-	const globalExists = await fs
-		.access(globalRooDir)
+	const sourceExists = await fs
+		.access(sourceDir)
 		.then(() => true)
 		.catch(() => false)
-	if (!globalExists) {
-		console.warn(`[copyPromptsFromGlobalToProject] Global .roo directory does not exist: ${globalRooDir}`)
+	if (!sourceExists) {
+		console.warn(`[copyPromptsFromGlobalToProject] dist/prompts directory does not exist: ${sourceDir}`)
 		return { totalCopied: 0, totalModes: 0, totalLanguages: 0 }
 	}
 
@@ -1105,9 +1086,9 @@ export async function copyPromptsFromGlobalToProject(
 	let totalLanguages = 0
 
 	try {
-		const globalEntries = await fs.readdir(globalRooDir, { withFileTypes: true })
+		const sourceEntries = await fs.readdir(sourceDir, { withFileTypes: true })
 
-		for (const entry of globalEntries) {
+		for (const entry of sourceEntries) {
 			if (!entry.isDirectory()) {
 				continue
 			}
@@ -1124,13 +1105,13 @@ export async function copyPromptsFromGlobalToProject(
 				continue
 			}
 
-			const globalLangDir = path.join(globalRooDir, lang)
+			const sourceLangDir = path.join(sourceDir, lang)
 			const projectLangDir = path.join(projectRooDir, lang)
 			await fs.mkdir(projectLangDir, { recursive: true })
 
 			totalLanguages = 1
 
-			const langEntries = await fs.readdir(globalLangDir, { withFileTypes: true })
+			const langEntries = await fs.readdir(sourceLangDir, { withFileTypes: true })
 
 			for (const langEntry of langEntries) {
 				if (!langEntry.isDirectory()) {
@@ -1145,15 +1126,15 @@ export async function copyPromptsFromGlobalToProject(
 
 				totalModes++
 
-				const globalModeDir = path.join(globalLangDir, modeDirName)
+				const sourceModeDir = path.join(sourceLangDir, modeDirName)
 				const projectModeDir = path.join(projectLangDir, modeDirName)
 				await fs.mkdir(projectModeDir, { recursive: true })
 
-				const modeFiles = await fs.readdir(globalModeDir, { withFileTypes: true })
+				const modeFiles = await fs.readdir(sourceModeDir, { withFileTypes: true })
 
 				for (const file of modeFiles) {
 					if (file.isFile() && file.name.endsWith(".md")) {
-						const sourceFile = path.join(globalModeDir, file.name)
+						const sourceFile = path.join(sourceModeDir, file.name)
 						const targetFile = path.join(projectModeDir, file.name)
 
 						const targetExists = await fs
@@ -1163,10 +1144,10 @@ export async function copyPromptsFromGlobalToProject(
 
 						if (targetExists) {
 							try {
-								const globalContent = await fs.readFile(sourceFile, "utf-8")
+								const sourceContent = await fs.readFile(sourceFile, "utf-8")
 								const projectContent = await fs.readFile(targetFile, "utf-8")
 
-								if (globalContent !== projectContent) {
+								if (sourceContent !== projectContent) {
 									console.log(`[copyPromptsFromGlobalToProject] Skipping ${file.name} - modified by user`)
 									continue
 								}
@@ -1192,7 +1173,7 @@ export async function copyPromptsFromGlobalToProject(
 		}
 
 		console.log(
-			`[copyPromptsFromGlobalToProject] Copied ${totalCopied} modes for language ${normalizedLang} from global ~/.roo to project .roo`
+			`[copyPromptsFromGlobalToProject] Copied ${totalCopied} modes for language ${normalizedLang} from dist/prompts to project .roo`
 		)
 		return { totalCopied, totalModes, totalLanguages }
 	} catch (error) {

@@ -247,10 +247,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	}
 
-	// Автоматическое обновление промптов из API с распределенной нагрузкой
-	const BASE_REFRESH_INTERVAL_MS = 10 * 60 * 1000 + 24 * 1000 // 624 секунды базовый интервал
-	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс (300 секунд)
-	const JITTER_PERCENT = 0.15 // ±15% разброс для каждого интервала (~94 секунды)
+	// Автоматическое обновление промптов из API с рандомным интервалом 8-12 минут
+	const MIN_REFRESH_INTERVAL_MS = 8 * 60 * 1000 // 8 минут минимум
+	const MAX_REFRESH_INTERVAL_MS = 12 * 60 * 1000 // 12 минут максимум
+	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс
 	
 	const language = formatLanguage(vscode.env.language)
 	
@@ -264,12 +264,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	let refreshTimeoutHandle: NodeJS.Timeout | undefined
 	
-	// Планирование следующего обновления с jitter
+	// Планирование следующего обновления с рандомным интервалом 8-12 минут
 	const scheduleNextRefresh = () => {
-		// Добавляем случайный jitter к базовому интервалу для распределения нагрузки
-		// Math.random() - 0.5 дает диапазон [-0.5, 0.5], умножаем на 2 * JITTER_PERCENT для получения ±15%
-		const jitter = (Math.random() - 0.5) * 2 * JITTER_PERCENT * BASE_REFRESH_INTERVAL_MS
-		const nextInterval = BASE_REFRESH_INTERVAL_MS + jitter
+		// Рандомный интервал от 8 до 12 минут
+		const nextInterval = MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
 		
 		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
 		
@@ -311,13 +309,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	})
 	
-	outputChannel.appendLine(`[AutoRefresh] ✅ Automatic prompt refresh enabled with load distribution`)
-	outputChannel.appendLine(`[AutoRefresh] Base interval: ${BASE_REFRESH_INTERVAL_MS / 1000}s (${Math.round(BASE_REFRESH_INTERVAL_MS / 60000)}min)`)
-	outputChannel.appendLine(`[AutoRefresh] Jitter range: ±${Math.round(JITTER_PERCENT * 100)}% (~${Math.round(BASE_REFRESH_INTERVAL_MS * JITTER_PERCENT / 1000)}s)`)
-	outputChannel.appendLine(`[AutoRefresh] Effective interval: ${Math.round(BASE_REFRESH_INTERVAL_MS * (1 - JITTER_PERCENT) / 60000)}-${Math.round(BASE_REFRESH_INTERVAL_MS * (1 + JITTER_PERCENT) / 60000)}min`)
+	outputChannel.appendLine(`[AutoRefresh] ✅ Automatic prompt refresh enabled`)
+	outputChannel.appendLine(`[AutoRefresh] Interval range: ${MIN_REFRESH_INTERVAL_MS / 60000}-${MAX_REFRESH_INTERVAL_MS / 60000}min (random)`)
 
 	// Export prompts on first install or update (non-blocking)
-	// This populates both ~/.roo and dist/prompts directories
+	// This populates ONLY dist/prompts directory (NOT ~/.roo)
 	const { exportPromptsOnFirstInstall } = await import("./services/prompt-export-service")
 	exportPromptsOnFirstInstall(context).catch((error) => {
 		outputChannel.appendLine(`[Extension] ⚠️ Failed to export prompts on first install: ${error.message || error}`)
