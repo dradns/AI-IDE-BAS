@@ -243,9 +243,12 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		try {
 			if (!visibleProvider) return
 
+			// workspaceRoot is REQUIRED - prompts are NOT exported to global ~/.roo
 			const workspaceRoot = visibleProvider.cwd || (await import("../utils/path")).getWorkspacePath()
+
 			if (!workspaceRoot) {
-				vscode.window.showErrorMessage(t("common:errors.no_workspace"))
+				// No workspace - show warning and return
+				vscode.window.showWarningMessage(t("prompts:exportAllRoleRules.noWorkspace") || "Open a workspace to export prompts to project .roo directory")
 				return
 			}
 
@@ -257,20 +260,18 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			// Debug: log current language
 			const actualLang = getCurrentLanguage()
 			console.log(`[exportAllRoleRules] Language: requested=${currentLanguage}, actual=${actualLang}`)
+			console.log(`[exportAllRoleRules] Target: project .roo (${workspaceRoot}/.roo)`)
 
 			// Import copy function
 			const { copyPromptsFromGlobalToProject } = await import("../services/prompt-export-service")
 			
-			// Copy prompts from dist/prompts to project .roo directory
-			// ВАЖНО: Копируем из dist/prompts только текущий язык пользователя
-			// Это позволяет выгружать только нужный язык при локальной выгрузке
-			console.log(`[exportAllRoleRules] Copying prompts from dist/prompts to project .roo: ${workspaceRoot}/.roo (language: ${actualLang})`)
+			// Copy prompts from dist/prompts to project .roo directory ONLY
+			// NOTE: Global ~/.roo export is disabled - prompts are stored in dist/prompts
 			const result = await copyPromptsFromGlobalToProject(workspaceRoot, actualLang, context)
 			
 			if (result.totalCopied > 0) {
 				const successMessage = t("prompts:exportAllRoleRules.success")
-				// ВАЖНО: Копируется только текущий язык пользователя
-				vscode.window.showInformationMessage(`${successMessage} (${result.totalCopied} режимов, язык: ${actualLang})`)
+				vscode.window.showInformationMessage(`${successMessage} (${result.totalCopied} режимов → ${workspaceRoot}/.roo, язык: ${actualLang})`)
 			} else {
 				const warningMessage = t("prompts:exportAllRoleRules.warning")
 				vscode.window.showWarningMessage(warningMessage)

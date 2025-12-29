@@ -264,6 +264,25 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	let refreshTimeoutHandle: NodeJS.Timeout | undefined
 	
+	// Helper to update UI after refresh
+	const notifyWebviewAboutRolesUpdate = async (roles: Awaited<ReturnType<typeof refreshAllPromptsFromApi>>["roles"]) => {
+		if (roles.length > 0) {
+			try {
+				// Update cached roles in globalState
+				await context.globalState.update("cachedApiRoles", roles)
+				
+				// Notify webview about updated roles
+				provider.postMessageToWebview({
+					type: "apiRoles",
+					apiRoles: roles,
+				})
+				outputChannel.appendLine(`[AutoRefresh] UI notified about ${roles.length} roles`)
+			} catch (error) {
+				outputChannel.appendLine(`[AutoRefresh] Failed to notify UI: ${error}`)
+			}
+		}
+	}
+	
 	// Планирование следующего обновления с рандомным интервалом 8-12 минут
 	const scheduleNextRefresh = () => {
 		// Рандомный интервал от 8 до 12 минут
@@ -271,30 +290,38 @@ export async function activate(context: vscode.ExtensionContext) {
 		
 		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
 		
-		refreshTimeoutHandle = setTimeout(() => {
+		refreshTimeoutHandle = setTimeout(async () => {
 			outputChannel.appendLine(`[AutoRefresh] Starting automatic refresh...`)
-			refreshAllPromptsFromApi(context, language)
-				.catch((error) => {
-					outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts: ${error.message || error}`)
-				})
-				.finally(() => {
-					// Планируем следующее обновление после завершения текущего
-					scheduleNextRefresh()
-				})
+			try {
+				const result = await refreshAllPromptsFromApi(context, language)
+				outputChannel.appendLine(`[AutoRefresh] Refreshed ${result.modesRefreshed} modes, ${result.roles.length} roles loaded`)
+				
+				// Update UI with new roles
+				await notifyWebviewAboutRolesUpdate(result.roles)
+			} catch (error: any) {
+				outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts: ${error.message || error}`)
+			} finally {
+				// Планируем следующее обновление после завершения текущего
+				scheduleNextRefresh()
+			}
 		}, nextInterval)
 	}
 	
 	// Первая загрузка с детерминированной задержкой (распределяем пользователей по времени)
-	const initialRefreshHandle = setTimeout(() => {
+	const initialRefreshHandle = setTimeout(async () => {
 		outputChannel.appendLine(`[AutoRefresh] Starting initial refresh...`)
-		refreshAllPromptsFromApi(context, language)
-			.catch((error) => {
-				outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts on activation: ${error.message || error}`)
-			})
-			.finally(() => {
-				// Запускаем цикл обновлений после первого обновления
-				scheduleNextRefresh()
-			})
+		try {
+			const result = await refreshAllPromptsFromApi(context, language)
+			outputChannel.appendLine(`[AutoRefresh] Initial refresh: ${result.modesRefreshed} modes, ${result.roles.length} roles loaded`)
+			
+			// Update UI with new roles
+			await notifyWebviewAboutRolesUpdate(result.roles)
+		} catch (error: any) {
+			outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts on activation: ${error.message || error}`)
+		} finally {
+			// Запускаем цикл обновлений после первого обновления
+			scheduleNextRefresh()
+		}
 	}, initialDelay)
 	
 	// Добавляем очистку таймеров при деактивации

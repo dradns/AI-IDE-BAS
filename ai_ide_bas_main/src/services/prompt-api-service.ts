@@ -1216,12 +1216,27 @@ export async function forceRefreshPrompt(
 	return result
 }
 
+// Result of refresh operation - includes loaded roles for UI update
+export interface RefreshResult {
+	roles: Array<{
+		slug: string
+		name: string
+		emoji?: string
+		target_roles: string[]
+		role_definition?: string | Record<string, string>
+		short_description?: Record<string, string>
+		when_to_use?: Record<string, string>
+	}>
+	modesRefreshed: number
+}
+
 // Refresh all prompts from API
+// Returns loaded roles so caller can update UI
 export async function refreshAllPromptsFromApi(
 	context: vscode.ExtensionContext,
 	language?: string,
 	apiBaseUrl?: string
-): Promise<void> {
+): Promise<RefreshResult> {
 	const normalizedLang = normalizeLang(language)
 
 	if (!apiBaseUrl) {
@@ -1232,8 +1247,9 @@ export async function refreshAllPromptsFromApi(
 
 	// Load roles list from API
 	let allModes: string[] = []
+	let apiRoles: RefreshResult["roles"] = []
 	try {
-		const apiRoles = await getAllRolesFromApi(apiBaseUrl, language)
+		apiRoles = await getAllRolesFromApi(apiBaseUrl, language)
 		if (apiRoles && apiRoles.length > 0) {
 			allModes = apiRoles.map(role => role.slug.toLowerCase())
 			console.log(`[PromptAPI] Loaded ${allModes.length} roles from API`)
@@ -1273,6 +1289,8 @@ export async function refreshAllPromptsFromApi(
 			console.warn(`[PromptAPI] Failed to load export service: ${error}`)
 		})
 	}, EXPORT_DEBOUNCE_DELAY)
+
+	return { roles: apiRoles, modesRefreshed: allModes.length }
 }
 
 // Load prompt from API with caching (returns string)

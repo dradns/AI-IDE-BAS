@@ -1046,12 +1046,19 @@ function normalizeLangForDirectory(lang?: string): string {
 }
 
 // Copy prompts from dist/prompts to project .roo directory
-// NOTE: Previously copied from ~/.roo, now copies from extension's dist/prompts
+// NOTE: Global ~/.roo export is DISABLED - prompts are stored ONLY in dist/prompts
+// workspaceRoot is REQUIRED - without it, function returns early
 export async function copyPromptsFromGlobalToProject(
-	workspaceRoot: string,
+	workspaceRoot?: string,
 	currentLanguage?: string,
 	context?: vscode.ExtensionContext
-): Promise<{ totalCopied: number; totalModes: number; totalLanguages: number }> {
+): Promise<{ totalCopied: number; totalModes: number; totalLanguages: number; targetDir: string }> {
+	// IMPORTANT: Reject export to global ~/.roo - prompts live ONLY in dist/prompts
+	if (!workspaceRoot) {
+		console.log(`[copyPromptsToRoo] Skipping - global ~/.roo export is disabled, prompts are stored in dist/prompts only`)
+		return { totalCopied: 0, totalModes: 0, totalLanguages: 0, targetDir: "" }
+	}
+
 	// Determine source directory: dist/prompts if context available, otherwise try to find extension path
 	let sourceDir: string
 	if (context) {
@@ -1061,25 +1068,26 @@ export async function copyPromptsFromGlobalToProject(
 		sourceDir = path.join(__dirname, "..", "prompts")
 	}
 	
-	const projectRooDir = getProjectRooDirectoryForCwd(workspaceRoot)
+	// Target directory: project .roo ONLY
+	const targetRooDir = getProjectRooDirectoryForCwd(workspaceRoot)
 
 	const normalizedLang = normalizeLangForDirectory(currentLanguage)
 
-	console.log(`[copyPromptsFromGlobalToProject] Copying from dist/prompts to project .roo`)
-	console.log(`[copyPromptsFromGlobalToProject]   Source: ${sourceDir}`)
-	console.log(`[copyPromptsFromGlobalToProject]   Target: ${projectRooDir}`)
-	console.log(`[copyPromptsFromGlobalToProject]   Language filter: ${normalizedLang}`)
+	console.log(`[copyPromptsToRoo] Copying from dist/prompts to project .roo`)
+	console.log(`[copyPromptsToRoo]   Source: ${sourceDir}`)
+	console.log(`[copyPromptsToRoo]   Target: ${targetRooDir}`)
+	console.log(`[copyPromptsToRoo]   Language filter: ${normalizedLang}`)
 
 	const sourceExists = await fs
 		.access(sourceDir)
 		.then(() => true)
 		.catch(() => false)
 	if (!sourceExists) {
-		console.warn(`[copyPromptsFromGlobalToProject] dist/prompts directory does not exist: ${sourceDir}`)
-		return { totalCopied: 0, totalModes: 0, totalLanguages: 0 }
+		console.warn(`[copyPromptsToRoo] dist/prompts directory does not exist: ${sourceDir}`)
+		return { totalCopied: 0, totalModes: 0, totalLanguages: 0, targetDir: targetRooDir }
 	}
 
-	await fs.mkdir(projectRooDir, { recursive: true })
+	await fs.mkdir(targetRooDir, { recursive: true })
 
 	let totalCopied = 0
 	let totalModes = 0
@@ -1097,7 +1105,7 @@ export async function copyPromptsFromGlobalToProject(
 
 			// Only copy current user language
 			if (lang !== normalizedLang) {
-				console.log(`[copyPromptsFromGlobalToProject] Skipping language: ${lang} (only copying ${normalizedLang})`)
+				console.log(`[copyPromptsToRoo] Skipping language: ${lang} (only copying ${normalizedLang})`)
 				continue
 			}
 
@@ -1106,8 +1114,8 @@ export async function copyPromptsFromGlobalToProject(
 			}
 
 			const sourceLangDir = path.join(sourceDir, lang)
-			const projectLangDir = path.join(projectRooDir, lang)
-			await fs.mkdir(projectLangDir, { recursive: true })
+			const targetLangDir = path.join(targetRooDir, lang)
+			await fs.mkdir(targetLangDir, { recursive: true })
 
 			totalLanguages = 1
 
@@ -1127,15 +1135,15 @@ export async function copyPromptsFromGlobalToProject(
 				totalModes++
 
 				const sourceModeDir = path.join(sourceLangDir, modeDirName)
-				const projectModeDir = path.join(projectLangDir, modeDirName)
-				await fs.mkdir(projectModeDir, { recursive: true })
+				const targetModeDir = path.join(targetLangDir, modeDirName)
+				await fs.mkdir(targetModeDir, { recursive: true })
 
 				const modeFiles = await fs.readdir(sourceModeDir, { withFileTypes: true })
 
 				for (const file of modeFiles) {
 					if (file.isFile() && file.name.endsWith(".md")) {
 						const sourceFile = path.join(sourceModeDir, file.name)
-						const targetFile = path.join(projectModeDir, file.name)
+						const targetFile = path.join(targetModeDir, file.name)
 
 						const targetExists = await fs
 							.access(targetFile)
@@ -1145,15 +1153,15 @@ export async function copyPromptsFromGlobalToProject(
 						if (targetExists) {
 							try {
 								const sourceContent = await fs.readFile(sourceFile, "utf-8")
-								const projectContent = await fs.readFile(targetFile, "utf-8")
+								const targetContent = await fs.readFile(targetFile, "utf-8")
 
-								if (sourceContent !== projectContent) {
-									console.log(`[copyPromptsFromGlobalToProject] Skipping ${file.name} - modified by user`)
+								if (sourceContent !== targetContent) {
+									console.log(`[copyPromptsToRoo] Skipping ${file.name} - modified by user`)
 									continue
 								}
 								continue
 							} catch (err) {
-								console.warn(`[copyPromptsFromGlobalToProject] Failed to compare ${file.name}: ${err}`)
+								console.warn(`[copyPromptsToRoo] Failed to compare ${file.name}: ${err}`)
 								continue
 							}
 						}
@@ -1161,9 +1169,9 @@ export async function copyPromptsFromGlobalToProject(
 						try {
 							const content = await fs.readFile(sourceFile, "utf-8")
 							await fs.writeFile(targetFile, content, "utf-8")
-							console.log(`[copyPromptsFromGlobalToProject] Copied ${file.name} to project .roo`)
+							console.log(`[copyPromptsToRoo] Copied ${file.name} to project .roo`)
 						} catch (err) {
-							console.warn(`[copyPromptsFromGlobalToProject] Failed to copy ${file.name}: ${err}`)
+							console.warn(`[copyPromptsToRoo] Failed to copy ${file.name}: ${err}`)
 						}
 					}
 				}
@@ -1173,11 +1181,11 @@ export async function copyPromptsFromGlobalToProject(
 		}
 
 		console.log(
-			`[copyPromptsFromGlobalToProject] Copied ${totalCopied} modes for language ${normalizedLang} from dist/prompts to project .roo`
+			`[copyPromptsToRoo] Copied ${totalCopied} modes for language ${normalizedLang} from dist/prompts to project .roo`
 		)
-		return { totalCopied, totalModes, totalLanguages }
+		return { totalCopied, totalModes, totalLanguages, targetDir: targetRooDir }
 	} catch (error) {
-		console.error(`[copyPromptsFromGlobalToProject] Failed to copy prompts: ${error}`)
-		return { totalCopied, totalModes, totalLanguages }
+		console.error(`[copyPromptsToRoo] Failed to copy prompts: ${error}`)
+		return { totalCopied, totalModes, totalLanguages, targetDir: targetRooDir }
 	}
 }
