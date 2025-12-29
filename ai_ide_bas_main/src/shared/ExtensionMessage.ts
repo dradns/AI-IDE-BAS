@@ -217,7 +217,7 @@ export interface ExtensionMessage {
 	errors?: string[]
 	visibility?: ShareVisibility
 	rulesFolderPath?: string
-	timestamp?: number // For promptsUpdated messages from WebSocket
+	timestamp?: number // For promptsUpdated messages
 	settings?: any
 	messageTs?: number
 	context?: string

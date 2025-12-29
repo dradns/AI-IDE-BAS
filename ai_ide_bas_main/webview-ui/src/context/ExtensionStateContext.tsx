@@ -388,13 +388,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					break
 				}
 				case "promptsUpdated": {
-					// Промпты были обновлены из админки через WebSocket
-					// Обновляем timestamp для инвалидации кэша компонентов
+					// Prompts were updated via background timer refresh
 					setState((prevState) => ({
 						...prevState,
 						promptsUpdatedAt: message.timestamp ?? Date.now(),
 					}))
-					// Тихо перезапрашиваем список ролей (для обновления удалённых/добавленных ролей)
+					// Silently re-request roles list
 					vscode.postMessage({ type: "requestApiRoles" })
 					break
 				}

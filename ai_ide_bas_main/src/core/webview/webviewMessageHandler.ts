@@ -58,13 +58,11 @@ import { MarketplaceManager, MarketplaceItemType } from "../../services/marketpl
 import { setPendingTodoList } from "../tools/updateTodoListTool"
 import { checkAndRefreshPromptForMode, checkAndRefreshPromptsIfNeeded } from "../../services/prompt-refresh-service"
 
-/**
- * Вспомогательная функция для проверки обновлений промпта при действиях пользователя
- * Вызывается в фоне, не блокирует UI
- */
-const triggerPromptRefresh = (provider: ClineProvider) => {
-	const currentMode = provider.state?.mode
-	const currentLanguage = provider.state?.language
+// Background prompt refresh helper (non-blocking)
+const triggerPromptRefresh = async (provider: ClineProvider) => {
+	const state = await provider.getState()
+	const currentMode = state?.mode
+	const currentLanguage = state?.language
 	if (currentMode) {
 		checkAndRefreshPromptForMode(provider.context, currentMode, currentLanguage).catch(err => {
 			console.debug(`[triggerPromptRefresh] Prompt refresh failed for mode=${currentMode}:`, err)
@@ -1469,10 +1467,11 @@ export const webviewMessageHandler = async (
 		case "mode": {
 			const newMode = message.text as Mode
 			
-			// Проверяем обновления промпта для нового режима (в фоне)
-			// Используем прямой вызов, так как режим еще не переключен
-			checkAndRefreshPromptForMode(provider.context, newMode, provider.state?.language).catch(err => {
-				console.debug(`[mode switch] Prompt refresh failed for mode=${newMode}:`, err)
+			// Background prompt refresh for new mode
+			provider.getState().then(state => {
+				checkAndRefreshPromptForMode(provider.context, newMode, state?.language).catch(err => {
+					console.debug(`[mode switch] Prompt refresh failed for mode=${newMode}:`, err)
+				})
 			})
 			
 			await provider.handleModeSwitch(newMode)
@@ -1698,18 +1697,20 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "checkPromptsUpdate": {
-			// Проверка обновлений промптов (вызывается из webview при открытии settings/modes)
-			const lang = provider.state?.language
-			checkAndRefreshPromptsIfNeeded(provider.context, lang).catch(err => {
-				console.debug(`[checkPromptsUpdate] Prompt refresh failed:`, err)
+			// Check for prompt updates (called from webview on settings/modes open)
+			provider.getState().then(state => {
+				checkAndRefreshPromptsIfNeeded(provider.context, state?.language).catch(err => {
+					console.debug(`[checkPromptsUpdate] Prompt refresh failed:`, err)
+				})
 			})
 			break
 		}
 		case "getSystemPrompt":
 			try {
-				// Проверяем обновления перед генерацией системного промпта
+				// Refresh prompt before generating system prompt
 				if (message.mode) {
-					await checkAndRefreshPromptForMode(provider.context, message.mode, provider.state?.language)
+					const state = await provider.getState()
+					await checkAndRefreshPromptForMode(provider.context, message.mode, state?.language)
 				}
 				
 				const systemPrompt = await generateSystemPrompt(provider, message)

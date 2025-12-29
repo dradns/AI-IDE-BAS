@@ -1266,6 +1266,21 @@ export async function refreshAllPromptsFromApi(
 	await Promise.allSettled(refreshPromises)
 	console.log(`[PromptAPI] Refresh completed for ${allModes.length} modes`)
 
+	// Notify webview with updated roles list
+	try {
+		const { ClineProvider } = await import("../core/webview/ClineProvider")
+		const visibleProvider = ClineProvider.getVisibleInstance()
+		if (visibleProvider) {
+			const apiRoles = await getAllRolesFromApi(apiBaseUrl, language)
+			await visibleProvider.contextProxy.setValue("cachedApiRoles", apiRoles)
+			visibleProvider.postMessageToWebview({ type: "apiRoles", apiRoles })
+			visibleProvider.postMessageToWebview({ type: "promptsUpdated", timestamp: Date.now() })
+			console.log(`[PromptAPI] Sent ${apiRoles.length} roles to webview after refresh`)
+		}
+	} catch (error) {
+		console.debug(`[PromptAPI] Failed to notify webview with roles:`, error)
+	}
+
 	// Schedule export after refresh
 	if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
 	exportDebounceTimer = setTimeout(() => {

@@ -33,7 +33,6 @@ import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
 import { refreshAllPromptsFromApi } from "./services/prompt-api-service"
-import { promptWebSocketService } from "./services/prompt-websocket-service"
 
 import {
 	handleUri,
@@ -316,16 +315,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel.appendLine(`[AutoRefresh] Base interval: ${BASE_REFRESH_INTERVAL_MS / 1000}s (${Math.round(BASE_REFRESH_INTERVAL_MS / 60000)}min)`)
 	outputChannel.appendLine(`[AutoRefresh] Jitter range: ±${Math.round(JITTER_PERCENT * 100)}% (~${Math.round(BASE_REFRESH_INTERVAL_MS * JITTER_PERCENT / 1000)}s)`)
 	outputChannel.appendLine(`[AutoRefresh] Effective interval: ${Math.round(BASE_REFRESH_INTERVAL_MS * (1 - JITTER_PERCENT) / 60000)}-${Math.round(BASE_REFRESH_INTERVAL_MS * (1 + JITTER_PERCENT) / 60000)}min`)
-
-	// Initialize WebSocket for real-time prompt updates (silent background updates)
-	// This allows instant prompt updates when admin publishes without waiting for polling
-	// ⚠️ ВАЖНО: initialize теперь async, запускаем в фоне
-	promptWebSocketService.initialize(context, language).then(() => {
-		context.subscriptions.push({ dispose: () => promptWebSocketService.dispose() })
-		outputChannel.appendLine(`[PromptWS] ✅ WebSocket real-time updates enabled`)
-	}).catch((error) => {
-		outputChannel.appendLine(`[PromptWS] ⚠️ Failed to initialize WebSocket: ${error instanceof Error ? error.message : String(error)}`)
-	})
 
 	// Export prompts on first install or update (non-blocking)
 	// This populates both ~/.roo and dist/prompts directories

@@ -555,11 +555,10 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 					setShowDeleteConfirm(true)
 				}
 			} else if (message.type === "promptsUpdated") {
-				// Промпты были обновлены из админки через WebSocket
-				// Тихо перезапрашиваем список ролей (для обновления удалённых/добавленных ролей)
+				// Prompts were updated via background timer refresh
 				vscode.postMessage({ type: "requestApiRoles", language })
 				
-				// Если открыт диалог системного промпта, обновляем его содержимое
+				// If system prompt dialog is open, refresh its content
 				if (isDialogOpen && mode) {
 					vscode.postMessage({
 						type: "getSystemPrompt",
