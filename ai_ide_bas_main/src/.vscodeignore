@@ -42,6 +42,9 @@ dist/prompts/**
 # Include .env file for telemetry
 !.env
 
+# Include extension-build-config.json
+!extension-build-config.json
+
 # Exclude all node_modules (dependencies are bundled in dist/extension.js)
 # But include ws module (native module, cannot be bundled, copied by vscode:prepublish script)
 !node_modules
