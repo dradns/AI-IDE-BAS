@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as path from "path"
+import fs from "fs"
 import * as os from "os"
 import { TelemetryReporter } from "@vscode/extension-telemetry"
 
@@ -12,6 +13,24 @@ try {
 } catch (e) {
 	// Silently handle environment loading errors
 	console.warn("Failed to load environment variables:", e)
+}
+
+// Load build config from extension-build-config.json
+interface IBuildConfig {
+    featureFlags: {
+        isImmediateUpdate: boolean
+    }
+}
+let buildConfig: IBuildConfig
+let raw: string
+try {
+    const configPath = path.join(__dirname, "..", "extension-build-config.json")
+    raw = fs.readFileSync(configPath, 'utf8')
+    console.log("Raw : " + raw)
+    buildConfig = JSON.parse(raw)
+    console.log("Successfully parsed build config))")
+} catch (e) {
+	console.warn("Failed to load build configuration:", e)
 }
 
 import { CloudService } from "@roo-code/cloud"
@@ -62,7 +81,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
-
 	// Initialize Azure telemetry if aiKey is available
 	try {
 		const { id, packageJSON } = context.extension
@@ -251,7 +269,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const MIN_REFRESH_INTERVAL_MS = 8 * 60 * 1000 // 8 минут минимум
 	const MAX_REFRESH_INTERVAL_MS = 12 * 60 * 1000 // 12 минут максимум
 	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс
-	
+    const IMMEDIATE_UPDATE_MS = 30 * 1000 // 30 sec
+
 	const language = formatLanguage(vscode.env.language)
 	
 	// Генерируем детерминированный jitter на основе machineId для стабильности
@@ -285,8 +304,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	// Планирование следующего обновления с рандомным интервалом 8-12 минут
 	const scheduleNextRefresh = () => {
-		// Рандомный интервал от 8 до 12 минут
-		const nextInterval = MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
+         
+		const nextInterval = buildConfig.featureFlags.isImmediateUpdate ?
+            IMMEDIATE_UPDATE_MS : 
+            // Рандомный интервал от 8 до 12 минут
+            MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
 		
 		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
 		
