@@ -17,20 +17,22 @@ try {
 
 // Load build config from extension-build-config.json
 interface IBuildConfig {
-    featureFlags: {
-        isImmediateUpdate: boolean
-    }
+	featureFlags: {
+		isImmediateUpdate: boolean
+	}
 }
-let buildConfig: IBuildConfig
-let raw: string
+let buildConfig: IBuildConfig = {
+	featureFlags: {
+		isImmediateUpdate: false
+	}
+}
 try {
-    const configPath = path.join(__dirname, "..", "extension-build-config.json")
-    raw = fs.readFileSync(configPath, 'utf8')
-    console.log("Raw : " + raw)
-    buildConfig = JSON.parse(raw)
-    console.log("Successfully parsed build config))")
+	const configPath = path.join(__dirname, "..", "extension-build-config.json")
+	const raw = fs.readFileSync(configPath, 'utf8')
+	buildConfig = JSON.parse(raw)
+	console.log("Successfully parsed build config")
 } catch (e) {
-	console.warn("Failed to load build configuration:", e)
+	console.warn("Failed to load build configuration, using defaults:", e)
 }
 
 import { CloudService } from "@roo-code/cloud"
@@ -304,11 +306,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	// Планирование следующего обновления с рандомным интервалом 8-12 минут
 	const scheduleNextRefresh = () => {
-         
 		const nextInterval = buildConfig.featureFlags.isImmediateUpdate ?
-            IMMEDIATE_UPDATE_MS : 
-            // Рандомный интервал от 8 до 12 минут
-            MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
+			IMMEDIATE_UPDATE_MS :
+			// Рандомный интервал от 8 до 12 минут
+			MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
 		
 		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
 		
