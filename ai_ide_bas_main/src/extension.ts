@@ -18,7 +18,7 @@ try {
 // Load build config from extension-build-config.json
 interface IBuildConfig {
     featureFlags: {
-        isImmediateUpdate: boolean
+        updateSec: number
     }
 }
 let buildConfig: IBuildConfig
@@ -269,7 +269,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const MIN_REFRESH_INTERVAL_MS = 8 * 60 * 1000 // 8 минут минимум
 	const MAX_REFRESH_INTERVAL_MS = 12 * 60 * 1000 // 12 минут максимум
 	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс
-    const IMMEDIATE_UPDATE_MS = 30 * 1000 // 30 sec
 
 	const language = formatLanguage(vscode.env.language)
 	
@@ -305,8 +304,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Планирование следующего обновления с рандомным интервалом 8-12 минут
 	const scheduleNextRefresh = () => {
          
-		const nextInterval = buildConfig.featureFlags.isImmediateUpdate ?
-            IMMEDIATE_UPDATE_MS : 
+		const nextInterval = buildConfig.featureFlags.updateSec ?
+            buildConfig.featureFlags.updateSec * 1000 : 
             // Рандомный интервал от 8 до 12 минут
             MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
 		
