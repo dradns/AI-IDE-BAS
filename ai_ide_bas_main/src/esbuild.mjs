@@ -11,13 +11,29 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 function updateExtensionBuildConfigIfNeeded() {
-	const isImmediateUpdate = process.argv.includes("--immediate-update")
+    const updateArg = process.argv.find(arg => arg.startsWith("--update-sec="));
+    const updateValueRaw = updateArg ? updateArg.split("=")[1].trim() : null;
+
+    let updateValue = null;
+
+    // Update value validation
+    if (updateValueRaw !== null) {
+        updateValue = parseInt(updateValueRaw, 10);
+
+        if (isNaN(updateValue)) {
+        console.error(
+            `[updateExtensionBuildConfigIfNeeded] Invalid --update value "${updateValueRaw}". It must be an integer.`
+        );
+        process.exit(1);
+        }
+    } 
+
 	const configPath = path.join(__dirname, "extension-build-config.json")
 	if (fs.existsSync(configPath)) {
 		const configRaw = fs.readFileSync(configPath, "utf8")
 		const config = JSON.parse(configRaw)
 
-		config.featureFlags.isImmediateUpdate = isImmediateUpdate
+		config.featureFlags.updateSec = updateValue
 
 		fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8")
         console.log(JSON.stringify(config, null, 2))

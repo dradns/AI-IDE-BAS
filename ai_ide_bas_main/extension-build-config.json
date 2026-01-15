@@ -1,5 +1,5 @@
 {
   "featureFlags": {
-    "isImmediateUpdate": false
+    "updateSec": 600
   }
 }
