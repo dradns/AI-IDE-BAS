@@ -1096,7 +1096,9 @@ export class CustomModesManager {
 								slug, 
 								state.language, 
 								undefined, 
-								provider.context
+								provider.context,
+								false, // onlyPublished
+								false, // useCacheOnly - при экспорте используем API, не только кэш
 							)
 							if (apiPromptData) {
 								if (apiPromptData.customInstructions && apiPromptData.customInstructions.trim()) {

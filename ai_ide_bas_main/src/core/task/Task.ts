@@ -66,7 +66,6 @@ import { getWorkspacePath } from "../../utils/path"
 // prompts
 import { formatResponse } from "../prompts/responses"
 import { SYSTEM_PROMPT } from "../prompts/system"
-import { checkAndRefreshPromptForMode } from "../../services/prompt-refresh-service"
 
 // core modules
 import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
@@ -1813,14 +1812,6 @@ export class Task extends EventEmitter<ClineEvents> {
 			apiConfiguration,
 		} = state ?? {}
 
-		// Проверяем обновления промпта для текущего режима перед генерацией системного промпта
-		if (mode) {
-			const provider = this.providerRef.deref()
-			if (provider) {
-				await checkAndRefreshPromptForMode(provider.context, mode, language)
-			}
-		}
-
 		return await (async () => {
 			const provider = this.providerRef.deref()
 
@@ -1855,6 +1846,8 @@ export class Task extends EventEmitter<ClineEvents> {
 					useAgentRules: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useAgentRules") ?? true,
 					useRooRulesOnly: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useRooRulesOnly") ?? false,
 				},
+				undefined, // todoList
+				false, // useCacheOnly - при генерации промпта для AI используем API, не только кэш
 			)
 		})()
 	}

@@ -232,15 +232,26 @@ export function pickTextFromMultilang(value: string | Record<string, string> | u
 				return pickTextFromMultilang(value[ptKey], undefined)
 			}
 		}
-		// Then try English
-		if (value["en"]) {
+		// Then try English as fallback (if not already requested)
+		if (normalizedLang !== "en" && value["en"]) {
 			console.log(`[pickTextFromMultilang] ⚠️ Falling back to English`)
 			return pickTextFromMultilang(value["en"], undefined)
 		}
-		// Fallback to first available
+		// If English was requested but not found, try Russian as fallback
+		if (normalizedLang === "en" && value["ru"]) {
+			console.log(`[pickTextFromMultilang] ⚠️ English not found, falling back to Russian`)
+			return pickTextFromMultilang(value["ru"], undefined)
+		}
+		// If Russian was requested but not found, try English as fallback
+		if (normalizedLang === "ru" && value["en"]) {
+			console.log(`[pickTextFromMultilang] ⚠️ Russian not found, falling back to English`)
+			return pickTextFromMultilang(value["en"], undefined)
+		}
+		// Fallback to first available key if requested language not found
+		// Краткое описание всегда есть для всех ролей на всех языках, но для тестовых ролей может быть только на одном языке
 		const firstKey = Object.keys(value)[0]
 		if (firstKey) {
-			console.log(`[pickTextFromMultilang] ⚠️ Falling back to first key "${firstKey}"`)
+			console.log(`[pickTextFromMultilang] ⚠️ Requested language "${lang || normalizedLang}" not found, falling back to first available key "${firstKey}"`)
 			return pickTextFromMultilang(value[firstKey], undefined)
 		}
 	}
@@ -473,19 +484,28 @@ export async function getAllModes(
 	console.log(`[Modes] getAllModes: language normalization - original="${language || "none"}", normalized="${lang}"`)
 	addApiRolesToModes(allModes, rolesToAdd, lang)
 
-	// Если обнаружена новая роль и передан context, запускаем экспорт в фоне (ТОЛЬКО в dist/prompts)
+	// Если обнаружена новая роль и передан context, проверяем, действительно ли она новая
 	if ((allModes as any).__hasNewRole && context) {
-		console.log(`[Modes] 🔄 New role detected, triggering background export to dist/prompts`)
-		// Запускаем экспорт в фоне с небольшой задержкой, чтобы не блокировать инициализацию
-		setTimeout(() => {
-			import("../services/prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
-				exportPromptsToExtensionDist(context).catch((error) => {
-					console.warn(`[Modes] ⚠️ Background export to dist/prompts failed after new role detection: ${error}`)
-				})
-			}).catch((error) => {
-				console.warn(`[Modes] ⚠️ Failed to load export service: ${error}`)
-			})
-		}, 2000) // 2 секунды задержка, чтобы не блокировать инициализацию
+		// Get list of known roles from global state, initialize if empty
+		let knownRoles = context.globalState.get<string[]>("knownApiRoles")
+		if (!knownRoles || knownRoles.length === 0) {
+			// First run: initialize with current roles
+			knownRoles = allModes.map(m => m.slug.toLowerCase())
+			await context.globalState.update("knownApiRoles", knownRoles)
+			console.log(`[Modes] Initialized knownApiRoles with ${knownRoles.length} roles`)
+		}
+		
+		const currentRoleSlugs = allModes.map(m => m.slug.toLowerCase())
+		const newRoles = currentRoleSlugs.filter(slug => !knownRoles!.includes(slug))
+		
+		if (newRoles.length > 0) {
+			console.log(`[Modes] 🔄 New role(s) detected: ${newRoles.join(", ")}`)
+			// Update known roles list
+			await context.globalState.update("knownApiRoles", currentRoleSlugs)
+			// НЕ триггерим экспорт при обнаружении новой роли - экспорт происходит только при автоматическом обновлении (8-12 минут или 2 минуты с флагом)
+		} else {
+			console.log(`[Modes] No truly new roles detected`)
+		}
 	}
 	
 	// Удаляем временный флаг

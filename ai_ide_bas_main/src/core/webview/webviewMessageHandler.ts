@@ -56,19 +56,6 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
 import { setPendingTodoList } from "../tools/updateTodoListTool"
-import { checkAndRefreshPromptForMode, checkAndRefreshPromptsIfNeeded } from "../../services/prompt-refresh-service"
-
-// Background prompt refresh helper (non-blocking)
-const triggerPromptRefresh = async (provider: ClineProvider) => {
-	const state = await provider.getState()
-	const currentMode = state?.mode
-	const currentLanguage = state?.language
-	if (currentMode) {
-		checkAndRefreshPromptForMode(provider.context, currentMode, currentLanguage).catch(err => {
-			console.debug(`[triggerPromptRefresh] Prompt refresh failed for mode=${currentMode}:`, err)
-		})
-	}
-}
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -299,18 +286,12 @@ export const webviewMessageHandler = async (
 			provider.isViewLaunched = true
 			break
 		case "newTask":
-			// Проверяем обновления промпта при каждом действии пользователя (в фоне)
-			triggerPromptRefresh(provider)
-			
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new
 			// task. This essentially creates a fresh slate for the new task.
 			await provider.initClineWithTask(message.text, message.images)
 			break
 		case "customInstructions":
-			// Проверяем обновления промпта при изменении кастомных инструкций (в фоне)
-			triggerPromptRefresh(provider)
-			
 			await provider.updateCustomInstructions(message.text)
 			break
 		case "alwaysAllowReadOnly":
@@ -362,9 +343,6 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		case "askResponse":
-			// Проверяем обновления промпта при каждом действии пользователя (в фоне)
-			triggerPromptRefresh(provider)
-			
 			provider.getCurrentCline()?.handleWebviewAskResponse(message.askResponse!, message.text, message.images)
 			break
 		case "autoCondenseContext":
@@ -714,41 +692,34 @@ export const webviewMessageHandler = async (
 				})
 			}
 			break
-		case "requestApiRoles":
-			try {
-				const { getAllRolesFromApi, loadPromptFromApiSeparated, roleToMode } = await import("../../services/prompt-api-service")
-				const { formatLanguage } = await import("../../shared/language")
-				// Используем язык из сообщения, если передан, иначе из VS Code настроек
-				const language = message.language 
-					? formatLanguage(message.language) 
-					: formatLanguage(vscode.env.language)
-				console.log(`[webviewMessageHandler] requestApiRoles: using language="${language}" (from message: ${message.language || "none"}, from vscode: ${vscode.env.language})`)
-				const allApiRoles = await getAllRolesFromApi(undefined, language)
-				
-				// ⚠️ ВАЖНО: Endpoint /modes уже возвращает ТОЛЬКО опубликованные роли
-				// Дополнительная фильтрация через loadPromptFromApiSeparated НЕ нужна и вызывала проблемы
-				// (роли helper, pm, code, simple отфильтровывались из-за проблем с кэшем или API)
-				// 
-				// Если нужна фильтрация по языку в будущем, бэкенд /modes должен её делать
-				const filteredRoles = allApiRoles
-				
-				console.log(`[webviewMessageHandler] Using all ${filteredRoles.length} roles from /modes API (no additional filtering)`)
-				
-				// Cache the filtered roles for instant initial load on next webview launch
-				await updateGlobalState("cachedApiRoles", filteredRoles)
-				
-				provider.postMessageToWebview({
-					type: "apiRoles",
-					apiRoles: filteredRoles,
-				})
-			} catch (error) {
-				console.error("Failed to fetch API roles:", error)
-				provider.postMessageToWebview({
-					type: "apiRoles",
-					apiRoles: [],
-				})
-			}
+		case "requestApiRoles": {
+			// НЕ делаем запрос к API - используем только кэш
+			// Запросы к API происходят только при установке и автоматическом обновлении (8-12 минут или 2 минуты)
+			const { formatLanguage: formatLang } = await import("../../shared/language")
+			const language = message.language 
+				? formatLang(message.language) 
+				: formatLang(getGlobalState("language") ?? vscode.env.language)
+			
+			// Читаем напрямую из context.globalState, чтобы получить актуальные данные
+			// (getGlobalState может использовать устаревший кэш для non-pass-through ключей)
+			const cachedApiRoles = provider.context.globalState.get<Array<{
+				slug: string
+				name: string
+				emoji?: string
+				target_roles: string[]
+				role_definition?: string | Record<string, string>
+				short_description?: Record<string, string>
+				when_to_use?: Record<string, string>
+			}>>("cachedApiRoles") || []
+			console.log(`[webviewMessageHandler] requestApiRoles: returning cached roles (${cachedApiRoles.length} roles, language=${language})`)
+			
+			provider.postMessageToWebview({
+				type: "apiRoles",
+				apiRoles: cachedApiRoles,
+				language: language,
+			})
 			break
+		}
 		case "openImage":
 			openImage(message.text!, { values: message.values })
 			break
@@ -1467,13 +1438,6 @@ export const webviewMessageHandler = async (
 		case "mode": {
 			const newMode = message.text as Mode
 			
-			// Background prompt refresh for new mode
-			provider.getState().then(state => {
-				checkAndRefreshPromptForMode(provider.context, newMode, state?.language).catch(err => {
-					console.debug(`[mode switch] Prompt refresh failed for mode=${newMode}:`, err)
-				})
-			})
-			
 			await provider.handleModeSwitch(newMode)
 			break
 		}
@@ -1571,11 +1535,39 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		case "language":
-			// Проверяем обновления промпта при смене языка (в фоне)
-			triggerPromptRefresh(provider)
-			
 			changeLanguage(message.text ?? "en")
 			await updateGlobalState("language", message.text as Language)
+			
+			// При смене языка загружаем роли для нового языка, чтобы краткие описания были на правильном языке
+			const { refreshAllPromptsFromApi } = await import("../../services/prompt-api-service")
+			const { formatLanguage } = await import("../../shared/language")
+			const newLanguage = formatLanguage(message.text ?? "en")
+			
+			// Загружаем промпты для нового языка в фоне (не блокируя UI)
+			refreshAllPromptsFromApi(provider.context, newLanguage).then((result) => {
+				console.log(`[webviewMessageHandler] Loaded prompts for language: ${newLanguage}, ${result.roles.length} roles`)
+				// Обновляем cachedApiRoles в globalState
+				updateGlobalState("cachedApiRoles", result.roles).catch((error) => {
+					console.warn(`[webviewMessageHandler] Failed to update cachedApiRoles:`, error)
+				})
+				// Сохраняем язык кэша
+				Promise.resolve(provider.context.globalState.update("cachedApiRolesLanguage", newLanguage)).catch((error: unknown) => {
+					console.warn(`[webviewMessageHandler] Failed to update cachedApiRolesLanguage:`, error)
+				})
+				// Обновляем UI с новыми ролями на правильном языке
+				provider.postMessageToWebview({
+					type: "apiRoles",
+					apiRoles: result.roles,
+					language: newLanguage, // Передаем язык, который использовался для запроса
+				})
+				provider.postMessageToWebview({
+					type: "promptsUpdated",
+					timestamp: Date.now(),
+				})
+			}).catch((error) => {
+				console.warn(`[webviewMessageHandler] Failed to load prompts for ${newLanguage}:`, error)
+			})
+			
 			await provider.postStateToWebview()
 			break
 		case "showRooIgnoredFiles":
@@ -1697,23 +1689,14 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "checkPromptsUpdate": {
-			// Check for prompt updates (called from webview on settings/modes open)
-			provider.getState().then(state => {
-				checkAndRefreshPromptsIfNeeded(provider.context, state?.language).catch(err => {
-					console.debug(`[checkPromptsUpdate] Prompt refresh failed:`, err)
-				})
-			})
+			// Prompt updates are now handled only by the timer in extension.ts
 			break
 		}
 		case "getSystemPrompt":
 			try {
-				// Refresh prompt before generating system prompt
-				if (message.mode) {
-					const state = await provider.getState()
-					await checkAndRefreshPromptForMode(provider.context, message.mode, state?.language)
-				}
-				
-				const systemPrompt = await generateSystemPrompt(provider, message)
+				// При просмотре системного промпта принудительно обновляем данные из API
+				// Локальные правила из .roo имеют приоритет и будут использоваться, если они есть
+				const systemPrompt = await generateSystemPrompt(provider, message, false, true)
 
 				await provider.postMessageToWebview({
 					type: "systemPrompt",
@@ -1729,7 +1712,8 @@ export const webviewMessageHandler = async (
 			break
 		case "copySystemPrompt":
 			try {
-				const systemPrompt = await generateSystemPrompt(provider, message)
+				// При копировании системного промпта используем только кэш, не делаем запросы к API
+				const systemPrompt = await generateSystemPrompt(provider, message, true)
 
 				await vscode.env.clipboard.writeText(systemPrompt)
 				await vscode.window.showInformationMessage(t("common:info.clipboard_copy"))
@@ -2142,9 +2126,6 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "exportMode":
-			// Проверяем обновления промпта при экспорте режима (в фоне)
-			triggerPromptRefresh(provider)
-			
 			if (message.slug) {
 				try {
 					// Get custom mode prompts to check if built-in mode has been customized
@@ -2234,9 +2215,6 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "loadModeInfo":
-			// Проверяем обновления промпта при загрузке информации о режиме (в фоне)
-			triggerPromptRefresh(provider)
-			
 			try {
 				const { modeSlug } = message as any
 				if (!modeSlug) {
@@ -2260,9 +2238,6 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "importMode":
-			// Проверяем обновления промпта при импорте режима (в фоне)
-			triggerPromptRefresh(provider)
-			
 			try {
 				// Get last used directory for import
 				const lastImportPath = getGlobalState("lastModeImportPath")
@@ -2794,12 +2769,6 @@ export const webviewMessageHandler = async (
 
 		case "switchTab": {
 			if (message.tab) {
-				// Проверяем обновления промпта при переключении вкладок (особенно modes/settings)
-				// Это гарантирует, что пользователь увидит актуальные промпты при открытии вкладок
-				if (message.tab === "modes" || message.tab === "settings") {
-					triggerPromptRefresh(provider)
-				}
-				
 				// Capture tab shown event for all switchTab messages (which are user-initiated)
 				if (TelemetryService.hasInstance()) {
 					TelemetryService.instance.captureTabShown(message.tab)

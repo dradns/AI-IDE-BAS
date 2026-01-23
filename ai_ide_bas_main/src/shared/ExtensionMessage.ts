@@ -135,6 +135,7 @@ export interface ExtensionMessage {
 		| "feedback:error"
 		| "showFeedbackDialog"
 	text?: string
+	language?: string // Language used for API request (for apiRoles message)
 	isAuthorized?: boolean
 	payload?: any // Add a generic payload for now, can refine later
 	action?:

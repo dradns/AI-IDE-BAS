@@ -21,7 +21,6 @@ import * as path from "path"
 import * as fs from "fs/promises"
 import { loadModeInfo } from "../services/mode-info-loader"
 import { clearPromptCache, refreshAllPromptsFromApi } from "../services/prompt-api-service"
-import { checkAndRefreshPromptsIfNeeded } from "../services/prompt-refresh-service"
 import { formatLanguage } from "../shared/language"
 
 /**
@@ -98,12 +97,6 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		if (!visibleProvider) {
 			return
 		}
-
-		// Проверяем обновления промптов перед созданием новой задачи (в фоне)
-		const state = await visibleProvider.getState()
-		checkAndRefreshPromptsIfNeeded(context, state?.language).catch(err => {
-			console.debug(`[plusButtonClicked] Prompt refresh failed:`, err)
-		})
 
 		TelemetryService.instance.captureTitleButtonClicked("plus")
 

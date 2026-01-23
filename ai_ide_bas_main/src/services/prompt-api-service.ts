@@ -1,4 +1,6 @@
 import * as vscode from "vscode"
+import * as path from "path"
+import * as fs from "fs"
 import { AIIDEBAS_PROMPTS_API_BASE_URL } from "../shared/constants"
 
 interface CachedPrompt {
@@ -22,7 +24,181 @@ const CACHE_LOGIC_VERSION = "3.6.0"
 
 // Export debounce to prevent multiple exports on batch updates
 let exportDebounceTimer: NodeJS.Timeout | null = null
-const EXPORT_DEBOUNCE_DELAY = 5000
+let isExportInProgress = false
+let exportQueue: Array<{ context: vscode.ExtensionContext; reason: string; onlyRoles?: string[] }> = []
+const EXPORT_TIMEOUT_MS = 60000 // 60 seconds timeout for export
+
+// API error tracking with exponential backoff
+interface ApiErrorState {
+	lastError: number
+	errorCount: number
+	nextRetryAt: number
+}
+const apiErrorStates = new Map<string, ApiErrorState>()
+
+// Cache update locks to prevent race conditions
+const cacheUpdateLocks = new Map<string, Promise<void>>()
+
+// Load build config to check feature flags
+interface IBuildConfig {
+	featureFlags: {
+		isImmediateUpdate: boolean
+	}
+}
+let buildConfig: IBuildConfig = {
+	featureFlags: {
+		isImmediateUpdate: false
+	}
+}
+try {
+	// Try root directory first (same as extension.ts)
+	const configPath = path.join(__dirname, "..", "..", "extension-build-config.json")
+	// Also try src directory as fallback
+	const configPathSrc = path.join(__dirname, "..", "extension-build-config.json")
+	
+	let configPathToUse: string | null = null
+	if (fs.existsSync(configPath)) {
+		configPathToUse = configPath
+	} else if (fs.existsSync(configPathSrc)) {
+		configPathToUse = configPathSrc
+	}
+	
+	if (configPathToUse) {
+		const raw = fs.readFileSync(configPathToUse, 'utf8')
+		buildConfig = JSON.parse(raw)
+		console.log(`[PromptAPI] Loaded build config from ${configPathToUse}, isImmediateUpdate=${buildConfig.featureFlags.isImmediateUpdate}`)
+	}
+} catch (e) {
+	// Use defaults if config loading fails
+	console.warn(`[PromptAPI] Failed to load build config, using defaults: ${e}`)
+}
+
+// Dynamic export debounce delay based on feature flag
+function getExportDebounceDelay(): number {
+	return buildConfig.featureFlags.isImmediateUpdate ? 15000 : 5000
+}
+
+// Exponential backoff delay calculation
+function getBackoffDelay(errorCount: number): number {
+	return Math.min(Math.pow(2, errorCount) * 1000, 5 * 60 * 1000) // Max 5 minutes
+}
+
+// Check if request should be skipped due to recent errors
+function shouldSkipRequest(mode: string): boolean {
+	const state = apiErrorStates.get(mode)
+	if (!state) return false
+	
+	const now = Date.now()
+	if (now < state.nextRetryAt) {
+		console.log(`[PromptAPI] Skipping request for ${mode}, retry after ${Math.round((state.nextRetryAt - now) / 1000)}s`)
+		return true
+	}
+	return false
+}
+
+// Record API error and set backoff
+function recordApiError(mode: string): void {
+	const state = apiErrorStates.get(mode) || { lastError: 0, errorCount: 0, nextRetryAt: 0 }
+	state.errorCount++
+	state.lastError = Date.now()
+	state.nextRetryAt = Date.now() + getBackoffDelay(state.errorCount)
+	apiErrorStates.set(mode, state)
+	console.warn(`[PromptAPI] Recorded error for ${mode}, errorCount=${state.errorCount}, retry after ${Math.round(getBackoffDelay(state.errorCount) / 1000)}s`)
+}
+
+// Clear error state on successful request
+function recordApiSuccess(mode: string): void {
+	apiErrorStates.delete(mode)
+}
+
+// Validate new format API response item
+function validateNewFormatItem(item: any): boolean {
+	if (!item || typeof item !== 'object') {
+		console.warn(`[PromptAPI] Invalid item: not an object`)
+		return false
+	}
+	if (!item.status) {
+		console.warn(`[PromptAPI] Invalid item: missing status`)
+		return false
+	}
+	if (!item.updated_at) {
+		console.warn(`[PromptAPI] Invalid item: missing updated_at`)
+		return false
+	}
+	const hasTemplate = item.template && typeof item.template === 'object'
+	const hasDirectFields = item.systemPrompt || item.customInstructions || item.promptContent || item.artifactsInstructions || item.artifacts_instructions
+	const hasArtifacts = item.artifacts && (Array.isArray(item.artifacts) || typeof item.artifacts === 'object')
+	if (!hasTemplate && !hasDirectFields && !hasArtifacts) {
+		console.warn(`[PromptAPI] Invalid item: no template, direct fields, or artifacts. Item keys:`, Object.keys(item))
+		return false
+	}
+	return true
+}
+
+// Atomic cache update to prevent race conditions
+async function atomicCacheUpdate(
+	context: vscode.ExtensionContext,
+	cacheKey: string,
+	oldUpdatedAt: string | undefined,
+	newData: CachedPromptSeparated
+): Promise<boolean> {
+	const existingLock = cacheUpdateLocks.get(cacheKey)
+	if (existingLock) {
+		await existingLock
+	}
+	
+	let resolveLock: () => void
+	const lock = new Promise<void>((resolve) => {
+		resolveLock = resolve
+	})
+	cacheUpdateLocks.set(cacheKey, lock)
+	
+	try {
+		const currentCached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+		if (currentCached && currentCached.updated_at !== oldUpdatedAt) {
+			console.log(`[PromptAPI] Cache was updated by another process, skipping update`)
+			return false
+		}
+		await context.globalState.update(cacheKey, newData)
+		return true
+	} finally {
+		cacheUpdateLocks.delete(cacheKey)
+		resolveLock!()
+	}
+}
+
+// Safe export with queue and timeout protection
+async function safeExportPrompts(context: vscode.ExtensionContext, reason: string, onlyRoles?: string[]): Promise<void> {
+	if (isExportInProgress) {
+		console.log(`[PromptAPI] Export in progress, queuing export: ${reason}`)
+		exportQueue.push({ context, reason, onlyRoles })
+		return
+	}
+
+	isExportInProgress = true
+	const startTime = Date.now()
+
+	try {
+		console.log(`[PromptAPI] Starting export: ${reason}${onlyRoles ? ` (only roles: ${onlyRoles.join(", ")})` : ""}`)
+		const { exportPromptsToExtensionDist } = await import("./prompt-export-service")
+		await Promise.race([
+			exportPromptsToExtensionDist(context, onlyRoles),
+			new Promise((_, reject) => 
+				setTimeout(() => reject(new Error("Export timeout")), EXPORT_TIMEOUT_MS)
+			)
+		])
+		console.log(`[PromptAPI] Export completed: ${reason} (took ${Date.now() - startTime}ms)`)
+	} catch (error: any) {
+		console.warn(`[PromptAPI] Export failed: ${reason}, error: ${error.message || error}`)
+	} finally {
+		isExportInProgress = false
+		
+		if (exportQueue.length > 0) {
+			const next = exportQueue.shift()!
+			setTimeout(() => safeExportPrompts(next.context, next.reason, next.onlyRoles), 1000)
+		}
+	}
+}
 
 // Returns cache key for prompt
 function getCacheKey(mode: string, language?: string): string {
@@ -31,12 +207,12 @@ function getCacheKey(mode: string, language?: string): string {
 }
 
 // Returns cache key for separated prompt data
-function getCacheKeySeparated(mode: string, language?: string): string {
+export function getCacheKeySeparated(mode: string, language?: string): string {
 	const lang = language ? normalizeLang(language) || "all" : "all"
 	return `${CACHE_KEY_PREFIX_SEPARATED}${mode}_${lang}`
 }
 
-interface CachedPromptSeparated {
+export interface CachedPromptSeparated {
 	systemPrompt: string
 	customInstructions: string
 	artifactsInstructions: string
@@ -391,7 +567,9 @@ async function checkForUpdatesInBackground(
 			const prompt = selectLatestPrompt(data.prompts || [], "published", role)
 
 			if (prompt) {
-				if (cached.updated_at === prompt.updated_at) {
+				const cachedUpdatedAt = normalizeUpdatedAt(cached.updated_at)
+				const promptUpdatedAt = normalizeUpdatedAt(prompt.updated_at)
+				if (cachedUpdatedAt === promptUpdatedAt && cachedUpdatedAt !== undefined) {
 					console.log(`[PromptAPI] Background: prompt unchanged`)
 					const cacheKey = getCacheKey(mode, language)
 					await context.globalState.update(cacheKey, {
@@ -429,15 +607,17 @@ export async function loadPromptFromApiSeparated(
 	language?: string,
 	apiBaseUrl?: string,
 	context?: vscode.ExtensionContext,
-	onlyPublished: boolean = false
+	onlyPublished: boolean = false,
+	useCacheOnly: boolean = false,
+	forceRefresh: boolean = false
 ): Promise<{ systemPrompt: string; customInstructions: string; artifactsInstructions: string } | null> {
 	const role = modeToRole(mode)
 	const normalizedLang = normalizeLang(language)
 	const cacheKey = getCacheKeySeparated(mode, language)
 	
-	// Try loading from cache
+	// Try loading from cache (skip if forceRefresh=true)
 	let cached: CachedPromptSeparated | undefined
-	if (context) {
+	if (context && !forceRefresh) {
 		cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
 		if (cached) {
 			// Invalidate cache if logic version mismatch
@@ -448,10 +628,13 @@ export async function loadPromptFromApiSeparated(
 				const age = Date.now() - cached.timestamp
 				if (age < CACHE_TTL) {
 					console.log(`[PromptAPI] Using cached prompt for mode=${mode}, age=${Math.round(age / 1000)}s`)
-					// Start background update check
-					checkForUpdatesSeparatedInBackground(mode, language, apiBaseUrl, cached, context).catch((err) => {
-						console.debug(`[PromptAPI] Background check failed:`, err)
-					})
+					// Start background update check только если useCacheOnly=false
+					// При useCacheOnly=true не делаем фоновые запросы к API
+					if (!useCacheOnly) {
+						checkForUpdatesSeparatedInBackground(mode, language, apiBaseUrl, cached, context).catch((err) => {
+							console.debug(`[PromptAPI] Background check failed:`, err)
+						})
+					}
 					return {
 						systemPrompt: cached.systemPrompt || "",
 						customInstructions: cached.customInstructions || "",
@@ -462,6 +645,40 @@ export async function loadPromptFromApiSeparated(
 				}
 			}
 		}
+	}
+	
+	// If forceRefresh=true, clear cache before fetching
+	if (forceRefresh && context) {
+		console.log(`[PromptAPI] Force refresh requested for mode=${mode}, clearing cache`)
+		await clearPromptCache(context, mode, language)
+		cached = undefined
+	}
+
+	// Если useCacheOnly=true, используем кэш даже если он устарел, или возвращаем null
+	if (useCacheOnly) {
+		if (cached && cached.status === "published") {
+			console.log(`[PromptAPI] Using cache only (even if expired) for mode=${mode}`)
+			return {
+				systemPrompt: cached.systemPrompt || "",
+				customInstructions: cached.customInstructions || "",
+				artifactsInstructions: cached.artifactsInstructions || "",
+			}
+		}
+		console.log(`[PromptAPI] No cache available for mode=${mode}, returning null (useCacheOnly=true)`)
+		return null
+	}
+
+	// Check if request should be skipped due to recent errors
+	if (shouldSkipRequest(mode)) {
+		if (cached && cached.status === "published") {
+			console.log(`[PromptAPI] Using cache due to recent errors`)
+			return {
+				systemPrompt: cached.systemPrompt || "",
+				customInstructions: cached.customInstructions || "",
+				artifactsInstructions: cached.artifactsInstructions || "",
+			}
+		}
+		return null
 	}
 
 	// Determine API base URL
@@ -490,6 +707,7 @@ export async function loadPromptFromApiSeparated(
 
 		// Handle rate limit
 		if (response.status === 429) {
+			recordApiError(mode)
 			const retryAfter = response.headers.get("Retry-After")
 			console.warn(`[PromptAPI] Rate limit (429), retry after ${retryAfter || 60}s`)
 			if (cached && cached.cacheLogicVersion === CACHE_LOGIC_VERSION) {
@@ -504,6 +722,7 @@ export async function loadPromptFromApiSeparated(
 		}
 
 		if (!response.ok) {
+			recordApiError(mode)
 			console.warn(`[PromptAPI] HTTP ${response.status}`)
 			if (cached && cached.status === "published") {
 				console.log(`[PromptAPI] Using cached prompt on API error`)
@@ -515,6 +734,8 @@ export async function loadPromptFromApiSeparated(
 			}
 			return null
 		}
+
+		recordApiSuccess(mode)
 
 		const rawData = await response.json()
 
@@ -544,10 +765,25 @@ export async function loadPromptFromApiSeparated(
 				return null
 			}
 
+			// Validate item structure
+			if (!validateNewFormatItem(item)) {
+				console.warn(`[PromptAPI] Invalid item structure for role=${role}, using cache if available`)
+				if (cached && cached.status === "published") {
+					return {
+						systemPrompt: cached.systemPrompt || "",
+						customInstructions: cached.customInstructions || "",
+						artifactsInstructions: cached.artifactsInstructions || "",
+					}
+				}
+				return null
+			}
+
 			console.log(`[PromptAPI] New format item: slug=${item.slug}, status=${item.status}`)
 
-			// Check if unchanged by updated_at
-			if (cached && cached.updated_at === item.updated_at) {
+			// Check if unchanged by updated_at (normalize for comparison)
+			const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
+			const itemUpdatedAt = normalizeUpdatedAt(item.updated_at)
+			if (cached && cachedUpdatedAt === itemUpdatedAt && cachedUpdatedAt !== undefined) {
 				console.log(`[PromptAPI] Prompt unchanged, using cache`)
 				if (context) {
 					await context.globalState.update(cacheKey, {
@@ -563,16 +799,76 @@ export async function loadPromptFromApiSeparated(
 				}
 			}
 
-			// Extract data from new format
-			const customInstructions = item.customInstructions || item.promptContent || item.exportedCustomInstructions || ""
-			const systemPrompt = ""
-			const artifactsInstructions = ""
+			// Extract data from new format - use template if available, otherwise direct fields
+			let systemPrompt = ""
+			let customInstructions = ""
+			let artifactsInstructions = ""
 
-			console.log(`[PromptAPI] Extracted customInstructions, length=${customInstructions.length}`)
+			if (item.template) {
+				// Use template functions (preferred method)
+				systemPrompt = buildSystemPromptFromTemplate(item.template, normalizedLang)
+				customInstructions = buildCustomInstructionsFromTemplate(item.template, language)
+				artifactsInstructions = buildArtifactsInstructionsFromTemplate(item.template, language)
+				console.log(`[PromptAPI] Using template: systemPrompt=${systemPrompt.length} chars, customInstructions=${customInstructions.length} chars, artifactsInstructions=${artifactsInstructions.length} chars`)
+				
+				// Если template вернул пустые строки, пробуем direct fields как fallback
+				if (!systemPrompt && !customInstructions && !artifactsInstructions) {
+					console.log(`[PromptAPI] Template returned empty, trying direct fields as fallback`)
+					systemPrompt = item.systemPrompt || item.system_prompt || ""
+					customInstructions = item.customInstructions || item.promptContent || item.exportedCustomInstructions || item.custom_instructions || ""
+					artifactsInstructions = item.artifactsInstructions || item.artifacts_instructions || item.instructions || ""
+					
+					// Также пробуем извлечь артефакты из item.artifacts
+					if (!artifactsInstructions && item.artifacts) {
+						try {
+							const extractedArtifacts = extractArtifactsFromTemplate(item.template, language)
+							if (extractedArtifacts.length > 0) {
+								artifactsInstructions = extractedArtifacts.map(a => a.content).join("\n\n")
+								console.log(`[PromptAPI] Extracted ${extractedArtifacts.length} artifacts from template`)
+							}
+						} catch (error) {
+							console.warn(`[PromptAPI] Failed to extract artifacts: ${error}`)
+						}
+						
+						// Если все еще нет, проверяем item.artifacts напрямую
+						if (!artifactsInstructions) {
+							let artifactsForLang: Array<{ key: string; content: string; name?: string }> = []
+							if (Array.isArray(item.artifacts)) {
+								artifactsForLang = item.artifacts
+							} else if (typeof item.artifacts === 'object' && normalizedLang) {
+								if (item.artifacts[normalizedLang] && Array.isArray(item.artifacts[normalizedLang])) {
+									artifactsForLang = item.artifacts[normalizedLang]
+								} else {
+									// Try case-insensitive match
+									for (const [key, value] of Object.entries(item.artifacts)) {
+										if (key.toLowerCase() === normalizedLang.toLowerCase() && Array.isArray(value)) {
+											artifactsForLang = value as Array<{ key: string; content: string; name?: string }>
+											break
+										}
+									}
+								}
+							}
+							
+							if (artifactsForLang.length > 0) {
+								artifactsInstructions = artifactsForLang.map(a => a.content).join("\n\n")
+								console.log(`[PromptAPI] Found ${artifactsForLang.length} artifacts in item.artifacts`)
+							}
+						}
+					}
+					
+					console.log(`[PromptAPI] After fallback: systemPrompt=${systemPrompt.length} chars, customInstructions=${customInstructions.length} chars, artifactsInstructions=${artifactsInstructions.length} chars`)
+				}
+			} else {
+				// Fallback: extract directly from fields
+				systemPrompt = item.systemPrompt || item.system_prompt || ""
+				customInstructions = item.customInstructions || item.promptContent || item.exportedCustomInstructions || item.custom_instructions || ""
+				artifactsInstructions = item.artifactsInstructions || item.artifacts_instructions || item.instructions || ""
+				console.log(`[PromptAPI] Using direct fields: systemPrompt=${systemPrompt.length} chars, customInstructions=${customInstructions.length} chars, artifactsInstructions=${artifactsInstructions.length} chars`)
+			}
 
 			// Save to cache
 			if (context) {
-				await context.globalState.update(cacheKey, {
+				const newData: CachedPromptSeparated = {
 					systemPrompt,
 					customInstructions,
 					artifactsInstructions,
@@ -582,7 +878,8 @@ export async function loadPromptFromApiSeparated(
 					status: item.status,
 					updated_at: item.updated_at,
 					cacheLogicVersion: CACHE_LOGIC_VERSION,
-				})
+				}
+				await atomicCacheUpdate(context, cacheKey, cached?.updated_at, newData)
 				console.log(`[PromptAPI] Cached for mode=${mode}`)
 			}
 
@@ -610,8 +907,10 @@ export async function loadPromptFromApiSeparated(
 		let prompt = selectLatestPrompt(data.prompts, "published", role)
 		let useDraft = false
 
-		// Check if unchanged
-		if (prompt && cached && cached.updated_at === prompt.updated_at) {
+		// Check if unchanged (normalize for comparison)
+		const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
+		const promptUpdatedAt = normalizeUpdatedAt(prompt?.updated_at)
+		if (prompt && cached && cachedUpdatedAt === promptUpdatedAt && cachedUpdatedAt !== undefined) {
 			console.log(`[PromptAPI] Prompt unchanged, using cache`)
 			if (context) {
 				await context.globalState.update(cacheKey, {
@@ -631,22 +930,20 @@ export async function loadPromptFromApiSeparated(
 			console.log(`[PromptAPI] Prompt changed, updating cache`)
 		}
 
-		// Fallback: try finding by status only
-		if (!prompt) {
+		// Fallback: try finding by status only (only if not onlyPublished)
+		if (!prompt && !onlyPublished) {
 			prompt = selectLatestPrompt(data.prompts, "published")
 			if (!prompt) {
-				if (onlyPublished) {
-					console.log(`[PromptAPI] No published prompts for role=${role}`)
-				} else {
-					prompt = selectLatestPrompt(data.prompts, "draft", role)
-					if (prompt) {
-						useDraft = true
-						console.log(`[PromptAPI] Using draft for role=${role}`)
-					}
+				prompt = selectLatestPrompt(data.prompts, "draft", role)
+				if (prompt) {
+					useDraft = true
+					console.log(`[PromptAPI] Using draft for role=${role}`)
 				}
 			} else {
 				console.warn(`[PromptAPI] Found published but target_roles mismatch for role=${role}`)
 			}
+		} else if (!prompt && onlyPublished) {
+			console.log(`[PromptAPI] No published prompts for role=${role} (onlyPublished=true)`)
 		}
 
 		// Last fallback: draft by status only
@@ -702,37 +999,21 @@ export async function loadPromptFromApiSeparated(
 				const etag = response.headers.get("ETag")
 				const wasUpdated = cached && cached.updated_at !== prompt.updated_at
 
-				await context.globalState.update(cacheKey, {
+				const newData: CachedPromptSeparated = {
 					systemPrompt,
 					customInstructions,
 					artifactsInstructions,
 					timestamp: Date.now(),
 					version: prompt.version,
 					etag: etag || undefined,
-					status: prompt.status,
+					status: (prompt.status === "published" || prompt.status === "draft") ? prompt.status : undefined,
 					updated_at: prompt.updated_at,
 					cacheLogicVersion: CACHE_LOGIC_VERSION,
-				})
+				}
+				await atomicCacheUpdate(context, cacheKey, cached?.updated_at, newData)
 				console.log(`[PromptAPI] Cached for mode=${mode}, status=${prompt.status}`)
 
-				// Trigger background export on new role or update (ONLY to dist/prompts, NOT to ~/.roo)
-				const isNewRole = !cached
-				if ((wasUpdated || isNewRole) && !useDraft) {
-					const reason = isNewRole ? "new role" : "prompt update"
-					console.log(`[PromptAPI] Scheduling export to dist/prompts (${reason})`)
-					if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
-					exportDebounceTimer = setTimeout(() => {
-						exportDebounceTimer = null
-						console.log(`[PromptAPI] Executing export to dist/prompts after ${reason}`)
-						import("./prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
-							exportPromptsToExtensionDist(context).catch((error: any) => {
-								console.warn(`[PromptAPI] Export to dist/prompts failed: ${error}`)
-							})
-						}).catch((error) => {
-							console.warn(`[PromptAPI] Failed to load export service: ${error}`)
-						})
-					}, EXPORT_DEBOUNCE_DELAY)
-				}
+				// НЕ триггерим экспорт при обновлении промпта - экспорт происходит только при автоматическом обновлении (8-12 минут или 2 минуты с флагом)
 			} else {
 				console.log(`[PromptAPI] Skipped cache update, keeping published`)
 			}
@@ -775,6 +1056,7 @@ export async function loadPromptFromApiSeparated(
 
 		return { systemPrompt, customInstructions, artifactsInstructions }
 	} catch (error) {
+		recordApiError(mode)
 		const msg = error instanceof Error ? error.message : String(error)
 		console.warn(`[PromptAPI] Failed to load prompt: ${msg}`)
 
@@ -799,6 +1081,8 @@ interface BatchExportResponse {
 			customInstructions?: string
 			artifactsInstructions?: string
 			artifacts?: Array<{ key: string; content: string; name?: string }>
+			updated_at?: string
+			id?: string
 		} | null
 	}
 }
@@ -902,7 +1186,9 @@ export async function loadPromptsBatchFromApi(
 									systemPrompt: typeof item.systemPrompt === 'object' && !Array.isArray(item.systemPrompt) ? (item.systemPrompt[lang] || item.system_prompt?.[lang] || "") : (item.systemPrompt || item.system_prompt || ""),
 									customInstructions: typeof customInstructions === 'object' && !Array.isArray(customInstructions) ? (customInstructions[lang] || "") : (customInstructions || ""),
 									artifactsInstructions: typeof item.artifactsInstructions === 'object' && !Array.isArray(item.artifactsInstructions) ? (item.artifactsInstructions[lang] || item.artifacts_instructions?.[lang] || "") : (item.artifactsInstructions || item.artifacts_instructions || ""),
-									artifacts: artifactsForLang
+									artifacts: artifactsForLang,
+									updated_at: item.updated_at || item.updatedAt,
+									id: item.id
 								}
 							}
 							continue
@@ -951,7 +1237,9 @@ export async function loadPromptsBatchFromApi(
 					systemPrompt: item.systemPrompt || item.system_prompt || "",
 					customInstructions: item.customInstructions || item.custom_instructions || "",
 					artifactsInstructions: item.artifactsInstructions || item.artifacts_instructions || "",
-					artifacts: artifactsForLang
+					artifacts: artifactsForLang,
+					updated_at: item.updated_at || item.updatedAt,
+					id: item.id
 				}
 			}
 
@@ -1065,6 +1353,16 @@ export async function loadPromptWithArtifactsFromApi(
 	}
 }
 
+// Normalize updated_at for comparison
+export function normalizeUpdatedAt(updatedAt: string | undefined | null): string | undefined {
+	if (!updatedAt) return undefined
+	try {
+		return new Date(updatedAt).toISOString()
+	} catch {
+		return updatedAt
+	}
+}
+
 // Background update check for separated prompts
 async function checkForUpdatesSeparatedInBackground(
 	mode: string,
@@ -1101,14 +1399,42 @@ async function checkForUpdatesSeparatedInBackground(
 		}
 
 		if (response.ok) {
-			const data: PromptApiResponse = await response.json()
+			const rawData = await response.json()
 			const role = modeToRole(mode)
-			let prompt = selectLatestPrompt(data.prompts || [], "published", role)
-			if (!prompt) prompt = selectLatestPrompt(data.prompts || [], "published")
+			let prompt: any = undefined
+			
+			// Check response format (array = new format, object = legacy)
+			if (Array.isArray(rawData)) {
+				// New format: find published prompt with matching targetRole
+				const publishedItems = rawData.filter((item: any) => {
+					if (item.status !== "published") return false
+					if (item.target_roles && item.target_roles.length > 0) {
+						return item.target_roles.some((tr: string) => tr.toUpperCase() === role.toUpperCase())
+					}
+					return false
+				})
+				if (publishedItems.length > 0) {
+					// Sort by updated_at descending
+					publishedItems.sort((a: any, b: any) => {
+						const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0
+						const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0
+						return bTime - aTime
+					})
+					prompt = publishedItems[0]
+				}
+			} else {
+				// Legacy format: { prompts: [...] }
+				const data: PromptApiResponse = rawData
+				prompt = selectLatestPrompt(data.prompts || [], "published", role)
+			}
 
 			if (prompt) {
+				// Normalize updated_at for comparison
+				const cachedUpdatedAt = normalizeUpdatedAt(cached.updated_at)
+				const promptUpdatedAt = normalizeUpdatedAt(prompt.updated_at)
+				
 				// Check if unchanged
-				if (cached.updated_at === prompt.updated_at) {
+				if (cachedUpdatedAt === promptUpdatedAt && cachedUpdatedAt !== undefined) {
 					console.log(`[PromptAPI] Background: prompt unchanged`)
 					const cacheKey = getCacheKeySeparated(mode, language)
 					await context.globalState.update(cacheKey, {
@@ -1119,47 +1445,39 @@ async function checkForUpdatesSeparatedInBackground(
 					return
 				}
 
-				console.log(`[PromptAPI] Background: prompt changed`)
+				// Only update if actually changed
+				if (cachedUpdatedAt !== promptUpdatedAt) {
+					console.log(`[PromptAPI] Background: prompt changed (${cachedUpdatedAt} -> ${promptUpdatedAt})`)
 
-				const systemPrompt = buildSystemPromptFromTemplate(prompt.template, normalizedLang)
-				const customInstructions = buildCustomInstructionsFromTemplate(prompt.template, language)
-				const artifactsInstructions = buildArtifactsInstructionsFromTemplate(prompt.template, language)
+					const systemPrompt = buildSystemPromptFromTemplate(prompt.template, normalizedLang)
+					const customInstructions = buildCustomInstructionsFromTemplate(prompt.template, language)
+					const artifactsInstructions = buildArtifactsInstructionsFromTemplate(prompt.template, language)
 
-				if (systemPrompt.trim() || customInstructions.trim() || artifactsInstructions.trim()) {
-					const etag = response.headers.get("ETag")
-					const cacheKey = getCacheKeySeparated(mode, language)
-					await context.globalState.update(cacheKey, {
-						systemPrompt,
-						customInstructions,
-						artifactsInstructions,
-						timestamp: Date.now(),
-						version: prompt.version,
-						etag: etag || undefined,
-						status: prompt.status,
-						updated_at: prompt.updated_at,
-						cacheLogicVersion: CACHE_LOGIC_VERSION,
-					})
-					console.log(`[PromptAPI] Background cache updated for mode=${mode}`)
-
-					// Schedule background export (ONLY to dist/prompts, NOT to ~/.roo)
-					if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
-					exportDebounceTimer = setTimeout(() => {
-						exportDebounceTimer = null
-						console.log(`[PromptAPI] Executing export to dist/prompts after background update`)
-						import("./prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
-							exportPromptsToExtensionDist(context).catch((error: any) => {
-								console.warn(`[PromptAPI] Dist export failed: ${error}`)
-							})
-						}).catch((error) => {
-							console.warn(`[PromptAPI] Failed to load export service: ${error}`)
+					if (systemPrompt.trim() || customInstructions.trim() || artifactsInstructions.trim()) {
+						const etag = response.headers.get("ETag")
+						const cacheKey = getCacheKeySeparated(mode, language)
+						await atomicCacheUpdate(context, cacheKey, cached.updated_at, {
+							systemPrompt,
+							customInstructions,
+							artifactsInstructions,
+							timestamp: Date.now(),
+							version: prompt.version,
+							etag: etag || undefined,
+							status: (prompt.status === "published" || prompt.status === "draft") ? prompt.status : undefined,
+							updated_at: prompt.updated_at,
+							cacheLogicVersion: CACHE_LOGIC_VERSION,
 						})
-					}, EXPORT_DEBOUNCE_DELAY)
+						console.log(`[PromptAPI] Background cache updated for mode=${mode}`)
+
+						// НЕ триггерим экспорт при фоновом обновлении - экспорт происходит только при автоматическом обновлении (8-12 минут или 2 минуты с флагом)
+					}
+				} else {
+					console.log(`[PromptAPI] Background: prompt unchanged (both undefined)`)
 				}
 			} else {
-				// Clear stale cache if prompt deleted
-				console.log(`[PromptAPI] No prompt in background, clearing cache for mode=${mode}`)
-				const cacheKey = getCacheKeySeparated(mode, language)
-				await context.globalState.update(cacheKey, undefined)
+				// Don't clear cache if prompt not found - might be temporary API issue
+				// Only log warning, keep existing cache
+				console.log(`[PromptAPI] Background: no prompt found for mode=${mode}, keeping cache`)
 			}
 		}
 	} catch (error) {
@@ -1235,9 +1553,34 @@ export interface RefreshResult {
 export async function refreshAllPromptsFromApi(
 	context: vscode.ExtensionContext,
 	language?: string,
-	apiBaseUrl?: string
+	apiBaseUrl?: string,
+	shouldExport: boolean = false // Экспорт только при автоматическом обновлении (8-12 минут или 2 минуты с флагом)
 ): Promise<RefreshResult> {
 	const normalizedLang = normalizeLang(language)
+
+	// Rate limiting for frequent updates
+	// При isImmediateUpdate интервал контролируется в extension.ts (2 минуты), rate limiting не нужен
+	// При обычном режиме (8-12 минут) rate limiting также не нужен, так как интервал достаточно большой
+	const lastRefreshKey = "last_prompts_refresh_time"
+	const MIN_REFRESH_INTERVAL_MS = 0 // Отключен, интервал контролируется в extension.ts
+
+	if (context) {
+		const lastRefresh = context.globalState.get<number>(lastRefreshKey)
+		if (lastRefresh && MIN_REFRESH_INTERVAL_MS > 0) {
+			const timeSinceLastRefresh = Date.now() - lastRefresh
+			if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL_MS) {
+				const waitTime = MIN_REFRESH_INTERVAL_MS - timeSinceLastRefresh
+				console.log(`[PromptAPI] Skipping refresh, only ${Math.round(timeSinceLastRefresh / 1000)}s since last refresh, need ${Math.round(MIN_REFRESH_INTERVAL_MS / 1000)}s`)
+				const cachedRoles = context.globalState.get<RefreshResult["roles"]>("cachedApiRoles")
+				return {
+					roles: cachedRoles || [],
+					modesRefreshed: 0
+				}
+			}
+		}
+		// Обновляем timestamp для отслеживания последнего обновления
+		await context.globalState.update(lastRefreshKey, Date.now())
+	}
 
 	if (!apiBaseUrl) {
 		apiBaseUrl = AIIDEBAS_PROMPTS_API_BASE_URL.includes("api-test")
@@ -1252,7 +1595,7 @@ export async function refreshAllPromptsFromApi(
 		apiRoles = await getAllRolesFromApi(apiBaseUrl, language)
 		if (apiRoles && apiRoles.length > 0) {
 			allModes = apiRoles.map(role => role.slug.toLowerCase())
-			console.log(`[PromptAPI] Loaded ${allModes.length} roles from API`)
+			console.log(`[PromptAPI] Loaded ${allModes.length} roles from API: ${apiRoles.map(r => r.slug).join(", ")}`)
 		} else {
 			allModes = ["code", "architect", "ask", "debug", "designer", "helper", "pm"]
 			console.log(`[PromptAPI] No roles from API, using fallback`)
@@ -1262,35 +1605,307 @@ export async function refreshAllPromptsFromApi(
 		console.warn(`[PromptAPI] Failed to load roles, using fallback: ${error}`)
 	}
 
-	console.log(`[PromptAPI] Refreshing ${allModes.length} modes`)
+	console.log(`[PromptAPI] Refreshing ${allModes.length} modes (only published prompts)`)
 
+	// Refresh only roles that have published prompts, track which roles actually updated
 	const refreshPromises = allModes.map(async (mode) => {
 		try {
-			await loadPromptFromApiSeparated(mode, normalizedLang, apiBaseUrl, context)
-			console.log(`[PromptAPI] Refreshed mode=${mode}`)
+			// Check cache before request to track changes
+			const cacheKey = getCacheKeySeparated(mode, normalizedLang)
+			const cachedBefore = context.globalState.get<CachedPromptSeparated>(cacheKey)
+			const updatedAtBefore = normalizeUpdatedAt(cachedBefore?.updated_at)
+
+			// Only load published prompts - if no published prompt exists, return null
+			const result = await loadPromptFromApiSeparated(mode, normalizedLang, apiBaseUrl, context, true)
+			if (result) {
+				// Check if updated_at changed (use atomic read to avoid race conditions)
+				const cachedAfter = context.globalState.get<CachedPromptSeparated>(cacheKey)
+				const updatedAtAfter = normalizeUpdatedAt(cachedAfter?.updated_at)
+				
+				// Consider updated if: different updated_at, or cache was empty before
+				const wasUpdated = updatedAtBefore !== updatedAtAfter && updatedAtAfter !== undefined
+
+				if (wasUpdated) {
+					console.log(`[PromptAPI] Refreshed mode=${mode} (published, updated): ${updatedAtBefore || 'none'} -> ${updatedAtAfter}`)
+				} else {
+					console.log(`[PromptAPI] Refreshed mode=${mode} (published, no changes): ${updatedAtBefore || 'none'} === ${updatedAtAfter || 'none'}`)
+				}
+				return { mode, success: true, wasUpdated }
+			} else {
+				console.log(`[PromptAPI] Skipped mode=${mode} (no published prompt)`)
+				return { mode, success: false, wasUpdated: false }
+			}
 		} catch (error) {
 			console.warn(`[PromptAPI] Failed to refresh mode=${mode}: ${error}`)
+			return { mode, success: false, wasUpdated: false }
 		}
 	})
 
-	await Promise.allSettled(refreshPromises)
-	console.log(`[PromptAPI] Refresh completed for ${allModes.length} modes`)
+	const results = await Promise.allSettled(refreshPromises)
+	const successfulModes = new Set<string>()
+	const updatedModes = new Set<string>()
+	results.forEach((r) => {
+		if (r.status === "fulfilled" && r.value.success) {
+			successfulModes.add(r.value.mode)
+			if (r.value.wasUpdated) {
+				updatedModes.add(r.value.mode)
+			}
+		}
+	})
+	const successfulRefreshes = successfulModes.size
+	let actualUpdates = updatedModes.size
+	
+	console.log(`[PromptAPI] Refresh results: ${successfulModes.size} successful, ${updatedModes.size} updated`)
+	console.log(`[PromptAPI] Successful modes: ${Array.from(successfulModes).join(", ")}`)
+	console.log(`[PromptAPI] Total apiRoles: ${apiRoles.length}, slugs: ${apiRoles.map(r => r.slug.toLowerCase()).join(", ")}`)
+	
+	// Check artifacts for modes where updated_at didn't change but artifacts might have
+	if (actualUpdates === 0 && successfulModes.size > 0 && normalizedLang) {
+		try {
+			const batchData = await loadPromptsBatchFromApi(
+				Array.from(successfulModes),
+				normalizedLang || "all",
+				apiBaseUrl,
+				"vscode"
+			)
+			
+			if (batchData) {
+				// Check each mode for content changes (prompt and artifacts)
+				for (const mode of successfulModes) {
+					const modeData = batchData[mode]
+					if (!modeData) continue
+					const langData = modeData[normalizedLang]
+					if (!langData) continue
+					
+					try {
+						const extensionPath = context.extensionPath
+						const distPromptsDir = path.join(extensionPath, "dist", "prompts")
+						const langDirPath = path.join(distPromptsDir, normalizedLang)
+						const modeRulesDir = path.join(langDirPath, `rules-${mode}`)
+						
+						const fsPromises = await import("fs/promises")
+						
+						// Check main prompt content (00_*.md)
+						const artifacts = langData.artifacts || []
+						const systemPrompt = langData.systemPrompt || ""
+						const customInstructions = langData.customInstructions || ""
+						const hasContent = systemPrompt || customInstructions
+						
+						try {
+							const existingFiles = await fsPromises.readdir(modeRulesDir)
+							const mainPromptFile = existingFiles.find(f => f.startsWith("00_") && f.endsWith(".md"))
+							
+							if (mainPromptFile) {
+								const mainPromptPath = path.join(modeRulesDir, mainPromptFile)
+								const existingContent = await fsPromises.readFile(mainPromptPath, "utf-8")
+								
+								// Build expected content from API
+								// Remove artifact content from prompts for comparison
+								const { removeArtifactContentFromPrompt } = await import("./prompt-export-service")
+								const systemPromptClean = removeArtifactContentFromPrompt(systemPrompt, artifacts)
+								const customInstructionsClean = removeArtifactContentFromPrompt(customInstructions, artifacts)
+								
+								const expectedParts: string[] = []
+								if (systemPromptClean) expectedParts.push(systemPromptClean)
+								if (customInstructionsClean) {
+									if (expectedParts.length > 0) expectedParts.push("\n\n---\n\n")
+									expectedParts.push(customInstructionsClean)
+								}
+								const expectedContent = expectedParts.join("")
+								
+								if (existingContent.trim() !== expectedContent.trim()) {
+									console.log(`[PromptAPI] Main prompt content changed for mode=${mode}, marking as updated`)
+									updatedModes.add(mode)
+									actualUpdates++
+									continue // Skip artifact check if main content changed
+								}
+							} else if (hasContent) {
+								// File should exist but doesn't - mark as updated
+								console.log(`[PromptAPI] Main prompt file missing for mode=${mode} but content exists, marking as updated`)
+								updatedModes.add(mode)
+								actualUpdates++
+								continue
+							}
+						} catch {
+							// Directory doesn't exist or can't read - mark as updated if content exists
+							if (hasContent) {
+								console.log(`[PromptAPI] Main prompt directory missing for mode=${mode} but content exists, marking as updated`)
+								updatedModes.add(mode)
+								actualUpdates++
+								continue
+							}
+						}
+						
+						// Check artifacts content
+						const artifactCount = artifacts.length
+						
+						try {
+							const existingFiles = await fsPromises.readdir(modeRulesDir)
+							const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+							const existingArtifactCount = existingArtifactFiles.length
+							
+							// Check count first
+							if (existingArtifactCount !== artifactCount) {
+								console.log(`[PromptAPI] Artifact count changed for mode=${mode} (${existingArtifactCount} -> ${artifactCount}), marking as updated`)
+								updatedModes.add(mode)
+								actualUpdates++
+							} else if (artifactCount > 0) {
+								// Same count, check content of each artifact
+								let contentChanged = false
+								
+								for (let i = 0; i < artifacts.length; i++) {
+									const artifact = artifacts[i]
+									const artifactKey = artifact.key || artifact.name || ""
+									const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+									const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+									const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+									const artifactFile = path.join(modeRulesDir, artifactFileName)
+									
+									try {
+										const existingContent = await fsPromises.readFile(artifactFile, "utf-8")
+										if (existingContent.trim() !== (artifact.content || "").trim()) {
+											contentChanged = true
+											break
+										}
+									} catch {
+										// File doesn't exist - content changed
+										contentChanged = true
+										break
+									}
+								}
+								
+								if (contentChanged) {
+									console.log(`[PromptAPI] Artifact content changed for mode=${mode}, marking as updated`)
+									updatedModes.add(mode)
+									actualUpdates++
+								}
+							}
+						} catch {
+							// Directory doesn't exist or can't read - artifacts might be new
+							if (artifactCount > 0) {
+								console.log(`[PromptAPI] Artifacts detected for mode=${mode} but directory missing, marking as updated`)
+								updatedModes.add(mode)
+								actualUpdates++
+							}
+						}
+					} catch (err) {
+						// Ignore errors in content check
+						console.debug(`[PromptAPI] Content check failed for mode=${mode}: ${err}`)
+					}
+				}
+			}
+		} catch (err) {
+			// Ignore errors in batch check
+			console.debug(`[PromptAPI] Artifact check failed: ${err}`)
+		}
+	}
+	
+	console.log(`[PromptAPI] Refresh completed: ${successfulRefreshes}/${allModes.length} modes refreshed, ${actualUpdates} actually updated`)
 
-	// Schedule export after refresh (ONLY to dist/prompts, NOT to ~/.roo)
-	if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
-	exportDebounceTimer = setTimeout(() => {
-		exportDebounceTimer = null
-		console.log(`[PromptAPI] Executing export to dist/prompts after refresh`)
-		import("./prompt-export-service").then(({ exportPromptsToExtensionDist }) => {
-			exportPromptsToExtensionDist(context).catch((error) => {
-				console.warn(`[PromptAPI] Dist export failed: ${error}`)
-			})
-		}).catch((error) => {
-			console.warn(`[PromptAPI] Failed to load export service: ${error}`)
-		})
-	}, EXPORT_DEBOUNCE_DELAY)
+	// Check for new roles OR removed roles - ALWAYS check, regardless of updates
+	const knownRoles = context.globalState.get<string[]>("knownApiRoles") || []
+	const currentRoleSlugs = apiRoles.map(role => role.slug.toLowerCase())
+	const newRoles = currentRoleSlugs.filter(slug => !knownRoles.includes(slug))
+	const removedRoles = knownRoles.filter(slug => !currentRoleSlugs.includes(slug))
+	
+	// Always update knownApiRoles to track current state
+	// Initialize if empty (first run)
+	if (knownRoles.length === 0 && currentRoleSlugs.length > 0) {
+		console.log(`[PromptAPI] Initializing knownApiRoles with ${currentRoleSlugs.length} roles`)
+		await context.globalState.update("knownApiRoles", currentRoleSlugs)
+	}
+	
+	// Log detected changes
+	if (newRoles.length > 0) {
+		console.log(`[PromptAPI] New role(s) detected in refresh: ${newRoles.join(", ")}`)
+	}
+	if (removedRoles.length > 0) {
+		console.log(`[PromptAPI] Removed role(s) detected in refresh: ${removedRoles.join(", ")} (archived/deleted)`)
+		// Clear cache for archived/removed roles to prevent them from appearing in UI
+		const SUPPORTED_LANGUAGES = ["ru", "en", "es", "zh", "ar", "pt"]
+		for (const removedRole of removedRoles) {
+			for (const lang of SUPPORTED_LANGUAGES) {
+				const cacheKey = getCacheKeySeparated(removedRole, lang)
+				await context.globalState.update(cacheKey, undefined)
+			}
+			console.log(`[PromptAPI] Cleared cache for archived role: ${removedRole}`)
+		}
+	}
+	
+	// Update known roles list if there were changes
+	if (newRoles.length > 0 || removedRoles.length > 0) {
+		await context.globalState.update("knownApiRoles", currentRoleSlugs)
+	}
 
-	return { roles: apiRoles, modesRefreshed: allModes.length }
+	// Schedule export after refresh (только при автоматическом обновлении)
+	if (shouldExport) {
+		if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
+		exportDebounceTimer = setTimeout(() => {
+			exportDebounceTimer = null
+			
+			// Determine what to export based on what changed
+			if (newRoles.length > 0 || removedRoles.length > 0) {
+				// New or removed roles detected
+				if (newRoles.length > 0) {
+					// If there are also updates, merge new roles with updated roles
+					const updatedRoleSlugs = actualUpdates > 0 ? Array.from(updatedModes) : []
+					const rolesToExport = [...new Set([...newRoles, ...updatedRoleSlugs])]
+					safeExportPrompts(
+						context, 
+						`new roles detected: ${newRoles.join(", ")}${actualUpdates > 0 ? `, ${actualUpdates} modes updated` : ""}`, 
+						rolesToExport.length > 0 ? rolesToExport : undefined
+					).catch((error) => {
+						console.warn(`[PromptAPI] Export failed: ${error}`)
+					})
+				} else if (removedRoles.length > 0) {
+					// Only removed roles - export without onlyRoles to trigger cleanup
+					// If there are also updates, include updated roles
+					if (actualUpdates > 0) {
+						const updatedRoleSlugs = Array.from(updatedModes)
+						safeExportPrompts(
+							context, 
+							`removed roles detected: ${removedRoles.join(", ")}, ${actualUpdates} modes updated`, 
+							updatedRoleSlugs
+						).catch((error) => {
+							console.warn(`[PromptAPI] Export failed: ${error}`)
+						})
+					} else {
+						safeExportPrompts(
+							context, 
+							`removed roles detected: ${removedRoles.join(", ")}`, 
+							undefined
+						).catch((error) => {
+							console.warn(`[PromptAPI] Export failed: ${error}`)
+						})
+					}
+				}
+			} else if (actualUpdates > 0) {
+				// Only updates, no new/removed roles
+				const updatedRoleSlugs = Array.from(updatedModes)
+				safeExportPrompts(context, `refresh (${actualUpdates} modes updated)`, updatedRoleSlugs).catch((error) => {
+					console.warn(`[PromptAPI] Export failed: ${error}`)
+				})
+			} else {
+				// No changes detected, but trigger cleanup to ensure archived roles are removed
+				// This ensures that archived roles are removed even if knownApiRoles wasn't initialized
+				safeExportPrompts(context, "automatic refresh cleanup", undefined).catch((error) => {
+					console.warn(`[PromptAPI] Cleanup export failed: ${error}`)
+				})
+			}
+		}, getExportDebounceDelay())
+	}
+
+	// Filter roles to only include those with published prompts
+	// getAllRolesFromApi уже возвращает только роли с опубликованными промптами (хотя бы для одного языка)
+	// Если роль в apiRoles, значит она опубликована - включаем её автоматически
+	// Это гарантирует, что новые опубликованные роли автоматически появляются в списке
+	// Архивированные роли не попадают в apiRoles, поэтому они автоматически исключаются
+	const rolesWithPublishedPrompts = apiRoles
+
+	console.log(`[PromptAPI] Returning ${rolesWithPublishedPrompts.length} roles with published prompts (out of ${apiRoles.length} total)`)
+	console.log(`[PromptAPI] Role slugs: ${rolesWithPublishedPrompts.map(r => r.slug).join(", ")}`)
+
+	return { roles: rolesWithPublishedPrompts, modesRefreshed: successfulRefreshes }
 }
 
 // Load prompt from API with caching (returns string)

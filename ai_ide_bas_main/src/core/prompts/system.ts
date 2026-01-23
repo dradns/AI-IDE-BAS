@@ -154,7 +154,7 @@ async function loadPromptsFromRooDirectories(
 		const { getRooDirectoriesForCwd, getGlobalRooDirectory } = await import("../../services/roo-config")
 		// Если cwd пустой, проверяем только глобальный ~/.roo
 		const rooDirectories = cwd ? getRooDirectoriesForCwd(cwd) : [getGlobalRooDirectory()]
-		const lang = language ? formatLanguage(language) : "en"
+		const lang = language ? formatLanguage(language) : formatLanguage(vscode.env.language)
 		const fs = await import("fs/promises")
 		
 		// Получаем название роли из mode (убираем emoji)
@@ -282,6 +282,8 @@ async function generatePrompt(
 	partialReadsEnabled?: boolean,
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
+	useCacheOnly: boolean = false,
+	forceRefresh: boolean = false,
 ): Promise<string> {
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
@@ -382,43 +384,78 @@ async function generatePrompt(
 	let apiArtifactsInstructions = "" // Для новых ролей: инструкции по артефактам из API (instructions с полями)
 	
 	if (!isBuiltInMode) {
-		// Для новых ролей: загружаем инструкции из API (role, project, tasks, instructions, artifacts)
-		// ВАЖНО: Для новых ролей НЕТ system_prompt (ни в админке, ни в .roo/rules-newmode/)
-		// effectiveBaseInstructions всегда будет пустым для новых ролей
-		console.log(`[SystemPrompt] 🔍 Loading API data for NEW role: mode=${mode}, language=${language}`)
-		try {
-			const apiPromptData = await loadPromptFromApiSeparated(mode, language, undefined, context)
-			console.log(`[SystemPrompt] 🔍 API response for NEW role:`, apiPromptData ? {
-				hasSystemPrompt: !!apiPromptData.systemPrompt,
-				systemPromptLength: apiPromptData.systemPrompt?.length || 0,
-				hasCustomInstructions: !!apiPromptData.customInstructions,
-				customInstructionsLength: apiPromptData.customInstructions?.length || 0,
-				hasArtifactsInstructions: !!apiPromptData.artifactsInstructions,
-				artifactsInstructionsLength: apiPromptData.artifactsInstructions?.length || 0,
-			} : "null")
-			if (apiPromptData) {
-				// Для новых ролей system_prompt не используется (его нет в админке)
-				// role, project, tasks, instructions.content идут в custom instructions
-				if (apiPromptData.customInstructions && apiPromptData.customInstructions.trim()) {
-					apiCustomInstructions = apiPromptData.customInstructions.trim()
-					apiPromptLoaded = true
-					console.log(`[SystemPrompt] ✅ NEW role: apiCustomInstructions loaded, length=${apiCustomInstructions.length}`)
-				}
-				
-				// instructions (артефакты) идут в отдельную секцию Artifacts
-				if (apiPromptData.artifactsInstructions && apiPromptData.artifactsInstructions.trim()) {
-					apiArtifactsInstructions = apiPromptData.artifactsInstructions.trim()
-					apiPromptLoaded = true
-					console.log(`[SystemPrompt] ✅ NEW role: apiArtifactsInstructions loaded, length=${apiArtifactsInstructions.length}`)
-				}
+		// ✅ FIX: Для новых ролей сначала проверяем project .roo (имеет приоритет над API),
+		// чтобы выгруженные пользователем правила применялись сразу, а не только после явного запроса.
+		console.log(`[SystemPrompt] 🔍 Loading data for NEW role: mode=${mode}, language=${language}`)
+		
+		rooPrompts = await loadPromptsFromRooDirectories(cwd, mode, modeConfig, language ?? effectiveLanguage)
+		console.log(`[SystemPrompt] 🔍 rooPrompts for NEW role:`, rooPrompts ? {
+			hasSystemPrompt: !!rooPrompts.systemPrompt,
+			systemPromptLength: rooPrompts.systemPrompt?.length || 0,
+			hasCustomInstructions: !!rooPrompts.customInstructions,
+			customInstructionsLength: rooPrompts.customInstructions?.length || 0,
+			hasArtifactsInstructions: !!rooPrompts.artifactsInstructions,
+			artifactsInstructionsLength: rooPrompts.artifactsInstructions?.length || 0,
+		} : "null")
+		
+		if (rooPrompts) {
+			// NOTE: systemPromptSection сейчас не используется, поэтому чтобы не терять контент файла,
+			// склеиваем systemPrompt + customInstructions в единый блок инструкций.
+			const localSystemPrompt = rooPrompts.systemPrompt?.trim() || ""
+			const localCustomInstructions = rooPrompts.customInstructions?.trim() || ""
+			const mergedLocalCustomInstructions = [localSystemPrompt, localCustomInstructions].filter(Boolean).join("\n\n")
+			
+			if (mergedLocalCustomInstructions && !apiCustomInstructions) {
+				apiCustomInstructions = mergedLocalCustomInstructions
+				apiPromptLoaded = true
+				console.log(`[SystemPrompt] ✅ NEW role: custom instructions loaded from project .roo, length=${apiCustomInstructions.length}`)
 			}
-		} catch (error) {
-			// API недоступен, продолжаем без API данных
-			console.warn(`[SystemPrompt] ⚠️ API error for NEW role:`, error)
+			
+			if (rooPrompts.artifactsInstructions && rooPrompts.artifactsInstructions.trim() && !apiArtifactsInstructions) {
+				apiArtifactsInstructions = rooPrompts.artifactsInstructions.trim()
+				apiPromptLoaded = true
+				console.log(`[SystemPrompt] ✅ NEW role: artifacts instructions loaded from project .roo, length=${apiArtifactsInstructions.length}`)
+			}
+		}
+		
+		// Если не всё найдено в project .roo — догружаем из API/кэша.
+		const needsApiData = !apiCustomInstructions || !apiArtifactsInstructions
+		if (needsApiData) {
+			console.log(`[SystemPrompt] 🔍 Fetching from API for NEW role: mode=${mode}, needsApiData=${needsApiData}`)
+			try {
+				const apiPromptData = await loadPromptFromApiSeparated(mode, language ?? effectiveLanguage, undefined, context, false, useCacheOnly, forceRefresh)
+				console.log(`[SystemPrompt] 🔍 API response for NEW role:`, apiPromptData ? {
+					hasSystemPrompt: !!apiPromptData.systemPrompt,
+					systemPromptLength: apiPromptData.systemPrompt?.length || 0,
+					hasCustomInstructions: !!apiPromptData.customInstructions,
+					customInstructionsLength: apiPromptData.customInstructions?.length || 0,
+					hasArtifactsInstructions: !!apiPromptData.artifactsInstructions,
+					artifactsInstructionsLength: apiPromptData.artifactsInstructions?.length || 0,
+				} : "null")
+				if (apiPromptData) {
+					// Для новых ролей system_prompt не используется (его нет в админке)
+					// role, project, tasks, instructions.content идут в custom instructions
+					if (apiPromptData.customInstructions && apiPromptData.customInstructions.trim() && !apiCustomInstructions) {
+						apiCustomInstructions = apiPromptData.customInstructions.trim()
+						apiPromptLoaded = true
+						console.log(`[SystemPrompt] ✅ NEW role: apiCustomInstructions loaded, length=${apiCustomInstructions.length}`)
+					}
+					
+					// instructions (артефакты) идут в отдельную секцию Artifacts
+					if (apiPromptData.artifactsInstructions && apiPromptData.artifactsInstructions.trim() && !apiArtifactsInstructions) {
+						apiArtifactsInstructions = apiPromptData.artifactsInstructions.trim()
+						apiPromptLoaded = true
+						console.log(`[SystemPrompt] ✅ NEW role: apiArtifactsInstructions loaded, length=${apiArtifactsInstructions.length}`)
+					}
+				}
+			} catch (error) {
+				// API недоступен, продолжаем без API данных
+				console.warn(`[SystemPrompt] ⚠️ API error for NEW role:`, error)
+			}
 		}
 		
 		// Для новых ролей effectiveBaseInstructions всегда пустой
-			effectiveBaseInstructions = ""
+		effectiveBaseInstructions = ""
 	} else {
 		// Для встроенных ролей: приоритет проект .roo -> API/кэш -> ~/.roo -> встроенные правила
 		// ВАЖНО: Если пользователь выгрузил правила в проект, они имеют приоритет над API
@@ -461,7 +498,7 @@ async function generatePrompt(
 		if (needsApiData) {
 			console.log(`[SystemPrompt] 🔍 Fetching from API for BUILT-IN role: mode=${mode}`)
 			try {
-				const apiPromptData = await loadPromptFromApiSeparated(mode, language, undefined, context)
+				const apiPromptData = await loadPromptFromApiSeparated(mode, language, undefined, context, false, useCacheOnly, forceRefresh)
 				console.log(`[SystemPrompt] 🔍 API response for BUILT-IN role:`, apiPromptData ? {
 					hasSystemPrompt: !!apiPromptData.systemPrompt,
 					systemPromptLength: apiPromptData.systemPrompt?.length || 0,
@@ -538,17 +575,127 @@ async function generatePrompt(
 			}
 		}
 		
-		// Если ничего не загрузилось, используем встроенные промпты как последний fallback
+		// Если ничего не загрузилось, проверяем dist/prompts перед fallback к встроенным промптам
 		if (!apiPromptLoaded) {
-			const hasExportedBefore = context.globalState.get<boolean>("promptsExportedFromApi")
-			if (!hasExportedBefore) {
-				// При первой установке, если экспорт еще не завершен, НЕ используем встроенные промпты
-				// Вместо этого используем пустую строку
-				effectiveBaseInstructions = "" // Используем пустую строку вместо встроенных промптов
-			} else {
-				// Экспорт уже был выполнен ранее, но файлы не найдены - используем встроенные как fallback
-				const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode, language)
-				effectiveBaseInstructions = builtInModeInstructions
+			// СНАЧАЛА пытаемся загрузить из dist/prompts (расширение)
+			const distPromptsPath = path.join(context.extensionPath, "dist", "prompts")
+			let distPrompts: { systemPrompt: string; customInstructions: string; artifactsInstructions: string } | null = null
+			try {
+				// Используем ту же логику, что и для .roo, но для dist/prompts
+				const lang = language ? formatLanguage(language) : "en"
+				const langDirPath = path.join(distPromptsPath, lang)
+				const modeRulesDir = path.join(langDirPath, `rules-${mode}`)
+				const fs = await import("fs/promises")
+				
+				const stats = await fs.stat(modeRulesDir).catch(() => null)
+				if (stats && stats.isDirectory()) {
+					const roleName = modeConfig.name.replace(/^[\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, "").trim() || mode
+					const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+					const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+					
+					let systemPrompt = ""
+					let customInstructions = ""
+					let artifactsInstructions = ""
+					
+					try {
+						const combinedContent = await fs.readFile(combinedPromptFile, "utf-8")
+						if (combinedContent && combinedContent.trim()) {
+							const parts = combinedContent.split(/\n\n---\n\n/)
+							if (parts.length >= 2) {
+								systemPrompt = parts[0].trim()
+								customInstructions = parts[1].trim()
+							} else if (parts.length === 1 && parts[0].trim()) {
+								customInstructions = parts[0].trim()
+							}
+						}
+					} catch (fileErr) {
+						// File doesn't exist
+					}
+					
+					try {
+						const modeFiles = await fs.readdir(modeRulesDir)
+						const artifactFiles = modeFiles
+							.filter(f => f.endsWith('.md') && /^\d{2}_/.test(f) && f !== `00_${cleanRoleName}.md`)
+							.sort()
+						
+						if (artifactFiles.length > 0) {
+							const artifactContents: string[] = []
+							for (const artifactFile of artifactFiles) {
+								try {
+									const content = await fs.readFile(path.join(modeRulesDir, artifactFile), "utf-8")
+									if (content && content.trim()) {
+										artifactContents.push(content.trim())
+									}
+								} catch (err) {
+									// Ignore
+								}
+							}
+							if (artifactContents.length > 0) {
+								artifactsInstructions = artifactContents.join("\n\n")
+							}
+						}
+					} catch (dirErr) {
+						// Ignore
+					}
+					
+					if (systemPrompt || customInstructions || artifactsInstructions) {
+						distPrompts = { systemPrompt, customInstructions, artifactsInstructions }
+					}
+				}
+			} catch (err) {
+				// Ignore errors
+			}
+			
+			if (distPrompts) {
+				if (distPrompts.systemPrompt && distPrompts.systemPrompt.trim() && !effectiveBaseInstructions) {
+					effectiveBaseInstructions = distPrompts.systemPrompt.trim()
+					apiPromptLoaded = true
+				}
+				if (distPrompts.customInstructions && distPrompts.customInstructions.trim() && !apiCustomInstructions) {
+					apiCustomInstructions = distPrompts.customInstructions.trim()
+					apiPromptLoaded = true
+				}
+				if (distPrompts.artifactsInstructions && distPrompts.artifactsInstructions.trim() && !apiArtifactsInstructions) {
+					apiArtifactsInstructions = distPrompts.artifactsInstructions.trim()
+					apiPromptLoaded = true
+				}
+				if (apiPromptLoaded) {
+					console.log(`[PromptAPI] Loaded prompts from dist/prompts for mode=${mode}`)
+				}
+			}
+			
+			// Если все еще ничего не загрузилось, используем встроенные промпты как последний fallback
+			if (!apiPromptLoaded) {
+				const hasExportedBefore = context.globalState.get<boolean>("promptsExportedFromApi")
+				let hasDistPrompts = false
+				try {
+					const stats = await fs.stat(distPromptsPath).catch(() => null)
+					if (stats && stats.isDirectory()) {
+						const contents = await fs.readdir(distPromptsPath).catch(() => [])
+						const lang = language ? formatLanguage(language) : "en"
+						const langDir = path.join(distPromptsPath, lang)
+						const langStats = await fs.stat(langDir).catch(() => null)
+						if (langStats && langStats.isDirectory()) {
+							const modeFiles = await fs.readdir(langDir).catch(() => [] as string[])
+							const modeDir = `rules-${mode}`
+							hasDistPrompts = modeFiles.includes(modeDir)
+						}
+					}
+				} catch (err) {
+					// Ignore errors
+				}
+				
+				if (!hasExportedBefore && !hasDistPrompts) {
+					effectiveBaseInstructions = ""
+					console.log(`[PromptAPI] First install, no exported prompts yet, using empty string instead of built-in`)
+				} else if (hasDistPrompts) {
+					console.warn(`[PromptAPI] Prompts exist in dist/prompts but failed to load, using empty string`)
+					effectiveBaseInstructions = ""
+				} else {
+					console.log(`[PromptAPI] Using built-in prompts as fallback (export completed but files missing)`)
+					const builtInModeInstructions = await loadBuiltInModeInstructions(context, mode, language)
+					effectiveBaseInstructions = builtInModeInstructions
+				}
 			}
 		}
 	}
@@ -675,6 +822,8 @@ export const SYSTEM_PROMPT = async (
 	partialReadsEnabled?: boolean,
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
+	useCacheOnly: boolean = false,
+	forceRefresh: boolean = false,
 ): Promise<string> => {
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
@@ -751,5 +900,7 @@ ${customInstructions}`
 		partialReadsEnabled,
 		settings,
 		todoList,
+		useCacheOnly,
+		forceRefresh,
 	)
 }

@@ -58,7 +58,6 @@ import type { IndexProgressUpdate } from "../../services/code-index/interfaces/m
 import { MdmService } from "../../services/mdm/MdmService"
 import { fileExistsAtPath } from "../../utils/fs"
 import { setTtsEnabled, setTtsSpeed } from "../../utils/tts"
-import { checkAndRefreshAllPrompts } from "../../services/prompt-refresh-service"
 import { ContextProxy } from "../config/ContextProxy"
 import { ProviderSettingsManager } from "../config/ProviderSettingsManager"
 import { CustomModesManager } from "../config/CustomModesManager"
@@ -412,12 +411,8 @@ export class ClineProvider
 	async resolveWebviewView(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
 		this.log("Resolving webview view")
 
-		// Проверяем обновления промптов при активации/reload расширения (в фоне)
-		this.getState().then(state => {
-			checkAndRefreshAllPrompts(this.context, state?.language).catch(err => {
-				console.debug(`[resolveWebviewView] Prompt refresh failed:`, err)
-			})
-		})
+		// Обновления промптов теперь происходят только автоматически каждые 2 минуты в extension.ts
+		// Убрали триггер при активации webview, чтобы не обновлять промпты при перезагрузке окна
 
 		this.view = webviewView
 

@@ -6,6 +6,9 @@ import {
 	getAllRolesFromApi,
 	roleToMode,
 	loadPromptsBatchFromApi,
+	getCacheKeySeparated,
+	normalizeUpdatedAt,
+	type CachedPromptSeparated,
 } from "./prompt-api-service"
 import { getProjectRooDirectoryForCwd } from "./roo-config"
 import { modes } from "../shared/modes"
@@ -14,7 +17,7 @@ import { modes } from "../shared/modes"
 const SUPPORTED_LANGUAGES = ["ru", "en", "es", "zh", "ar", "pt"]
 
 // Remove artifact content from prompt text to avoid duplication
-function removeArtifactContentFromPrompt(
+export function removeArtifactContentFromPrompt(
 	text: string,
 	artifacts: Array<{ key: string; content: string; name?: string }>
 ): string {
@@ -142,6 +145,7 @@ async function saveCombinedPrompt(
 
 	const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
 	const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+	const newContent = combinedPromptParts.join("")
 
 	const fileExists = await fs
 		.access(combinedPromptFile)
@@ -151,6 +155,19 @@ async function saveCombinedPrompt(
 	if (isProjectExport && fileExists) {
 		console.log(`[saveCombinedPrompt] Skipping ${combinedPromptFile} - file exists in project .roo`)
 		return
+	}
+
+	// Check if content changed before writing
+	if (fileExists && !isProjectExport) {
+		try {
+			const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
+			if (existingContent === newContent) {
+				console.log(`[saveCombinedPrompt] Content unchanged, skipping write for ${combinedPromptFile}`)
+				return
+			}
+		} catch (err) {
+			// If read fails, continue with write
+		}
 	}
 
 	if (!isProjectExport) {
@@ -170,7 +187,7 @@ async function saveCombinedPrompt(
 		}
 	}
 
-	await fs.writeFile(combinedPromptFile, combinedPromptParts.join(""), "utf-8")
+	await fs.writeFile(combinedPromptFile, newContent, "utf-8")
 }
 
 // Save artifacts to separate files (01_*.md, 02_*.md, etc.)
@@ -181,22 +198,26 @@ async function saveArtifacts(
 	lang: string,
 	isProjectExport: boolean
 ): Promise<void> {
-	if (artifacts.length === 0) {
-		return
-	}
+	console.log(`[saveArtifacts] Processing ${artifacts.length} artifacts for mode=${modeSlug}, lang=${lang}`)
 
-	console.log(`[saveArtifacts] Saving ${artifacts.length} artifacts for mode=${modeSlug}, lang=${lang}`)
-
-	// Clean up old artifact files
+	// Always clean up old artifact files first (even if no new artifacts)
+	// This ensures deleted artifacts are removed
 	try {
 		const existingFiles = await fs.readdir(modeRulesDir)
 		for (const file of existingFiles) {
 			if (file.endsWith(".md") && /^\d{2}_/i.test(file) && !file.startsWith("00_")) {
+				console.log(`[saveArtifacts] Removing old artifact file: ${file}`)
 				await fs.unlink(path.join(modeRulesDir, file)).catch(() => {})
 			}
 		}
 	} catch (err) {
 		/* ignore */
+	}
+
+	// If no artifacts, we're done (old files already removed)
+	if (artifacts.length === 0) {
+		console.log(`[saveArtifacts] No artifacts to save, old files removed`)
+		return
 	}
 
 	for (let i = 0; i < artifacts.length; i++) {
@@ -223,6 +244,7 @@ async function saveArtifacts(
 		const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
 
 		const artifactFile = path.join(modeRulesDir, artifactFileName)
+		const newContent = artifact.content || ""
 
 		const fileExists = await fs
 			.access(artifactFile)
@@ -232,6 +254,19 @@ async function saveArtifacts(
 		if (isProjectExport && fileExists) {
 			console.log(`[saveArtifacts] Skipping ${artifactFileName} - file exists in project .roo`)
 			continue
+		}
+
+		// Check if content changed before writing
+		if (fileExists && !isProjectExport) {
+			try {
+				const existingContent = await fs.readFile(artifactFile, "utf-8")
+				if (existingContent === newContent) {
+					console.log(`[saveArtifacts] Content unchanged, skipping write for ${artifactFileName}`)
+					continue
+				}
+			} catch (err) {
+				// If read fails, continue with write
+			}
 		}
 
 		console.log(`[saveArtifacts] Saving artifact "${artifactKey}" to ${artifactFile}`)
@@ -250,7 +285,7 @@ async function saveArtifacts(
 			}
 		}
 
-		await fs.writeFile(artifactFile, artifact.content.trim(), "utf-8")
+		await fs.writeFile(artifactFile, newContent.trim(), "utf-8")
 	}
 }
 
@@ -595,6 +630,13 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 			const entryPath = path.join(distPromptsDir, entry.name)
 
 			if (entry.isDirectory()) {
+				// Remove all rules-* directories at top level (should only be inside language folders)
+				if (entry.name.startsWith("rules-")) {
+					console.log(`[cleanupDistPrompts] Removing rules-* directory at top level: ${entry.name}`)
+					await fs.rm(entryPath, { recursive: true, force: true })
+					continue
+				}
+				
 				if (!SUPPORTED_LANGUAGES.includes(entry.name)) {
 					console.log(`[cleanupDistPrompts] Removing unsupported language folder: ${entry.name}`)
 					await fs.rm(entryPath, { recursive: true, force: true })
@@ -643,7 +685,8 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 
 // Export prompts from API to extension's dist/prompts directory
 export async function exportPromptsToExtensionDist(
-	context: vscode.ExtensionContext
+	context: vscode.ExtensionContext,
+	onlyRoles?: string[] // Optional: export only these roles (for selective updates)
 ): Promise<{ totalExported: number; totalModes: number; totalLanguages: number }> {
 	const extensionPath = context.extensionPath
 	const distPromptsDir = path.join(extensionPath, "dist", "prompts")
@@ -659,30 +702,30 @@ export async function exportPromptsToExtensionDist(
 		console.log("[exportPromptsToExtensionDist] Fetching all roles from API...")
 		const apiRoles = await getAllRolesFromApi(undefined, "ru")
 
-		const allModes =
-			apiRoles.length > 0
-				? apiRoles.map((role: { slug: string; name: string; emoji?: string; target_roles: string[] }) => {
-						const mappedSlug = role.slug.toLowerCase()
-						console.log(
-							`[exportPromptsToExtensionDist] Using slug "${role.slug}" -> "${mappedSlug}", target_roles: ${role.target_roles.join(", ")}`
-						)
-						return {
-							slug: mappedSlug,
-							name: role.emoji ? `${role.emoji} ${role.name}` : role.name,
-							originalSlug: role.slug,
-							targetRoles: role.target_roles,
-						}
-					})
-				: modes.map((mode) => ({
-						slug: mode.slug,
-						name: mode.name,
-						originalSlug: mode.slug,
-						targetRoles: [mode.slug],
-					}))
+		if (apiRoles.length === 0) {
+			console.warn(`[exportPromptsToExtensionDist] API returned no roles - nothing to export`)
+			return { totalExported: 0, totalModes: 0, totalLanguages: 0 }
+		}
 
-		const validModeSlugs = new Set<string>(allModes.map((mode) => mode.slug))
-
-		await cleanupDistPrompts(distPromptsDir, validModeSlugs)
+		let allModes = apiRoles.map((role: { slug: string; name: string; emoji?: string; target_roles: string[] }) => {
+			const mappedSlug = role.slug.toLowerCase()
+			console.log(
+				`[exportPromptsToExtensionDist] Using slug "${role.slug}" -> "${mappedSlug}", target_roles: ${role.target_roles.join(", ")}`
+			)
+			return {
+				slug: mappedSlug,
+				name: role.emoji ? `${role.emoji} ${role.name}` : role.name,
+				originalSlug: role.slug,
+				targetRoles: role.target_roles,
+			}
+		})
+		
+		// Filter to only specified roles if provided
+		if (onlyRoles && onlyRoles.length > 0) {
+			const onlyRolesLower = onlyRoles.map(r => r.toLowerCase())
+			allModes = allModes.filter(mode => onlyRolesLower.includes(mode.slug))
+			console.log(`[exportPromptsToExtensionDist] Filtered to ${allModes.length} roles: ${onlyRoles.join(", ")}`)
+		}
 
 		try {
 			await fs.mkdir(distPromptsDir, { recursive: true })
@@ -693,10 +736,67 @@ export async function exportPromptsToExtensionDist(
 		}
 
 		console.log(
-			`[exportPromptsToExtensionDist] Exporting ${allModes.length} modes (${apiRoles.length} from API, ${modes.length} built-in)`
+			`[exportPromptsToExtensionDist] Exporting ${allModes.length} modes from API`
 		)
 
-		// Try batch endpoint first
+		// For cleanup: need to check ALL roles from API (not just filtered ones) to determine which have published prompts
+		// This prevents deletion of other roles when onlyRoles is specified
+		const allApiRoleSlugs = apiRoles.map((role: { slug: string }) => role.slug.toLowerCase())
+		
+		// Try batch endpoint for ALL roles from API (to collect complete list of roles with published prompts for cleanup)
+		let batchDataForCleanup = await loadPromptsBatchFromApi(allApiRoleSlugs, "all", undefined, "vscode")
+		
+		// Collect ALL roles with published prompts from batch data (for cleanup)
+		// IMPORTANT: Use apiRoles as the source of truth - if a role is not in apiRoles, it should be removed
+		// (archived roles won't be in apiRoles, so they will be removed)
+		const rolesWithPublishedPrompts = new Set<string>(allApiRoleSlugs) // Start with all roles from API
+
+		if (batchDataForCleanup) {
+			const batchKeysForCleanup = Object.keys(batchDataForCleanup)
+			
+			// Remove roles that don't have published prompts in batch response
+			// (archived roles won't be in batch response, so they'll be removed from the set)
+			for (const roleSlug of allApiRoleSlugs) {
+				// Try to find role data in batch
+				let roleData = batchDataForCleanup[roleSlug]
+				if (!roleData) {
+					// Try original slug from API
+					const originalRole = apiRoles.find((r: { slug: string }) => r.slug.toLowerCase() === roleSlug)
+					if (originalRole) {
+						roleData = batchDataForCleanup[originalRole.slug]
+					}
+				}
+				if (!roleData) {
+					// Try to find by any key that matches
+					for (const key of batchKeysForCleanup) {
+						if (key.toLowerCase() === roleSlug) {
+							roleData = batchDataForCleanup[key]
+							break
+						}
+					}
+				}
+				
+				if (roleData) {
+					// Check if role has at least one published prompt (for any language)
+					const hasPublishedPrompt = SUPPORTED_LANGUAGES.some(lang => roleData[lang] !== null && roleData[lang] !== undefined)
+					if (!hasPublishedPrompt) {
+						// Role exists in batch but has no published prompts - remove it
+						rolesWithPublishedPrompts.delete(roleSlug)
+					}
+				} else {
+					// Role not found in batch response - likely archived, remove it
+					rolesWithPublishedPrompts.delete(roleSlug)
+				}
+			}
+		} else {
+			// No batch data - use all roles from API as valid (they should have published prompts if they're in the list)
+			// This is safe because getAllRolesFromApi should only return roles with published prompts
+			console.log(`[exportPromptsToExtensionDist] No batch data for cleanup, using all ${allApiRoleSlugs.length} roles from API`)
+		}
+		
+		// Try batch endpoint for filtered roles (for actual export)
+		// IMPORTANT: Always request separate batch for filtered roles, don't reuse batchDataForCleanup
+		// This ensures we get fresh data only for roles we need to export, preventing unnecessary updates
 		const roleSlugs = allModes.map((m) => m.slug)
 		let batchData = await loadPromptsBatchFromApi(roleSlugs, "all", undefined, "vscode")
 
@@ -717,6 +817,12 @@ export async function exportPromptsToExtensionDist(
 					console.log(`[exportPromptsToExtensionDist] No data for mode=${mode.slug} in batch response - skipping`)
 					continue
 				}
+				
+				// Check if role has at least one published prompt (for any language)
+				const hasPublishedPrompt = SUPPORTED_LANGUAGES.some(lang => roleData[lang] !== null && roleData[lang] !== undefined)
+				if (hasPublishedPrompt) {
+					rolesWithPublishedPrompts.add(mode.slug)
+				}
 
 				totalModes++
 				let modeExported = false
@@ -730,25 +836,193 @@ export async function exportPromptsToExtensionDist(
 						continue
 					}
 
-					totalLanguages++
-
-					const langDirPath = path.join(distPromptsDir, lang)
+						// Check updated_at from cache first (optimization - skip file read if unchanged)
+						const cacheKey = getCacheKeySeparated(mode.slug, lang)
+						const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+						const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
+						const responseUpdatedAt = normalizeUpdatedAt(langData.updated_at)
+						
+						const langDirPath = path.join(distPromptsDir, lang)
+						const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
+						
+						// Check if directory exists
+						const modeRulesDirExists = await fs.access(modeRulesDir).then(() => true).catch(() => false)
+						
+						// If updated_at unchanged, still check artifacts (cache might be stale or artifacts might have changed)
+						let shouldSkipDueToUnchanged = false
+						if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined && modeRulesDirExists) {
+							// Check artifacts even if updated_at unchanged (artifacts might have changed)
+							try {
+								const existingFiles = await fs.readdir(modeRulesDir)
+								const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+								const newArtifacts = langData.artifacts || []
+								const newArtifactCount = newArtifacts.length
+								
+								// If artifact count changed, need to update (don't skip)
+								if (existingArtifactFiles.length !== newArtifactCount) {
+									console.log(`[exportPromptsToExtensionDist] Artifact count changed for mode=${mode.slug}, lang=${lang} (${existingArtifactFiles.length} -> ${newArtifactCount}), updating despite unchanged updated_at`)
+									// Continue with update - don't skip
+								} else if (existingArtifactFiles.length === newArtifactCount && newArtifactCount > 0) {
+									// Same count, check if all artifacts exist and match
+									let allArtifactsMatch = true
+									
+									for (let i = 0; i < newArtifacts.length; i++) {
+										const artifact = newArtifacts[i]
+										const artifactKey = artifact.key || artifact.name || ""
+										const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+										const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+										const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+										const artifactFile = path.join(modeRulesDir, artifactFileName)
+										
+										try {
+											const existingContent = await fs.readFile(artifactFile, "utf-8")
+											if (existingContent.trim() !== (artifact.content || "").trim()) {
+												allArtifactsMatch = false
+												break
+											}
+										} catch {
+											// File doesn't exist - artifact changed
+											allArtifactsMatch = false
+											break
+										}
+									}
+									
+									if (allArtifactsMatch) {
+										// Both updated_at and artifacts unchanged, skip completely
+										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+										shouldSkipDueToUnchanged = true
+									} else {
+										console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
+									}
+								} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
+									// All artifacts were deleted
+									console.log(`[exportPromptsToExtensionDist] All artifacts deleted for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
+								}
+							} catch (err) {
+								// If check fails, proceed with update
+							}
+						} else if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined) {
+							// updated_at unchanged and directory doesn't exist, skip
+							console.log(`[exportPromptsToExtensionDist] updated_at unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+							shouldSkipDueToUnchanged = true
+						}
+						
+						if (shouldSkipDueToUnchanged) {
+							continue
+						}
+					
+					// Check if content changed before creating directories and processing
+					// modeRulesDirExists already declared above
+					
+					let shouldUpdateMainFile = true
+					let shouldUpdateArtifacts = true
+					
+					if (modeRulesDirExists) {
+						// Check if main file content changed
+						const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+						const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+						const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+						const fileExists = await fs.access(combinedPromptFile).then(() => true).catch(() => false)
+						
+						if (fileExists) {
+							try {
+								// Build new content to compare
+								const artifacts = langData.artifacts || []
+								const systemPromptClean = removeArtifactContentFromPrompt(langData.systemPrompt || "", artifacts)
+								const customInstructionsClean = removeArtifactContentFromPrompt(langData.customInstructions || "", artifacts)
+								const combinedPromptParts: string[] = []
+								if (systemPromptClean) {
+									combinedPromptParts.push(systemPromptClean)
+								}
+								if (customInstructionsClean) {
+									if (combinedPromptParts.length > 0) {
+										combinedPromptParts.push("\n\n---\n\n")
+									}
+									combinedPromptParts.push(customInstructionsClean)
+								}
+								const newContent = combinedPromptParts.join("")
+								
+								const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
+								if (existingContent === newContent) {
+									// Main file content unchanged, but still check artifacts
+									console.log(`[exportPromptsToExtensionDist] Main file content unchanged for mode=${mode.slug}, lang=${lang}, but checking artifacts`)
+									shouldUpdateMainFile = false
+								}
+							} catch (err) {
+								// If read fails, continue with export
+							}
+						}
+						
+						// Check if artifacts changed by comparing count and content
+						if (shouldUpdateMainFile === false) {
+							try {
+								const existingFiles = await fs.readdir(modeRulesDir)
+								const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+								const newArtifacts = langData.artifacts || []
+								const newArtifactCount = newArtifacts.length
+								
+								// If artifact count changed (including deletion), need to update
+								if (existingArtifactFiles.length !== newArtifactCount) {
+									// Artifact count changed, need to update (will remove deleted artifacts)
+									console.log(`[exportPromptsToExtensionDist] Artifact count changed for mode=${mode.slug}, lang=${lang} (${existingArtifactFiles.length} -> ${newArtifactCount})`)
+								} else if (existingArtifactFiles.length === newArtifactCount && newArtifactCount > 0) {
+									// Same count, check if all artifacts exist and match
+									let allArtifactsMatch = true
+									
+									for (let i = 0; i < newArtifacts.length; i++) {
+										const artifact = newArtifacts[i]
+										const artifactKey = artifact.key || artifact.name || ""
+										const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+										const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+										const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+										const artifactFile = path.join(modeRulesDir, artifactFileName)
+										
+										try {
+											const existingContent = await fs.readFile(artifactFile, "utf-8")
+											if (existingContent.trim() !== (artifact.content || "").trim()) {
+												allArtifactsMatch = false
+												break
+											}
+										} catch {
+											allArtifactsMatch = false
+											break
+										}
+									}
+									
+									if (allArtifactsMatch) {
+										// Both main file and artifacts unchanged, skip completely
+										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+										continue
+									}
+								} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
+									// All artifacts were deleted, need to update to remove them
+									console.log(`[exportPromptsToExtensionDist] All artifacts deleted for mode=${mode.slug}, lang=${lang}, will remove old files`)
+								}
+							} catch (err) {
+								// If check fails, proceed with update
+							}
+						}
+					}
+					
+					// Only create directories if we're actually going to write files
 					await fs.mkdir(langDirPath, { recursive: true })
-
-					const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
 					await fs.mkdir(modeRulesDir, { recursive: true })
+
+					totalLanguages++
 
 					const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
 					const artifacts = langData.artifacts || []
 
-					await saveCombinedPrompt(
-						modeRulesDir,
-						roleName,
-						langData.systemPrompt || "",
-						langData.customInstructions || "",
-						artifacts,
-						false
-					)
+					if (shouldUpdateMainFile) {
+						await saveCombinedPrompt(
+							modeRulesDir,
+							roleName,
+							langData.systemPrompt || "",
+							langData.customInstructions || "",
+							artifacts,
+							false
+						)
+					}
 
 					await saveArtifacts(modeRulesDir, artifacts, mode.slug, lang, false)
 					modeExported = true
@@ -793,25 +1067,226 @@ export async function exportPromptsToExtensionDist(
 							continue
 						}
 
-						totalLanguages++
-
-						const langDirPath = path.join(distPromptsDir, lang)
+					// Check updated_at from cache first (optimization - skip file read if unchanged)
+					const cacheKey = getCacheKeySeparated(mode.slug, lang)
+					const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+					const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
+					const responseUpdatedAt = normalizeUpdatedAt(langData.updated_at)
+					
+					const langDirPath = path.join(distPromptsDir, lang)
+					const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
+					
+					// Check if content changed before creating directories and processing
+					const modeRulesDirExists = await fs.access(modeRulesDir).then(() => true).catch(() => false)
+					
+					// If updated_at unchanged, still check artifacts (cache might be stale or artifacts might have changed)
+					let shouldSkipDueToUnchanged = false
+					if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined && modeRulesDirExists) {
+						// Check artifacts even if updated_at unchanged (artifacts might have changed)
+						try {
+							const existingFiles = await fs.readdir(modeRulesDir)
+							const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+							const newArtifacts = langData.artifacts || []
+							const newArtifactCount = newArtifacts.length
+							
+							// If artifact count changed, need to update (don't skip)
+							if (existingArtifactFiles.length !== newArtifactCount) {
+								console.log(`[exportPromptsToExtensionDist] Artifact count changed for mode=${mode.slug}, lang=${lang} (${existingArtifactFiles.length} -> ${newArtifactCount}), updating despite unchanged updated_at`)
+								// Continue with update - don't skip
+							} else if (existingArtifactFiles.length === newArtifactCount && newArtifactCount > 0) {
+								// Same count, check if all artifacts exist and match
+								let allArtifactsMatch = true
+								
+								for (let i = 0; i < newArtifacts.length; i++) {
+									const artifact = newArtifacts[i]
+									const artifactKey = artifact.key || artifact.name || ""
+									const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+									const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+									const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+									const artifactFile = path.join(modeRulesDir, artifactFileName)
+									
+									try {
+										const existingContent = await fs.readFile(artifactFile, "utf-8")
+										if (existingContent.trim() !== (artifact.content || "").trim()) {
+											allArtifactsMatch = false
+											break
+										}
+									} catch {
+										// File doesn't exist - artifact changed
+										allArtifactsMatch = false
+										break
+									}
+								}
+								
+								if (allArtifactsMatch) {
+									// Both updated_at and artifacts unchanged, skip completely
+									console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+									shouldSkipDueToUnchanged = true
+								} else {
+									console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
+								}
+							} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
+								// All artifacts were deleted
+								console.log(`[exportPromptsToExtensionDist] All artifacts deleted for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
+							}
+						} catch (err) {
+							// If check fails, proceed with update
+						}
+						
+						// Also check main file if artifacts are unchanged
+						if (!shouldSkipDueToUnchanged && modeRulesDirExists) {
+							const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+							const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+							const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+							const fileExists = await fs.access(combinedPromptFile).then(() => true).catch(() => false)
+							
+							if (fileExists) {
+								try {
+									const artifacts = langData.artifacts || []
+									const systemPromptClean = removeArtifactContentFromPrompt(langData.systemPrompt || "", artifacts)
+									const customInstructionsClean = removeArtifactContentFromPrompt(langData.customInstructions || "", artifacts)
+									const combinedPromptParts: string[] = []
+									if (systemPromptClean) {
+										combinedPromptParts.push(systemPromptClean)
+									}
+									if (customInstructionsClean) {
+										if (combinedPromptParts.length > 0) {
+											combinedPromptParts.push("\n\n---\n\n")
+										}
+										combinedPromptParts.push(customInstructionsClean)
+									}
+									const newContent = combinedPromptParts.join("")
+									
+									const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
+									if (existingContent === newContent) {
+										// Both main file and artifacts unchanged, skip completely
+										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+										shouldSkipDueToUnchanged = true
+									}
+								} catch (err) {
+									// If read fails, continue with export
+								}
+							}
+						}
+					} else if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined) {
+						// updated_at unchanged and directory doesn't exist, skip
+						console.log(`[exportPromptsToExtensionDist] updated_at unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+						shouldSkipDueToUnchanged = true
+					}
+					
+					if (shouldSkipDueToUnchanged) {
+						continue
+					}
+					
+					let shouldUpdateMainFile = true
+					
+					if (modeRulesDirExists) {
+						// Check if main file content changed
+						const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+						const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+						const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+						const fileExists = await fs.access(combinedPromptFile).then(() => true).catch(() => false)
+						
+						if (fileExists) {
+							try {
+								// Build new content to compare
+								const artifacts = langData.artifacts || []
+								const systemPromptClean = removeArtifactContentFromPrompt(langData.systemPrompt || "", artifacts)
+								const customInstructionsClean = removeArtifactContentFromPrompt(langData.customInstructions || "", artifacts)
+								const combinedPromptParts: string[] = []
+								if (systemPromptClean) {
+									combinedPromptParts.push(systemPromptClean)
+								}
+								if (customInstructionsClean) {
+									if (combinedPromptParts.length > 0) {
+										combinedPromptParts.push("\n\n---\n\n")
+									}
+									combinedPromptParts.push(customInstructionsClean)
+								}
+								const newContent = combinedPromptParts.join("")
+								
+								const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
+								if (existingContent === newContent) {
+									// Main file content unchanged, but still check artifacts
+									console.log(`[exportPromptsToExtensionDist] Main file content unchanged for mode=${mode.slug}, lang=${lang}, but checking artifacts`)
+									shouldUpdateMainFile = false
+								}
+							} catch (err) {
+								// If read fails, continue with export
+							}
+						}
+						
+						// Check if artifacts changed by comparing count and content
+						if (shouldUpdateMainFile === false) {
+							try {
+								const existingFiles = await fs.readdir(modeRulesDir)
+								const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+								const newArtifacts = langData.artifacts || []
+								const newArtifactCount = newArtifacts.length
+								
+								// If artifact count changed (including deletion), need to update
+								if (existingArtifactFiles.length !== newArtifactCount) {
+									// Artifact count changed, need to update (will remove deleted artifacts)
+									console.log(`[exportPromptsToExtensionDist] Artifact count changed for mode=${mode.slug}, lang=${lang} (${existingArtifactFiles.length} -> ${newArtifactCount})`)
+								} else if (existingArtifactFiles.length === newArtifactCount && newArtifactCount > 0) {
+									// Same count, check if all artifacts exist and match
+									let allArtifactsMatch = true
+									
+									for (let i = 0; i < newArtifacts.length; i++) {
+										const artifact = newArtifacts[i]
+										const artifactKey = artifact.key || artifact.name || ""
+										const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+										const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+										const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+										const artifactFile = path.join(modeRulesDir, artifactFileName)
+										
+										try {
+											const existingContent = await fs.readFile(artifactFile, "utf-8")
+											if (existingContent.trim() !== (artifact.content || "").trim()) {
+												allArtifactsMatch = false
+												break
+											}
+										} catch {
+											// File doesn't exist - artifact changed
+											allArtifactsMatch = false
+											break
+										}
+									}
+									
+									if (allArtifactsMatch) {
+										// Both main file and artifacts unchanged, skip completely
+										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+										continue
+									}
+								} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
+									// All artifacts were deleted, need to update to remove them
+									console.log(`[exportPromptsToExtensionDist] All artifacts deleted for mode=${mode.slug}, lang=${lang}, will remove old files`)
+								}
+							} catch (err) {
+								// If check fails, proceed with update
+							}
+						}
+					}
+						
+						// Only create directories if we're actually going to write files
 						await fs.mkdir(langDirPath, { recursive: true })
-
-						const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
 						await fs.mkdir(modeRulesDir, { recursive: true })
+
+						totalLanguages++
 
 						const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
 						const artifacts = langData.artifacts || []
 
-						await saveCombinedPrompt(
-							modeRulesDir,
-							roleName,
-							langData.systemPrompt || "",
-							langData.customInstructions || "",
-							artifacts,
-							false
-						)
+						if (shouldUpdateMainFile) {
+							await saveCombinedPrompt(
+								modeRulesDir,
+								roleName,
+								langData.systemPrompt || "",
+								langData.customInstructions || "",
+								artifacts,
+								false
+							)
+						}
 
 						await saveArtifacts(modeRulesDir, artifacts, mode.slug, lang, false)
 						modeExported = true
@@ -825,6 +1300,32 @@ export async function exportPromptsToExtensionDist(
 		} else {
 			// Fallback to individual requests
 			console.log(`[exportPromptsToExtensionDist] Batch endpoint unavailable, falling back to individual requests`)
+			
+			// If we don't have batch data for cleanup, need to check all roles from API (not just filtered ones)
+			// to determine which have published prompts for cleanup
+			if (!batchDataForCleanup && rolesWithPublishedPrompts.size === 0) {
+				console.log(`[exportPromptsToExtensionDist] No batch data for cleanup, checking all roles from API for cleanup`)
+				// Check all roles from API (not just filtered ones) to build complete list for cleanup
+				for (const apiRole of apiRoles) {
+					const roleSlug = apiRole.slug.toLowerCase()
+					// Check if role has at least one published prompt for any language
+					let hasPublishedPrompt = false
+					for (const lang of SUPPORTED_LANGUAGES) {
+						try {
+							const promptData = await loadPromptWithArtifactsFromApi(roleSlug, lang, undefined, context, true)
+							if (promptData) {
+								hasPublishedPrompt = true
+								break
+							}
+						} catch (err) {
+							// Continue checking other languages
+						}
+					}
+					if (hasPublishedPrompt) {
+						rolesWithPublishedPrompts.add(roleSlug)
+					}
+				}
+			}
 
 			for (const mode of allModes) {
 				totalModes++
@@ -834,6 +1335,7 @@ export async function exportPromptsToExtensionDist(
 				}
 
 				let modeExported = false
+				let hasPublishedPromptForMode = false
 
 				for (const lang of SUPPORTED_LANGUAGES) {
 					try {
@@ -841,6 +1343,12 @@ export async function exportPromptsToExtensionDist(
 							await new Promise((resolve) => setTimeout(resolve, 200))
 						}
 
+						// Check updated_at from cache first (optimization - skip API call if unchanged)
+						const cacheKey = getCacheKeySeparated(mode.slug, lang)
+						const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+						const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
+						
+						// Load prompt data (this will update cache with latest updated_at)
 						const promptData = await loadPromptWithArtifactsFromApi(mode.slug, lang, undefined, context, true)
 
 						if (!promptData) {
@@ -848,26 +1356,227 @@ export async function exportPromptsToExtensionDist(
 							await removeUnpublishedModeDir(distPromptsDir, lang, mode.slug)
 							continue
 						}
+						
+						// Mark that this role has at least one published prompt
+						hasPublishedPromptForMode = true
+
+						// Check if updated_at changed after API call
+						const cachedAfter = context.globalState.get<CachedPromptSeparated>(cacheKey)
+						const responseUpdatedAt = normalizeUpdatedAt(cachedAfter?.updated_at)
+						
+						const langDirPath = path.join(distPromptsDir, lang)
+						const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
+						
+						// Check if content changed before creating directories and processing
+						const modeRulesDirExists = await fs.access(modeRulesDir).then(() => true).catch(() => false)
+						
+						// If updated_at unchanged, still check artifacts (cache might be stale or artifacts might have changed)
+						let shouldSkipDueToUnchanged = false
+						if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined && modeRulesDirExists) {
+							// Check artifacts even if updated_at unchanged (artifacts might have changed)
+							try {
+								const existingFiles = await fs.readdir(modeRulesDir)
+								const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+								const newArtifacts = promptData.artifacts || []
+								const newArtifactCount = newArtifacts.length
+								
+								// If artifact count changed, need to update (don't skip)
+								if (existingArtifactFiles.length !== newArtifactCount) {
+									console.log(`[exportPromptsToExtensionDist] Artifact count changed for mode=${mode.slug}, lang=${lang} (${existingArtifactFiles.length} -> ${newArtifactCount}), updating despite unchanged updated_at`)
+									// Continue with update - don't skip
+								} else if (existingArtifactFiles.length === newArtifactCount && newArtifactCount > 0) {
+									// Same count, check if all artifacts exist and match
+									let allArtifactsMatch = true
+									
+									for (let i = 0; i < newArtifacts.length; i++) {
+										const artifact = newArtifacts[i]
+										const artifactKey = artifact.key || artifact.name || ""
+										const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+										const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+										const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+										const artifactFile = path.join(modeRulesDir, artifactFileName)
+										
+										try {
+											const existingContent = await fs.readFile(artifactFile, "utf-8")
+											if (existingContent.trim() !== (artifact.content || "").trim()) {
+												allArtifactsMatch = false
+												break
+											}
+										} catch {
+											// File doesn't exist - artifact changed
+											allArtifactsMatch = false
+											break
+										}
+									}
+									
+									if (allArtifactsMatch) {
+										// Both updated_at and artifacts unchanged, skip completely
+										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+										shouldSkipDueToUnchanged = true
+									} else {
+										console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
+									}
+								} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
+									// All artifacts were deleted
+									console.log(`[exportPromptsToExtensionDist] All artifacts deleted for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
+								}
+							} catch (err) {
+								// If check fails, proceed with update
+							}
+							
+							// Also check main file if artifacts are unchanged
+							if (!shouldSkipDueToUnchanged && modeRulesDirExists) {
+								const roleName = mode.name.replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+								const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+								const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+								const fileExists = await fs.access(combinedPromptFile).then(() => true).catch(() => false)
+								
+								if (fileExists) {
+									try {
+										const artifacts = promptData.artifacts || []
+										const systemPromptClean = removeArtifactContentFromPrompt(promptData.systemPrompt || "", artifacts)
+										const customInstructionsClean = removeArtifactContentFromPrompt(promptData.customInstructions || "", artifacts)
+										const combinedPromptParts: string[] = []
+										if (systemPromptClean) {
+											combinedPromptParts.push(systemPromptClean)
+										}
+										if (customInstructionsClean) {
+											if (combinedPromptParts.length > 0) {
+												combinedPromptParts.push("\n\n---\n\n")
+											}
+											combinedPromptParts.push(customInstructionsClean)
+										}
+										const newContent = combinedPromptParts.join("")
+										
+										const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
+										if (existingContent === newContent) {
+											// Both main file and artifacts unchanged, skip completely
+											console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+											shouldSkipDueToUnchanged = true
+										}
+									} catch (err) {
+										// If read fails, continue with export
+									}
+								}
+							}
+						} else if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined) {
+							// updated_at unchanged and directory doesn't exist, skip
+							console.log(`[exportPromptsToExtensionDist] updated_at unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+							shouldSkipDueToUnchanged = true
+						}
+						
+						if (shouldSkipDueToUnchanged) {
+							continue
+						}
+						
+						let shouldUpdateMainFile = true
+						
+						if (modeRulesDirExists) {
+							// Check if main file content changed
+							const roleName = mode.name.replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+							const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+							const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+							const fileExists = await fs.access(combinedPromptFile).then(() => true).catch(() => false)
+							
+							if (fileExists) {
+								try {
+									// Build new content to compare
+									const artifacts = promptData.artifacts || []
+									const systemPromptClean = removeArtifactContentFromPrompt(promptData.systemPrompt || "", artifacts)
+									const customInstructionsClean = removeArtifactContentFromPrompt(promptData.customInstructions || "", artifacts)
+									const combinedPromptParts: string[] = []
+									if (systemPromptClean) {
+										combinedPromptParts.push(systemPromptClean)
+									}
+									if (customInstructionsClean) {
+										if (combinedPromptParts.length > 0) {
+											combinedPromptParts.push("\n\n---\n\n")
+										}
+										combinedPromptParts.push(customInstructionsClean)
+									}
+									const newContent = combinedPromptParts.join("")
+									
+									const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
+									if (existingContent === newContent) {
+										// Main file content unchanged, but still check artifacts
+										console.log(`[exportPromptsToExtensionDist] Main file content unchanged for mode=${mode.slug}, lang=${lang}, but checking artifacts`)
+										shouldUpdateMainFile = false
+									}
+								} catch (err) {
+									// If read fails, continue with export
+								}
+							}
+							
+							// Check if artifacts changed by comparing count and content
+							if (shouldUpdateMainFile === false) {
+								try {
+									const existingFiles = await fs.readdir(modeRulesDir)
+									const existingArtifactFiles = existingFiles.filter(f => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_"))
+									const newArtifacts = promptData.artifacts || []
+									const newArtifactCount = newArtifacts.length
+									
+									// If artifact count changed (including deletion), need to update
+									if (existingArtifactFiles.length !== newArtifactCount) {
+										// Artifact count changed, need to update (will remove deleted artifacts)
+										console.log(`[exportPromptsToExtensionDist] Artifact count changed for mode=${mode.slug}, lang=${lang} (${existingArtifactFiles.length} -> ${newArtifactCount})`)
+									} else if (existingArtifactFiles.length === newArtifactCount && newArtifactCount > 0) {
+										// Same count, check if all artifacts exist and match
+										let allArtifactsMatch = true
+										
+										for (let i = 0; i < newArtifacts.length; i++) {
+											const artifact = newArtifacts[i]
+											const artifactKey = artifact.key || artifact.name || ""
+											const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+											const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+											const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+											const artifactFile = path.join(modeRulesDir, artifactFileName)
+											
+											try {
+												const existingContent = await fs.readFile(artifactFile, "utf-8")
+												if (existingContent.trim() !== (artifact.content || "").trim()) {
+													allArtifactsMatch = false
+													break
+												}
+											} catch {
+												allArtifactsMatch = false
+												break
+											}
+										}
+										
+										if (allArtifactsMatch) {
+											// Both main file and artifacts unchanged, skip completely
+											console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+											continue
+										}
+									} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
+										// All artifacts were deleted, need to update to remove them
+										console.log(`[exportPromptsToExtensionDist] All artifacts deleted for mode=${mode.slug}, lang=${lang}, will remove old files`)
+									}
+								} catch (err) {
+									// If check fails, proceed with update
+								}
+							}
+						}
+						
+						// Only create directories if we're actually going to write files
+						await fs.mkdir(langDirPath, { recursive: true })
+						await fs.mkdir(modeRulesDir, { recursive: true })
 
 						totalLanguages++
-
-						const langDirPath = path.join(distPromptsDir, lang)
-						await fs.mkdir(langDirPath, { recursive: true })
-
-						const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
-						await fs.mkdir(modeRulesDir, { recursive: true })
 
 						const roleName = mode.name.replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
 						const artifacts = promptData.artifacts || []
 
-						await saveCombinedPrompt(
-							modeRulesDir,
-							roleName,
-							promptData.systemPrompt || "",
-							promptData.customInstructions || "",
-							artifacts,
-							false
-						)
+						if (shouldUpdateMainFile) {
+							await saveCombinedPrompt(
+								modeRulesDir,
+								roleName,
+								promptData.systemPrompt || "",
+								promptData.customInstructions || "",
+								artifacts,
+								false
+							)
+						}
 
 						await saveArtifacts(modeRulesDir, artifacts, mode.slug, lang, false)
 						modeExported = true
@@ -879,78 +1588,26 @@ export async function exportPromptsToExtensionDist(
 				if (modeExported) {
 					totalExported++
 				}
+				
+				// Add role to set of roles with published prompts (for cleanup) if it has at least one published prompt
+				if (hasPublishedPromptForMode) {
+					rolesWithPublishedPrompts.add(mode.slug)
+				}
 			}
 		}
 
-		// Final cleanup
-		console.log(`[exportPromptsToExtensionDist] Performing final cleanup...`)
-		await cleanupDistPrompts(distPromptsDir, validModeSlugs)
+		// Final cleanup - use only roles that are in apiRoles AND have published prompts
+		// This ensures archived roles (not in apiRoles) are removed from dist/prompts
+		console.log(`[exportPromptsToExtensionDist] Performing final cleanup with ${rolesWithPublishedPrompts.size} valid roles (out of ${allApiRoleSlugs.length} from API)...`)
+		await cleanupDistPrompts(distPromptsDir, rolesWithPublishedPrompts.size > 0 ? rolesWithPublishedPrompts : undefined)
 
 		return { totalExported, totalModes, totalLanguages }
 	} catch (error: any) {
 		console.error(`[exportPromptsToExtensionDist] Failed to fetch roles from API: ${error}`)
-		console.log("[exportPromptsToExtensionDist] Falling back to built-in modes...")
-
-		// Fallback to built-in modes
-		for (const mode of modes) {
-			totalModes++
-
-			if (totalModes > 1) {
-				await new Promise((resolve) => setTimeout(resolve, 500))
-			}
-
-			let modeExported = false
-
-			for (const lang of SUPPORTED_LANGUAGES) {
-				try {
-					if (lang !== SUPPORTED_LANGUAGES[0]) {
-						await new Promise((resolve) => setTimeout(resolve, 200))
-					}
-
-					const promptData = await loadPromptWithArtifactsFromApi(mode.slug, lang, undefined, context, true)
-
-					if (!promptData) {
-						console.log(`[exportPromptsToExtensionDist] No published prompt for mode=${mode.slug}, lang=${lang}`)
-						await removeUnpublishedModeDir(distPromptsDir, lang, mode.slug)
-						continue
-					}
-
-					totalLanguages++
-
-					const langDirPath = path.join(distPromptsDir, lang)
-					await fs.mkdir(langDirPath, { recursive: true })
-
-					const modeRulesDir = path.join(langDirPath, `rules-${mode.slug}`)
-					await fs.mkdir(modeRulesDir, { recursive: true })
-
-					const roleName = mode.name.replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
-					const artifacts = promptData.artifacts || []
-
-					await saveCombinedPrompt(
-						modeRulesDir,
-						roleName,
-						promptData.systemPrompt || "",
-						promptData.customInstructions || "",
-						artifacts,
-						false
-					)
-
-					await saveArtifacts(modeRulesDir, artifacts, mode.slug, lang, false)
-					modeExported = true
-				} catch (error) {
-					console.warn(`[exportPromptsToExtensionDist] Failed to export mode=${mode.slug}, lang=${lang}: ${error}`)
-				}
-			}
-
-			if (modeExported) {
-				totalExported++
-			}
-		}
-
-		console.log(
-			`[exportPromptsToExtensionDist] Export completed (fallback): ${totalExported} modes, ${totalLanguages} languages exported to ${distPromptsDir}`
-		)
-		return { totalExported, totalModes, totalLanguages }
+		console.warn(`[exportPromptsToExtensionDist] NOT using built-in prompts fallback - only API data should be exported`)
+		// Do NOT export built-in prompts - this function should only export API data
+		// Return empty result instead of falling back to built-in prompts
+		return { totalExported: 0, totalModes: 0, totalLanguages: 0 }
 	}
 }
 
@@ -985,11 +1642,18 @@ export async function exportPromptsOnFirstInstall(
 				const hasLanguageFolders = contents.some((item) => {
 					return ["ru", "en", "es", "zh", "ar", "pt"].includes(item)
 				})
+				// Check for rules-* folders at top level (incorrect structure - should be inside language folders)
+				const hasRulesFoldersAtTopLevel = contents.some((item) => {
+					return item.startsWith("rules-")
+				})
 				if (!hasLanguageFolders) {
 					console.log(`[exportPromptsOnFirstInstall] dist/prompts directory is empty, will export`)
 					needsExport = true
+				} else if (hasRulesFoldersAtTopLevel) {
+					console.log(`[exportPromptsOnFirstInstall] Found rules-* folders at top level (incorrect structure), will re-export`)
+					needsExport = true
 				} else {
-					console.log(`[exportPromptsOnFirstInstall] dist/prompts directory exists with content, skipping export`)
+					console.log(`[exportPromptsOnFirstInstall] dist/prompts directory exists with correct structure, skipping export`)
 				}
 			}
 		} catch (err) {

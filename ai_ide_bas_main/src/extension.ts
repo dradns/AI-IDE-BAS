@@ -31,6 +31,7 @@ try {
 	const raw = fs.readFileSync(configPath, 'utf8')
 	buildConfig = JSON.parse(raw)
 	console.log("Successfully parsed build config")
+	console.log(`[Extension] isImmediateUpdate=${buildConfig.featureFlags.isImmediateUpdate}`)
 } catch (e) {
 	console.warn("Failed to load build configuration, using defaults:", e)
 }
@@ -53,7 +54,7 @@ import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
-import { refreshAllPromptsFromApi } from "./services/prompt-api-service"
+import { refreshAllPromptsFromApi, getCacheKeySeparated } from "./services/prompt-api-service"
 
 import {
 	handleUri,
@@ -271,8 +272,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	const MIN_REFRESH_INTERVAL_MS = 8 * 60 * 1000 // 8 минут минимум
 	const MAX_REFRESH_INTERVAL_MS = 12 * 60 * 1000 // 12 минут максимум
 	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс
+	const IMMEDIATE_UPDATE_MS = 2 * 60 * 1000 // 2 minutes
 
-	const language = formatLanguage(vscode.env.language)
+	// Функция для получения текущего языка из настроек
+	// Используется динамически при каждом обновлении, чтобы учитывать смену языка
+	const getCurrentLanguage = () => formatLanguage(context.globalState.get("language") ?? vscode.env.language)
 	
 	// Генерируем детерминированный jitter на основе machineId для стабильности
 	// Это гарантирует, что каждый клиент получает свое уникальное время обновления
@@ -285,41 +289,59 @@ export async function activate(context: vscode.ExtensionContext) {
 	let refreshTimeoutHandle: NodeJS.Timeout | undefined
 	
 	// Helper to update UI after refresh
-	const notifyWebviewAboutRolesUpdate = async (roles: Awaited<ReturnType<typeof refreshAllPromptsFromApi>>["roles"]) => {
-		if (roles.length > 0) {
-			try {
-				// Update cached roles in globalState
-				await context.globalState.update("cachedApiRoles", roles)
-				
-				// Notify webview about updated roles
-				provider.postMessageToWebview({
-					type: "apiRoles",
-					apiRoles: roles,
-				})
-				outputChannel.appendLine(`[AutoRefresh] UI notified about ${roles.length} roles`)
-			} catch (error) {
-				outputChannel.appendLine(`[AutoRefresh] Failed to notify UI: ${error}`)
-			}
+	// Обновляет кэш и UI с новыми ролями
+	const notifyWebviewAboutRolesUpdate = async (roles: Awaited<ReturnType<typeof refreshAllPromptsFromApi>>["roles"], language?: string) => {
+		try {
+			// Обновляем список ролей из API (все опубликованные роли) в кэше
+			// Удаленные роли (которых нет в списке из API) автоматически исчезнут
+			await context.globalState.update("cachedApiRoles", roles)
+			
+			// Get current language from settings if not provided
+			const currentLanguage = language || getCurrentLanguage()
+			// Сохраняем язык кэша
+			await context.globalState.update("cachedApiRolesLanguage", currentLanguage)
+			
+			// Обновляем UI с новыми ролями
+			outputChannel.appendLine(`[AutoRefresh] Sending ${roles.length} roles to UI: ${roles.map(r => r.slug).join(", ")}`)
+			provider.postMessageToWebview({
+				type: "apiRoles",
+				apiRoles: roles,
+				language: currentLanguage, // Передаем язык, который использовался для запроса
+			})
+			
+			// Also send promptsUpdated message so UI knows to refresh
+			provider.postMessageToWebview({
+				type: "promptsUpdated",
+				timestamp: Date.now(),
+			})
+			
+			outputChannel.appendLine(`[AutoRefresh] UI notified about ${roles.length} roles`)
+		} catch (error) {
+			outputChannel.appendLine(`[AutoRefresh] Failed to update: ${error}`)
 		}
 	}
 	
 	// Планирование следующего обновления с рандомным интервалом 8-12 минут
 	const scheduleNextRefresh = () => {
-		const nextInterval = buildConfig.featureFlags.updateSec ?
-            buildConfig.featureFlags.updateSec * 1000 : 
-            // Рандомный интервал от 8 до 12 минут
-            MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
+		const isImmediate = buildConfig.featureFlags.isImmediateUpdate
+		outputChannel.appendLine(`[AutoRefresh] isImmediateUpdate=${isImmediate}`)
+		const nextInterval = isImmediate ?
+			IMMEDIATE_UPDATE_MS :
+			// Рандомный интервал от 8 до 12 минут
+			MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
 		
 		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
 		
 		refreshTimeoutHandle = setTimeout(async () => {
 			outputChannel.appendLine(`[AutoRefresh] Starting automatic refresh...`)
 			try {
-				const result = await refreshAllPromptsFromApi(context, language)
-				outputChannel.appendLine(`[AutoRefresh] Refreshed ${result.modesRefreshed} modes, ${result.roles.length} roles loaded`)
+				// Получаем текущий язык динамически при каждом обновлении
+				const currentLanguage = getCurrentLanguage()
+				const result = await refreshAllPromptsFromApi(context, currentLanguage, undefined, true) // shouldExport=true для автоматического обновления
+				outputChannel.appendLine(`[AutoRefresh] Refreshed ${result.modesRefreshed} modes, ${result.roles.length} roles loaded (language: ${currentLanguage})`)
 				
-				// Update UI with new roles
-				await notifyWebviewAboutRolesUpdate(result.roles)
+				// Обновляем кэш и UI с новыми ролями
+				await notifyWebviewAboutRolesUpdate(result.roles, currentLanguage)
 			} catch (error: any) {
 				outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts: ${error.message || error}`)
 			} finally {
@@ -333,11 +355,70 @@ export async function activate(context: vscode.ExtensionContext) {
 	const initialRefreshHandle = setTimeout(async () => {
 		outputChannel.appendLine(`[AutoRefresh] Starting initial refresh...`)
 		try {
-			const result = await refreshAllPromptsFromApi(context, language)
-			outputChannel.appendLine(`[AutoRefresh] Initial refresh: ${result.modesRefreshed} modes, ${result.roles.length} roles loaded`)
+			// Проверяем, первая ли это установка
+			const hasExportedBefore = context.globalState.get<boolean>("promptsExportedFromApi")
+			const cachedApiRoles = context.globalState.get<Awaited<ReturnType<typeof refreshAllPromptsFromApi>>["roles"]>("cachedApiRoles")
+			const isFirstInstall = !hasExportedBefore
 			
-			// Update UI with new roles
-			await notifyWebviewAboutRolesUpdate(result.roles)
+			// При первой установке проверяем, запросил ли webview роли
+			// Если webview уже запросил роли, не перезаписываем их другим языком
+			if (isFirstInstall && cachedApiRoles && cachedApiRoles.length > 0) {
+				outputChannel.appendLine(`[AutoRefresh] First install: webview already requested roles, skipping initial refresh to preserve language`)
+				// Загружаем промпты для всех языков в фоне, но не обновляем UI
+				const allLanguages = ["ru", "en", "es", "zh", "ar", "pt"]
+				for (const lang of allLanguages) {
+					try {
+						await refreshAllPromptsFromApi(context, lang)
+						outputChannel.appendLine(`[AutoRefresh] Loaded prompts for language: ${lang}`)
+					} catch (error: any) {
+						outputChannel.appendLine(`[AutoRefresh] Failed to load prompts for ${lang}: ${error.message || error}`)
+					}
+				}
+				// Запускаем цикл обновлений
+				scheduleNextRefresh()
+				return
+			}
+			
+			// Загружаем промпты для текущего языка (получаем динамически)
+			const currentLanguage = getCurrentLanguage()
+			const result = await refreshAllPromptsFromApi(context, currentLanguage) // shouldExport=false (первая загрузка, экспорт через exportPromptsOnFirstInstall)
+			outputChannel.appendLine(`[AutoRefresh] Initial refresh: ${result.modesRefreshed} modes, ${result.roles.length} roles loaded (language: ${currentLanguage})`)
+			
+			// При первой установке загружаем промпты для всех поддерживаемых языков
+			// чтобы пользователь мог сразу переключаться между языками
+			if (isFirstInstall && result.roles.length > 0) {
+				outputChannel.appendLine(`[AutoRefresh] First install detected, loading prompts for all supported languages...`)
+				const allLanguages = ["ru", "en", "es", "zh", "ar", "pt"]
+				// Normalize current language to supported folder names without relying on a narrow string union type
+				const currentLanguageRaw = String(currentLanguage)
+				const currentLangNormalized =
+					currentLanguageRaw === "ru"
+						? "ru"
+						: currentLanguageRaw === "es"
+							? "es"
+							: currentLanguageRaw.startsWith("zh")
+								? "zh"
+								: currentLanguageRaw === "ar"
+									? "ar"
+									: currentLanguageRaw === "pt" || currentLanguageRaw === "pt-BR"
+										? "pt"
+										: "en"
+				
+				// Загружаем для языков, которые еще не загружены
+				for (const lang of allLanguages) {
+					if (lang !== currentLangNormalized) {
+						try {
+							await refreshAllPromptsFromApi(context, lang)
+							outputChannel.appendLine(`[AutoRefresh] Loaded prompts for language: ${lang}`)
+						} catch (error: any) {
+							outputChannel.appendLine(`[AutoRefresh] Failed to load prompts for ${lang}: ${error.message || error}`)
+						}
+					}
+				}
+			}
+			
+			// При первой загрузке обновляем UI (это установка/перезагрузка IDE)
+			await notifyWebviewAboutRolesUpdate(result.roles, currentLanguage)
 		} catch (error: any) {
 			outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts on activation: ${error.message || error}`)
 		} finally {
