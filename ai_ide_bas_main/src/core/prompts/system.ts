@@ -282,8 +282,6 @@ async function generatePrompt(
 	partialReadsEnabled?: boolean,
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
-	useCacheOnly: boolean = false,
-	forceRefresh: boolean = false,
 ): Promise<string> {
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
@@ -423,7 +421,7 @@ async function generatePrompt(
 		if (needsApiData) {
 			console.log(`[SystemPrompt] 🔍 Fetching from API for NEW role: mode=${mode}, needsApiData=${needsApiData}`)
 			try {
-				const apiPromptData = await loadPromptFromApiSeparated(mode, language ?? effectiveLanguage, undefined, context, false, useCacheOnly, forceRefresh)
+				const apiPromptData = await loadPromptFromApiSeparated(mode, language ?? effectiveLanguage, undefined, context, false)
 				console.log(`[SystemPrompt] 🔍 API response for NEW role:`, apiPromptData ? {
 					hasSystemPrompt: !!apiPromptData.systemPrompt,
 					systemPromptLength: apiPromptData.systemPrompt?.length || 0,
@@ -498,7 +496,7 @@ async function generatePrompt(
 		if (needsApiData) {
 			console.log(`[SystemPrompt] 🔍 Fetching from API for BUILT-IN role: mode=${mode}`)
 			try {
-				const apiPromptData = await loadPromptFromApiSeparated(mode, language, undefined, context, false, useCacheOnly, forceRefresh)
+				const apiPromptData = await loadPromptFromApiSeparated(mode, language, undefined, context, false)
 				console.log(`[SystemPrompt] 🔍 API response for BUILT-IN role:`, apiPromptData ? {
 					hasSystemPrompt: !!apiPromptData.systemPrompt,
 					systemPromptLength: apiPromptData.systemPrompt?.length || 0,
@@ -822,8 +820,6 @@ export const SYSTEM_PROMPT = async (
 	partialReadsEnabled?: boolean,
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
-	useCacheOnly: boolean = false,
-	forceRefresh: boolean = false,
 ): Promise<string> => {
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
@@ -900,7 +896,5 @@ ${customInstructions}`
 		partialReadsEnabled,
 		settings,
 		todoList,
-		useCacheOnly,
-		forceRefresh,
 	)
 }

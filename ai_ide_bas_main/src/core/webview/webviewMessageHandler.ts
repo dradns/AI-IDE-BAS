@@ -56,6 +56,7 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
 import { setPendingTodoList } from "../tools/updateTodoListTool"
+import { checkAndRefreshPromptForMode } from "../../services/prompt-refresh-service"
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -1694,9 +1695,14 @@ export const webviewMessageHandler = async (
 		}
 		case "getSystemPrompt":
 			try {
-				// При просмотре системного промпта принудительно обновляем данные из API
+				// При просмотре системного промпта обновляем данные из API перед генерацией
 				// Локальные правила из .roo имеют приоритет и будут использоваться, если они есть
-				const systemPrompt = await generateSystemPrompt(provider, message, false, true)
+				if (message.mode) {
+					const state = await provider.getState()
+					await checkAndRefreshPromptForMode(provider.context, message.mode, state?.language)
+				}
+				
+				const systemPrompt = await generateSystemPrompt(provider, message)
 
 				await provider.postMessageToWebview({
 					type: "systemPrompt",
@@ -1712,8 +1718,8 @@ export const webviewMessageHandler = async (
 			break
 		case "copySystemPrompt":
 			try {
-				// При копировании системного промпта используем только кэш, не делаем запросы к API
-				const systemPrompt = await generateSystemPrompt(provider, message, true)
+				// При копировании системного промпта используем кэш
+				const systemPrompt = await generateSystemPrompt(provider, message)
 
 				await vscode.env.clipboard.writeText(systemPrompt)
 				await vscode.window.showInformationMessage(t("common:info.clipboard_copy"))

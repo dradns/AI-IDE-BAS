@@ -10,7 +10,7 @@ import { MultiFileSearchReplaceDiffStrategy } from "../diff/strategies/multi-fil
 
 import { ClineProvider } from "./ClineProvider"
 
-export const generateSystemPrompt = async (provider: ClineProvider, message: WebviewMessage, useCacheOnly: boolean = false, forceRefresh: boolean = false) => {
+export const generateSystemPrompt = async (provider: ClineProvider, message: WebviewMessage) => {
 	const {
 		apiConfiguration,
 		customModePrompts,
@@ -50,36 +50,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 	const customModes = await provider.customModesManager.getCustomModes()
 
 	// Загружаем все режимы, включая роли из API, чтобы правильно найти режим
-	// При useCacheOnly используем кэшированные роли из globalState и НЕ передаем context,
-	// чтобы не триггерить запрос к API в getAllModes
-	let cachedApiRoles: Array<{ 
-		slug: string
-		name: string
-		emoji?: string
-		target_roles: string[]
-		role_definition?: string | Record<string, string>
-		short_description?: Record<string, string>
-		when_to_use?: Record<string, string>
-	}> | undefined = undefined
-	
-	if (useCacheOnly && provider.context) {
-		const cached = provider.context.globalState.get<Array<{ 
-			slug: string
-			name: string
-			emoji?: string
-			target_roles: string[]
-			role_definition?: string | Record<string, string>
-			short_description?: Record<string, string>
-			when_to_use?: Record<string, string>
-		}>>("cachedApiRoles")
-		// Используем кэш только если он существует (не null/undefined)
-		// Если кэш пуст, передаем undefined, чтобы getAllModes не делал запрос
-		if (cached && cached.length > 0) {
-			cachedApiRoles = cached
-		}
-	}
-	// При useCacheOnly не передаем context, чтобы getAllModes не делал запрос к API
-	const allModes = await getAllModes(customModes, useCacheOnly ? undefined : provider.context, cachedApiRoles, language)
+	const allModes = await getAllModes(customModes, provider.context, undefined, language)
 	const modeConfig = allModes.find((m) => m.slug === mode) || getModeBySlug(mode, customModes)
 
 	const rooIgnoreInstructions = provider.getCurrentCline()?.rooIgnoreController?.getInstructions()
@@ -128,8 +99,6 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 			useRooRulesOnly: vscode.workspace.getConfiguration("roo-cline").get<boolean>("useRooRulesOnly") ?? false,
 		},
 		undefined, // todoList
-		useCacheOnly, // useCacheOnly - использовать только кэш при просмотре системного промпта
-		forceRefresh, // forceRefresh - принудительно обновить данные из API
 	)
 
 	return systemPrompt
