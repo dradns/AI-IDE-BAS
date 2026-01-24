@@ -23,6 +23,33 @@ import { RouterModels } from "@roo/api"
 import { vscode } from "@src/utils/vscode"
 import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
 
+type UiLanguage = NonNullable<ExtensionState["language"]>
+const UI_LANGUAGES: readonly UiLanguage[] = [
+	"id",
+	"ca",
+	"de",
+	"en",
+	"es",
+	"fr",
+	"hi",
+	"it",
+	"ja",
+	"ko",
+	"nl",
+	"pl",
+	"pt-BR",
+	"ru",
+	"tr",
+	"vi",
+	"zh-CN",
+	"zh-TW",
+] as const
+
+const isUiLanguage = (value: unknown): value is UiLanguage => {
+	if (typeof value !== "string") return false
+	return (UI_LANGUAGES as readonly string[]).includes(value)
+}
+
 export interface ExtensionStateContextType extends ExtensionState {
 	historyPreviewCollapsed?: boolean // Add the new state property
 	didHydrateState: boolean
@@ -152,6 +179,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 		short_description?: Record<string, string>
 		when_to_use?: Record<string, string>
 	}>
+	apiRolesLanguage?: string // Язык, который использовался для запроса apiRoles
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -379,22 +407,29 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 				}
 				case "apiRoles": {
 					// Сохраняем роли из API в state для использования в компонентах
+					// Также сохраняем язык, который использовался для запроса (отдельно от основного language)
 					if (message.apiRoles !== undefined) {
+						console.log(`[ExtensionStateContext] Received ${message.apiRoles.length} roles from extension: ${message.apiRoles.map((r: any) => r.slug).join(", ")}`)
+						const safeLanguage = isUiLanguage(message.language) ? message.language : undefined
 						setState((prevState) => ({
 							...prevState,
 							apiRoles: message.apiRoles,
+							// Сохраняем язык запроса отдельно, чтобы использовать его синхронно
+							apiRolesLanguage: message.language || prevState.language,
+							// Также обновляем основной язык, если он передан в сообщении
+							...(safeLanguage && { language: safeLanguage }),
 						}))
 					}
 					break
 				}
 				case "promptsUpdated": {
 					// Prompts were updated via background timer refresh
+					// НЕ триггерим обновление ролей - только обновляем timestamp
+					// Обновление ролей происходит только при смене языка или перезагрузке IDE
 					setState((prevState) => ({
 						...prevState,
 						promptsUpdatedAt: message.timestamp ?? Date.now(),
 					}))
-					// Silently re-request roles list
-					vscode.postMessage({ type: "requestApiRoles" })
 					break
 				}
 			}

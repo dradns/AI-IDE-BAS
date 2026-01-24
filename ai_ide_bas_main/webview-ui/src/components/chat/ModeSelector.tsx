@@ -43,7 +43,7 @@ export const ModeSelector = ({
 	const [searchValue, setSearchValue] = React.useState("")
 	const searchInputRef = React.useRef<HTMLInputElement>(null)
 	const portalContainer = useRooPortal("roo-portal")
-	const { hasOpenedModeSelector, setHasOpenedModeSelector, apiRoles, language } = useExtensionState()
+	const { hasOpenedModeSelector, setHasOpenedModeSelector, apiRoles, language, apiRolesLanguage } = useExtensionState()
 	const { t } = useAppTranslation()
 
 	const trackModeSelectorOpened = React.useCallback(() => {
@@ -79,11 +79,9 @@ export const ModeSelector = ({
 		})
 	})
 
-	// Запрашиваем роли из API через extension host (избегаем CORS в webview)
-	React.useEffect(() => {
-		console.log(`[ModeSelector] Requesting API roles from extension host with language="${language}"...`)
-		vscode.postMessage({ type: "requestApiRoles", language })
-	}, [language])
+	// НЕ запрашиваем роли из API при монтировании или смене языка
+	// Роли загружаются только при установке и автоматическом обновлении (8-12 минут или 2 минуты)
+	// Используем уже загруженные роли из apiRoles (которые приходят при запуске webview)
 
 	// Обновляем режимы когда получаем роли из API
 	React.useEffect(() => {
@@ -97,7 +95,9 @@ export const ModeSelector = ({
 			
 		// Получаем все режимы с ролями из API
 		// Передаем язык для правильного извлечения текста из многоязычных объектов
-			getAllModes(customModes, undefined, apiRoles, language).then((allModes) => {
+		// Используем apiRolesLanguage (язык запроса) вместо language (язык состояния), чтобы избежать race condition
+			const rolesLanguage = apiRolesLanguage || language
+			getAllModes(customModes, undefined, apiRoles, rolesLanguage).then((allModes) => {
 				console.log(`[ModeSelector] Total modes after API: ${allModes.length}`, allModes.map(m => m.slug).join(", "))
 				// Логируем описания для отладки
 				allModes.forEach(mode => {
@@ -115,22 +115,24 @@ export const ModeSelector = ({
 						const prevMode = prevModes.find(m => m.slug === mode.slug)
 						const prevDescription = prevMode?.description || ""
 						
-					// ⚠️ КРИТИЧНО: Нормализуем язык для совместимости с бэкендом (ru-RU -> ru, en-US -> en)
-					const normalizedLang = language ? language.split("-")[0].toLowerCase() : "en"
+					// ⚠️ КРИТИЧНО: Используем язык запроса (apiRolesLanguage) вместо языка состояния (language)
+					// чтобы избежать race condition, когда язык еще не обновился в состоянии
+					const rolesLanguage = apiRolesLanguage || language
+					const normalizedLang = rolesLanguage ? rolesLanguage.split("-")[0].toLowerCase() : "en"
 					
 					// ⚠️ КРИТИЧНО: Также проверяем short_description напрямую из apiRoles
 					const apiRole = apiRoles.find(r => r.slug.toLowerCase() === mode.slug.toLowerCase())
 					let apiRoleDescription = ""
 					if (apiRole?.short_description) {
 						const sd = apiRole.short_description
-						apiRoleDescription = sd[normalizedLang] || sd[language || "en"] || sd["en"] || sd["ru"] || Object.values(sd)[0] || ""
+						apiRoleDescription = sd[normalizedLang] || sd[rolesLanguage || "en"] || sd["en"] || sd["ru"] || Object.values(sd)[0] || ""
 						console.log(`[ModeSelector] Extracted description for ${mode.slug} from apiRole.short_description: "${apiRoleDescription}"`)
 					}
 					
 					const finalDescription = promptDescription
 						? (typeof promptDescription === "string"
 							? promptDescription
-							: (promptDescription[normalizedLang] || promptDescription[language || "en"] || promptDescription["en"] || promptDescription["ru"] || Object.values(promptDescription)[0] || ""))
+							: (promptDescription[normalizedLang] || promptDescription[rolesLanguage || "en"] || promptDescription["en"] || promptDescription["ru"] || Object.values(promptDescription)[0] || ""))
 							: (apiRoleDescription || apiDescription || prevDescription)
 						
 						console.log(`[ModeSelector] Final description for ${mode.slug}: "${finalDescription}" (from customModePrompts: ${!!promptDescription}, from apiRole: ${!!apiRoleDescription}, from API: ${!!apiDescription}, from prev: ${!!prevDescription})`)
@@ -146,7 +148,7 @@ export const ModeSelector = ({
 				console.warn(`[ModeSelector] Failed to process API roles:`, error)
 			})
 		}
-	}, [apiRoles, customModes, language])
+	}, [apiRoles, customModes, apiRolesLanguage, language])
 
 	// Отдельный эффект для обновления описаний при изменении customModePrompts
 	// Не перезагружаем режимы из API, только обновляем описания в существующих режимах

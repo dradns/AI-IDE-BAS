@@ -108,10 +108,9 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 	// Загружаем режимы, включая роли из API
 	const [modes, setModes] = useState<ModeConfig[]>(() => getAllModesSync(customModes))
 
-	// Запрашиваем роли из API при монтировании компонента
-	useEffect(() => {
-		vscode.postMessage({ type: "requestApiRoles", language })
-	}, [language])
+	// НЕ запрашиваем роли из API при монтировании компонента
+	// Роли загружаются только при смене языка или перезагрузке IDE
+	// Используем уже загруженные роли из apiRoles (которые приходят при запуске webview)
 
 	// Обновляем режимы когда получаем роли из API
 	useEffect(() => {
@@ -556,15 +555,9 @@ const ModesView = ({ onDone }: ModesViewProps) => {
 				}
 			} else if (message.type === "promptsUpdated") {
 				// Prompts were updated via background timer refresh
-				vscode.postMessage({ type: "requestApiRoles", language })
-				
-				// If system prompt dialog is open, refresh its content
-				if (isDialogOpen && mode) {
-					vscode.postMessage({
-						type: "getSystemPrompt",
-						mode: mode,
-					})
-				}
+				// НЕ триггерим обновление ролей или системного промпта
+				// Обновление происходит только при смене языка или перезагрузке IDE
+				// При просмотре системного промпта используем только кэш
 			}
 		}
 
