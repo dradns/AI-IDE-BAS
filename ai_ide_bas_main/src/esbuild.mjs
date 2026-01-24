@@ -33,10 +33,12 @@ function updateExtensionBuildConfigIfNeeded() {
 		const configRaw = fs.readFileSync(configPath, "utf8")
 		const config = JSON.parse(configRaw)
 
-		config.featureFlags.updateSec = updateValue
-
-		fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8")
-        console.log(JSON.stringify(config, null, 2))
+		// Only update updateSec if argument is provided, don't touch isImmediateUpdate
+		if (updateValue !== null) {
+			config.featureFlags.updateSec = updateValue
+			fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8")
+			console.log(JSON.stringify(config, null, 2))
+		}
 	} else {
 		console.warn(`[${name}] extension-build-config.json not found, skipping update`)
 	}
