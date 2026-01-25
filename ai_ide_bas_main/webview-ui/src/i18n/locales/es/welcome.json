@@ -33,14 +33,15 @@
 			"instagram": "Instagram"
 		},
 		"title": "AI IDE BAS: Tu asistente de IA para analítica",
-		"desc": "Genera documentación, escribe requisitos y artefactos del proyecto mucho más rápido con IA.",
+		"desc": "Genera documentos y artefactos con AI IDE BAS usando plantillas listas de expertos de nuestro equipo — más rápido y con mejor calidad que un LLM convencional. 💡Empieza eligiendo un rol y, en el campo del prompt, indica el proyecto y el artefacto necesario; la IA comenzará a trabajar en el documento. Consulta la guía completa para trabajar con AI IDE BAS.",
 		"features": {
-			"bonus": "Bono de bienvenida. Obtén tokens DeepSeek gratis después de registrarte.",
-			"productionArtifacts": "Genera artefactos reales adaptados a tus procesos de desarrollo.",
-			"inviteFriends": "Invita amigos. Aumenta tu saldo de bonificación por cada invitación y colabora.",
-			"googleSignIn": "Inicia sesión con Google. Inicio rápido sin contraseñas.",
-			"workAnywhere": "Trabaja desde cualquier lugar. Crea proyectos en la nube y comparte resultados."
+			"bonus": "Bono de bienvenida: obtén tokens DeepSeek gratis después de registrarte.",
+			"productionArtifacts": "Genera artefactos directamente para tus procesos de desarrollo.",
+			"inviteFriends": "Invita a tus amigos: +1000 al saldo de bonificación por cada invitación.",
+			"googleSignIn": "Inicia sesión con Google: inicio rápido sin contraseñas.",
+			"workAnywhere": "Trabajo en la nube: comparte resultados con colegas."
 		},
+		"support": "¿Tienes dificultades? Ponte en contacto con nuestro equipo.",
 		"signInWithGoogle": "Iniciar sesión con Google",
 		"openingBrowser": "Abriendo navegador...",
 		"checkBrowserWindow": "💡 Verifica si se abrió la ventana de autorización en tu navegador"

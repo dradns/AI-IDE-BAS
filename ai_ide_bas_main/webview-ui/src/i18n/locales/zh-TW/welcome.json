@@ -33,15 +33,16 @@
       "github": "GitHub",
       "instagram": "Instagram"
     },
-    "title": "AI IDE BAS：分析專用的 AI 助手",
-    "desc": "透過 AI 更快速產出文件、需求與專案產物。",
+    "title": "AI IDE BAS：你的分析型 AI 助手",
+    "desc": "使用 AI IDE BAS 透過我們團隊專家模板產出文件與成果，比一般 LLM 更快、更高品質。💡先選擇角色，在提示詞欄位填入專案與所需產物，AI 便會開始生成文件。查看 AI IDE BAS 的完整使用指南。",
     "features": {
-      "bonus": "歡迎獎勵。註冊後即可獲得免費 DeepSeek 代幣。",
-      "productionArtifacts": "依你的開發流程產出真實產物。",
-      "inviteFriends": "邀請好友。每次邀請都能增加獎勵餘額並便於協作。",
-      "googleSignIn": "使用 Google 登入。免密碼快速開始。",
-      "workAnywhere": "隨處工作。建立雲端專案並分享成果。"
+      "bonus": "歡迎獎勵：註冊後即可獲得免費 DeepSeek 代幣。",
+      "productionArtifacts": "生成貼合你開發流程的產物。",
+      "inviteFriends": "邀請好友：每邀請一人獎勵餘額 +1000。",
+      "googleSignIn": "使用 Google 授權：免密碼快速開始。",
+      "workAnywhere": "雲端工作：與同事分享成果。"
     },
+    "support": "遇到困難？請聯絡我們的團隊。",
     "signInWithGoogle": "使用 Google 登入",
     "openingBrowser": "正在開啟瀏覽器...",
     "checkBrowserWindow": "💡 請檢查瀏覽器中是否已開啟授權視窗"

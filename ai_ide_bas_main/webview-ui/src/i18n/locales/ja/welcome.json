@@ -42,6 +42,7 @@
       "googleSignIn": "Googleでログイン。パスワード不要の素早い開始。",
       "workAnywhere": "どこからでも作業。クラウドプロジェクトを作成し結果を共有。"
     },
+    "support": "お困りですか？私たちのチームにご連絡ください。",
     "signInWithGoogle": "Googleでログイン",
     "openingBrowser": "ブラウザを開いています...",
     "checkBrowserWindow": "💡 ブラウザで認可ウィンドウが開いたか確認してください"

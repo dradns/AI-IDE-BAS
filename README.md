@@ -1,7 +1,7 @@
 <div align="center">
 <sub>
 
-<b>English</b> • [Русский](locales/ru/README.md) • [Deutsch](locales/de/README.md) • [Français](locales/fr/README.md) • [Español](locales/es/README.md)
+<b>Русский</b> • [English](locales/en/README.md) • [العربية](locales/ar/README.md) • [Español](locales/es/README.md) • [中文](locales/zh/README.md)
 
 </sub>
 </div>
