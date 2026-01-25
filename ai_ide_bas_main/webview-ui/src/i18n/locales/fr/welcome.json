@@ -42,6 +42,7 @@
       "googleSignIn": "Connexion avec Google. Démarrage rapide sans mots de passe.",
       "workAnywhere": "Travaillez de n’importe où. Créez des projets cloud et partagez les résultats."
     },
+    "support": "Des difficultés ? Contactez notre équipe.",
     "signInWithGoogle": "Se connecter avec Google",
     "openingBrowser": "Ouverture du navigateur...",
     "checkBrowserWindow": "💡 Vérifiez si la fenêtre d’autorisation s’est ouverte dans votre navigateur"

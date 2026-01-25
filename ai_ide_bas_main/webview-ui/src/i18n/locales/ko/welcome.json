@@ -42,6 +42,7 @@
       "googleSignIn": "Google로 로그인. 비밀번호 없이 빠른 시작.",
       "workAnywhere": "어디서나 작업. 클라우드 프로젝트 생성 및 결과 공유."
     },
+    "support": "어려움이 있나요? 우리 팀에 문의하세요.",
     "signInWithGoogle": "Google로 로그인",
     "openingBrowser": "브라우저 여는 중...",
     "checkBrowserWindow": "💡 브라우저에서 인증 창이 열렸는지 확인하세요"

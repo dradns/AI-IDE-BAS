@@ -42,6 +42,7 @@
       "googleSignIn": "Inicia sessió amb Google. Inici ràpid sense contrasenyes.",
       "workAnywhere": "Treballa des de qualsevol lloc. Crea projectes al núvol i comparteix resultats."
     },
+    "support": "Tens dificultats? Contacta amb el nostre equip.",
     "signInWithGoogle": "Inicia sessió amb Google",
     "openingBrowser": "S’està obrint el navegador...",
     "checkBrowserWindow": "💡 Comprova si s’ha obert la finestra d’autorització al navegador"

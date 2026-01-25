@@ -33,15 +33,16 @@
       "github": "GitHub",
       "instagram": "Instagram"
     },
-    "title": "AI IDE BAS：面向分析的 AI 助手",
-    "desc": "借助 AI，更快地生成文档、需求和项目产物。",
+    "title": "AI IDE BAS：你的分析型 AI 助手",
+    "desc": "使用 AI IDE BAS 基于我们团队专家模板生成文档和产物，比常规 LLM 更快、更高质量。💡先选择角色，在提示词字段填写项目和所需产物，AI 就会开始生成文档。查看 AI IDE BAS 的完整使用指南。",
     "features": {
-      "bonus": "欢迎奖励。注册后即可获得免费的 DeepSeek 代币。",
-      "productionArtifacts": "根据你的开发流程生成真实产物。",
-      "inviteFriends": "邀请好友。每次邀请都会增加奖励余额并便于协作。",
-      "googleSignIn": "使用 Google 登录。无需密码即可快速开始。",
-      "workAnywhere": "随时随地工作。创建云端项目并分享成果。"
+      "bonus": "欢迎奖励：注册后可获得免费 DeepSeek 代币。",
+      "productionArtifacts": "生成贴合你开发流程的产物。",
+      "inviteFriends": "邀请好友：每邀请一人奖励余额 +1000。",
+      "googleSignIn": "通过 Google 授权：无需密码快速开始。",
+      "workAnywhere": "云端工作：与同事分享成果。"
     },
+    "support": "遇到问题？请联系我们的团队。",
     "signInWithGoogle": "使用 Google 登录",
     "openingBrowser": "正在打开浏览器...",
     "checkBrowserWindow": "💡 请检查浏览器中是否已打开授权窗口"

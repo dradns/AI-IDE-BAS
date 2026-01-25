@@ -1,10 +1,6 @@
 <div align="center">
 
-[English](https://github.com/dradns/AI-IDE-BAS/blob/sync-upstream/ai_ide_bas_main/locales/en/README.md) • 
-**Русский** • 
-[Deutsch](https://github.com/dradns/AI-IDE-BAS/blob/sync-upstream/ai_ide_bas_main/locales/de/README.md) • 
-[Français](https://github.com/dradns/AI-IDE-BAS/blob/sync-upstream/ai_ide_bas_main/locales/fr/README.md) • 
-[Español](https://github.com/dradns/AI-IDE-BAS/blob/sync-upstream/ai_ide_bas_main/locales/es/README.md)
+**Русский** • [English](locales/en/README.md) • [العربية](locales/ar/README.md) • [Español](locales/es/README.md) • [中文](locales/zh/README.md)
 
 </div>
 
