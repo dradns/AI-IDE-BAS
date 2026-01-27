@@ -300,15 +300,17 @@ function pickText(value: any, lang?: string): string {
 		const normalizedLang = lang ? normalizeLang(lang) : undefined
 
 		// Try normalized language first
-		if (normalizedLang && value[normalizedLang]) {
+		if (normalizedLang && normalizedLang in value) {
 			const result = pickText(value[normalizedLang], undefined)
-			if (result) return result
+			// Return result even if empty - language exists but has no content
+			// Don't fallback to other languages if requested language key exists
+			if (result || value[normalizedLang] === "") return result
 		}
 
 		// Try original language code
-		if (lang && value[lang]) {
+		if (lang && lang in value) {
 			const result = pickText(value[lang], undefined)
-			if (result) return result
+			if (result || value[lang] === "") return result
 		}
 
 		// Try language variants (zh-CN, pt-BR, es-ES, ar-SA)
@@ -317,14 +319,14 @@ function pickText(value: any, lang?: string): string {
 			const variantKey = Object.keys(value).find(key => key.toLowerCase().startsWith(normalizedLang))
 			if (variantKey) {
 				const result = pickText(value[variantKey], undefined)
-				if (result) return result
+				if (result || value[variantKey] === "") return result
 			}
 		}
 
 		// Return empty if specific language requested but not found
 		if (lang || normalizedLang) return ""
 
-		// Fallback to English or first available
+		// Fallback to English or first available (only when no language specified)
 		if (value["en"]) return pickText(value["en"], undefined)
 		const firstKey = Object.keys(value)[0]
 		if (firstKey) return pickText(value[firstKey], undefined)

@@ -10,15 +10,10 @@
 !package.json
 !package.nls.*
 
-# Include the built extension (but exclude dist/prompts)
+# Include the built extension (including dist/prompts for offline fallback)
 !dist
 !dist/**
 !dist/**/*
-
-# Exclude dist/prompts (will be populated from API on first install)
-# This must come AFTER !dist/** to override the inclusion
-dist/prompts
-dist/prompts/**
 
 # Include the built webview
 !**/*.map

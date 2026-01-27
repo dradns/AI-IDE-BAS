@@ -121,11 +121,16 @@ async function main() {
 			name: "copyPrompts",
 			setup(build) {
 				build.onEnd(() => {
-					// Always skip copying prompts - they are loaded from API at runtime
-					console.log(
-						`[copyPrompts] Skipping prompts copy - will be loaded from API on first install`,
-					)
-					return
+					// Copy bundled prompts from /promts to dist/prompts as offline fallback
+					const promptsSrc = path.join(srcDir, "..", "..", "promts")
+					const promptsDest = path.join(distDir, "prompts")
+					
+					if (fs.existsSync(promptsSrc)) {
+						fs.cpSync(promptsSrc, promptsDest, { recursive: true })
+						console.log(`[copyPrompts] Copied bundled prompts from ${promptsSrc} to ${promptsDest}`)
+					} else {
+						console.warn(`[copyPrompts] Prompts source not found: ${promptsSrc}`)
+					}
 				})
 			},
 		},

@@ -587,33 +587,31 @@ async function generatePrompt(
 				
 				const stats = await fs.stat(modeRulesDir).catch(() => null)
 				if (stats && stats.isDirectory()) {
-					const roleName = modeConfig.name.replace(/^[\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, "").trim() || mode
-					const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
-					const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
-					
 					let systemPrompt = ""
 					let customInstructions = ""
 					let artifactsInstructions = ""
 					
 					try {
-						const combinedContent = await fs.readFile(combinedPromptFile, "utf-8")
-						if (combinedContent && combinedContent.trim()) {
-							const parts = combinedContent.split(/\n\n---\n\n/)
-							if (parts.length >= 2) {
-								systemPrompt = parts[0].trim()
-								customInstructions = parts[1].trim()
-							} else if (parts.length === 1 && parts[0].trim()) {
-								customInstructions = parts[0].trim()
+						// Ищем любой файл начинающийся с 00_ (основной промпт роли)
+						const modeFiles = await fs.readdir(modeRulesDir)
+						const mainPromptFile = modeFiles.find(f => f.startsWith('00_') && f.endsWith('.md'))
+						
+						if (mainPromptFile) {
+							const combinedContent = await fs.readFile(path.join(modeRulesDir, mainPromptFile), "utf-8")
+							if (combinedContent && combinedContent.trim()) {
+								const parts = combinedContent.split(/\n\n---\n\n/)
+								if (parts.length >= 2) {
+									systemPrompt = parts[0].trim()
+									customInstructions = parts[1].trim()
+								} else if (parts.length === 1 && parts[0].trim()) {
+									customInstructions = parts[0].trim()
+								}
 							}
 						}
-					} catch (fileErr) {
-						// File doesn't exist
-					}
-					
-					try {
-						const modeFiles = await fs.readdir(modeRulesDir)
+						
+						// Артефакты - все файлы 01_*, 02_*, ... (кроме 00_*)
 						const artifactFiles = modeFiles
-							.filter(f => f.endsWith('.md') && /^\d{2}_/.test(f) && f !== `00_${cleanRoleName}.md`)
+							.filter(f => f.endsWith('.md') && /^0[1-9]_|^[1-9]\d*_/.test(f))
 							.sort()
 						
 						if (artifactFiles.length > 0) {

@@ -247,13 +247,9 @@ export function pickTextFromMultilang(value: string | Record<string, string> | u
 			console.log(`[pickTextFromMultilang] ⚠️ Russian not found, falling back to English`)
 			return pickTextFromMultilang(value["en"], undefined)
 		}
-		// Fallback to first available key if requested language not found
-		// Краткое описание всегда есть для всех ролей на всех языках, но для тестовых ролей может быть только на одном языке
-		const firstKey = Object.keys(value)[0]
-		if (firstKey) {
-			console.log(`[pickTextFromMultilang] ⚠️ Requested language "${lang || normalizedLang}" not found, falling back to first available key "${firstKey}"`)
-			return pickTextFromMultilang(value[firstKey], undefined)
-		}
+		// Don't fallback to random language - return empty string if requested language not found
+		// This prevents showing Arabic text when Portuguese is requested but not available
+		console.log(`[pickTextFromMultilang] ⚠️ Requested language "${lang || normalizedLang}" not found, returning empty string (available: ${Object.keys(value).join(", ")})`)
 	}
 	return ""
 }

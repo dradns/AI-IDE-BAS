@@ -105,7 +105,6 @@ export function RooCloudCTA() {
 					<li>{t("cloudCta.features.bonus")}</li>
 					<li>{t("cloudCta.features.googleSignIn")}</li>
 					<li>{t("cloudCta.features.productionArtifacts")}</li>
-					<li>{t("cloudCta.features.inviteFriends")}</li>
 					<li>{t("cloudCta.features.workAnywhere")}</li>
 				</ul>
 				<p className="m-0 mt-2 text-sm text-vscode-descriptionForeground">{t("cloudCta.support")}</p>

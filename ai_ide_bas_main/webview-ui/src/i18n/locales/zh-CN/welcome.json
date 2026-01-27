@@ -38,7 +38,6 @@
     "features": {
       "bonus": "欢迎奖励：注册后可获得免费 DeepSeek 代币。",
       "productionArtifacts": "生成贴合你开发流程的产物。",
-      "inviteFriends": "邀请好友：每邀请一人奖励余额 +1000。",
       "googleSignIn": "通过 Google 授权：无需密码快速开始。",
       "workAnywhere": "云端工作：与同事分享成果。"
     },

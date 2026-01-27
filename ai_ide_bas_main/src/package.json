@@ -3,7 +3,7 @@
 	"displayName": "AI IDE BAS",
 	"description": "IDE for analysts and architects",
 	"publisher": "8eton",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"icon": "assets/icons/bas-logo.png",
 	"aiKey": "InstrumentationKey=e8a16c83-dab4-48d4-bf92-408c9e579a85",
 	"galleryBanner": {
@@ -489,7 +489,7 @@
 		"test": "vitest run",
 		"format": "prettier --write .",
 		"bundle": "node esbuild.mjs",
-        "vsix": "mkdirp ../bin && rimraf dist/prompts && npm run bundle --",
+        "vsix": "mkdirp ../bin && npm run bundle --",
 		"postvsix": "vsce package --no-dependencies --out ../bin && node scripts/add-ws-to-vsix.mjs",
 		"publish:marketplace": "vsce publish && ovsx publish",
 		"watch:bundle": "pnpm bundle --watch",
