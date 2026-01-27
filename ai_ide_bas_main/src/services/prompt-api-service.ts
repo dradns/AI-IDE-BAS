@@ -1807,18 +1807,20 @@ export async function refreshAllPromptsFromApi(
 	// Check for new roles OR removed roles - ALWAYS check, regardless of updates
 	const knownRoles = context.globalState.get<string[]>("knownApiRoles") || []
 	const currentRoleSlugs = apiRoles.map(role => role.slug.toLowerCase())
-	const newRoles = currentRoleSlugs.filter(slug => !knownRoles.includes(slug))
+	let newRoles = currentRoleSlugs.filter(slug => !knownRoles.includes(slug))
 	const removedRoles = knownRoles.filter(slug => !currentRoleSlugs.includes(slug))
 	
 	// Always update knownApiRoles to track current state
-	// Initialize if empty (first run)
-	if (knownRoles.length === 0 && currentRoleSlugs.length > 0) {
-		console.log(`[PromptAPI] Initializing knownApiRoles with ${currentRoleSlugs.length} roles`)
+	// Initialize if empty (first run) - treat ALL roles as new for export
+	const isFirstRun = knownRoles.length === 0 && currentRoleSlugs.length > 0
+	if (isFirstRun) {
+		console.log(`[PromptAPI] First run - all ${currentRoleSlugs.length} roles are new, will export all`)
+		newRoles = currentRoleSlugs // All roles are "new" on first run
 		await context.globalState.update("knownApiRoles", currentRoleSlugs)
 	}
 	
 	// Log detected changes
-	if (newRoles.length > 0) {
+	if (newRoles.length > 0 && !isFirstRun) {
 		console.log(`[PromptAPI] New role(s) detected in refresh: ${newRoles.join(", ")}`)
 	}
 	if (removedRoles.length > 0) {
@@ -1839,8 +1841,12 @@ export async function refreshAllPromptsFromApi(
 		await context.globalState.update("knownApiRoles", currentRoleSlugs)
 	}
 
-	// Schedule export after refresh (только при автоматическом обновлении)
-	if (shouldExport) {
+	// Schedule export after refresh
+	// IMPORTANT: New roles are ALWAYS exported immediately (even if shouldExport=false)
+	// This ensures new roles from API appear in dist/prompts without waiting for automatic refresh
+	const hasNewRoles = newRoles.length > 0
+	
+	if (shouldExport || hasNewRoles) {
 		if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
 		exportDebounceTimer = setTimeout(() => {
 			exportDebounceTimer = null
@@ -1852,6 +1858,7 @@ export async function refreshAllPromptsFromApi(
 					// If there are also updates, merge new roles with updated roles
 					const updatedRoleSlugs = actualUpdates > 0 ? Array.from(updatedModes) : []
 					const rolesToExport = [...new Set([...newRoles, ...updatedRoleSlugs])]
+					console.log(`[PromptAPI] Exporting new roles immediately: ${newRoles.join(", ")}`)
 					safeExportPrompts(
 						context, 
 						`new roles detected: ${newRoles.join(", ")}${actualUpdates > 0 ? `, ${actualUpdates} modes updated` : ""}`, 
@@ -1887,9 +1894,9 @@ export async function refreshAllPromptsFromApi(
 				safeExportPrompts(context, `refresh (${actualUpdates} modes updated)`, updatedRoleSlugs).catch((error) => {
 					console.warn(`[PromptAPI] Export failed: ${error}`)
 				})
-			} else {
+			} else if (shouldExport) {
 				// No changes detected, but trigger cleanup to ensure archived roles are removed
-				// This ensures that archived roles are removed even if knownApiRoles wasn't initialized
+				// Only do cleanup during automatic refresh (shouldExport=true), not initial load
 				safeExportPrompts(context, "automatic refresh cleanup", undefined).catch((error) => {
 					console.warn(`[PromptAPI] Cleanup export failed: ${error}`)
 				})

@@ -444,10 +444,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Export prompts on first install or update (non-blocking)
 	// This populates ONLY dist/prompts directory (NOT ~/.roo)
+	// Use same initialDelay as refresh to prevent API overload on mass updates
 	const { exportPromptsOnFirstInstall } = await import("./services/prompt-export-service")
-	exportPromptsOnFirstInstall(context).catch((error) => {
-		outputChannel.appendLine(`[Extension] ⚠️ Failed to export prompts on first install: ${error.message || error}`)
-	})
+	setTimeout(() => {
+		exportPromptsOnFirstInstall(context).catch((error) => {
+			outputChannel.appendLine(`[Extension] ⚠️ Failed to export prompts on first install: ${error.message || error}`)
+		})
+	}, initialDelay + 1000) // Add 1s after initial refresh to not compete
 
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
