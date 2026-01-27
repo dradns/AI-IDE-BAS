@@ -14,6 +14,7 @@ import { getProjectRooDirectoryForCwd } from "./roo-config"
 import { modes } from "../shared/modes"
 
 // Supported languages for API export
+// NOTE: Bundled prompts use zh-CN folder, but esbuild.mjs renames it to zh for API compatibility
 const SUPPORTED_LANGUAGES = ["ru", "en", "es", "zh", "ar", "pt"]
 
 // Remove artifact content from prompt text to avoid duplication
@@ -170,6 +171,9 @@ async function saveCombinedPrompt(
 		}
 	}
 
+	// Clean up old 00_*.md files with different names in same directory
+	// This handles role name changes (e.g. "Architect" -> "Solution Architect")
+	// Only delete if we're writing a new file (API returned valid data)
 	if (!isProjectExport) {
 		try {
 			const existingFiles = await fs.readdir(modeRulesDir).catch(() => [])
@@ -179,6 +183,7 @@ async function saveCombinedPrompt(
 					existingFile.endsWith(".md") &&
 					existingFile !== `00_${cleanRoleName}.md`
 				) {
+					console.log(`[saveCombinedPrompt] Removing old main file: ${existingFile} (replaced by 00_${cleanRoleName}.md)`)
 					await fs.unlink(path.join(modeRulesDir, existingFile)).catch(() => {})
 				}
 			}
@@ -191,17 +196,27 @@ async function saveCombinedPrompt(
 }
 
 // Save artifacts to separate files (01_*.md, 02_*.md, etc.)
+// IMPORTANT: apiReturnedData flag indicates if API successfully returned data for this mode
+// If true - we trust API and can delete old artifacts (intentional deletion from server)
+// If false - API failed/timeout, keep existing files as fallback
 async function saveArtifacts(
 	modeRulesDir: string,
 	artifacts: Array<{ key: string; content: string; name?: string }>,
 	modeSlug: string,
 	lang: string,
-	isProjectExport: boolean
+	isProjectExport: boolean,
+	apiReturnedData: boolean = true // Default true for backward compatibility
 ): Promise<void> {
-	console.log(`[saveArtifacts] Processing ${artifacts.length} artifacts for mode=${modeSlug}, lang=${lang}`)
+	console.log(`[saveArtifacts] Processing ${artifacts.length} artifacts for mode=${modeSlug}, lang=${lang}, apiReturnedData=${apiReturnedData}`)
 
-	// Always clean up old artifact files first (even if no new artifacts)
-	// This ensures deleted artifacts are removed
+	// If API didn't return data (error/timeout), keep existing files unchanged
+	if (!apiReturnedData) {
+		console.log(`[saveArtifacts] API didn't return data - keeping existing files unchanged for mode=${modeSlug}, lang=${lang}`)
+		return
+	}
+
+	// API returned data successfully - we can sync (delete old artifacts if they were removed on server)
+	// Clean up old artifact files before writing new ones
 	try {
 		const existingFiles = await fs.readdir(modeRulesDir)
 		for (const file of existingFiles) {
@@ -214,9 +229,9 @@ async function saveArtifacts(
 		/* ignore */
 	}
 
-	// If no artifacts, we're done (old files already removed)
+	// If API returned empty artifacts array - that's intentional (all artifacts deleted on server)
 	if (artifacts.length === 0) {
-		console.log(`[saveArtifacts] No artifacts to save, old files removed`)
+		console.log(`[saveArtifacts] API returned 0 artifacts - old artifacts removed for mode=${modeSlug}, lang=${lang}`)
 		return
 	}
 
@@ -289,8 +304,15 @@ async function saveArtifacts(
 	}
 }
 
-// Remove directory for unpublished prompt
+// Remove directory for unpublished prompt (only for project .roo, NOT for dist/prompts)
+// For dist/prompts - use cleanupDistPrompts with full list of valid roles
 async function removeUnpublishedModeDir(rooDir: string, lang: string, modeSlug: string): Promise<void> {
+	// Skip removal for dist/prompts - it's handled by cleanupDistPrompts with proper validation
+	if (rooDir.includes("dist/prompts") || rooDir.includes("dist\\prompts")) {
+		console.log(`[removeUnpublishedModeDir] Skipping dist/prompts - use cleanupDistPrompts instead`)
+		return
+	}
+
 	const langDirPath = path.join(rooDir, lang)
 	const modeRulesDir = path.join(langDirPath, `rules-${modeSlug}`)
 
@@ -300,7 +322,7 @@ async function removeUnpublishedModeDir(rooDir: string, lang: string, modeSlug: 
 			.then(() => true)
 			.catch(() => false)
 		if (dirExists) {
-			console.log(`[removeUnpublishedModeDir] Removing directory for mode=${modeSlug}, lang=${lang}`)
+			console.log(`[removeUnpublishedModeDir] Removing unpublished mode directory: ${modeRulesDir}`)
 			await fs.rm(modeRulesDir, { recursive: true, force: true }).catch(() => {})
 		}
 	} catch (err) {
@@ -609,8 +631,25 @@ export async function exportPromptsFromApi(
 }
 
 // Clean up old files from dist/prompts directory
+// IMPORTANT: Only removes roles that are NOT in validModeSlugs
+// validModeSlugs MUST contain ALL roles from API (not just updated ones)
+// If API returned partial data or error, don't call this function!
 async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<string>): Promise<void> {
 	try {
+		// Safety check: don't cleanup if we don't have a valid list of roles
+		// This prevents deleting bundled prompts when API returns partial data
+		if (!validModeSlugs || validModeSlugs.size === 0) {
+			console.log(`[cleanupDistPrompts] No valid mode slugs provided - skipping cleanup to preserve bundled prompts`)
+			return
+		}
+
+		// Additional safety: require at least 3 roles to consider it a valid API response
+		// This prevents cleanup when API returns error/empty/partial data
+		if (validModeSlugs.size < 3) {
+			console.log(`[cleanupDistPrompts] Only ${validModeSlugs.size} roles - too few, skipping cleanup (API may have returned partial data)`)
+			return
+		}
+
 		const dirExists = await fs
 			.access(distPromptsDir)
 			.then(() => true)
@@ -620,9 +659,7 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 			return
 		}
 
-		if (validModeSlugs) {
-			console.log(`[cleanupDistPrompts] Valid mode slugs: ${Array.from(validModeSlugs).join(", ")}`)
-		}
+		console.log(`[cleanupDistPrompts] Valid mode slugs (${validModeSlugs.size}): ${Array.from(validModeSlugs).join(", ")}`)
 
 		const entries = await fs.readdir(distPromptsDir, { withFileTypes: true })
 
@@ -630,16 +667,8 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 			const entryPath = path.join(distPromptsDir, entry.name)
 
 			if (entry.isDirectory()) {
-				// Remove all rules-* directories at top level (should only be inside language folders)
-				if (entry.name.startsWith("rules-")) {
-					console.log(`[cleanupDistPrompts] Removing rules-* directory at top level: ${entry.name}`)
-					await fs.rm(entryPath, { recursive: true, force: true })
-					continue
-				}
-				
+				// Skip non-language directories
 				if (!SUPPORTED_LANGUAGES.includes(entry.name)) {
-					console.log(`[cleanupDistPrompts] Removing unsupported language folder: ${entry.name}`)
-					await fs.rm(entryPath, { recursive: true, force: true })
 					continue
 				}
 
@@ -649,23 +678,13 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 					for (const langEntry of langEntries) {
 						const langEntryPath = path.join(entryPath, langEntry.name)
 
-						if (langEntry.isFile()) {
-							console.log(`[cleanupDistPrompts] Removing old file: ${entry.name}/${langEntry.name}`)
-							await fs.unlink(langEntryPath).catch(() => {})
-						} else if (langEntry.isDirectory()) {
-							if (langEntry.name.startsWith("rules-")) {
-								if (validModeSlugs) {
-									const modeSlug = langEntry.name.replace("rules-", "")
-									if (!validModeSlugs.has(modeSlug)) {
-										console.log(
-											`[cleanupDistPrompts] Removing obsolete rules-* directory: ${entry.name}/${langEntry.name}`
-										)
-										await fs.rm(langEntryPath, { recursive: true, force: true }).catch(() => {})
-										continue
-									}
-								}
-							} else {
-								console.log(`[cleanupDistPrompts] Removing old directory: ${entry.name}/${langEntry.name}`)
+						if (langEntry.isDirectory() && langEntry.name.startsWith("rules-")) {
+							// Only remove rules-* directories that are NOT in validModeSlugs
+							const modeSlug = langEntry.name.replace("rules-", "")
+							if (!validModeSlugs.has(modeSlug)) {
+								console.log(
+									`[cleanupDistPrompts] Removing archived role directory: ${entry.name}/${langEntry.name}`
+								)
 								await fs.rm(langEntryPath, { recursive: true, force: true }).catch(() => {})
 							}
 						}
@@ -673,9 +692,6 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 				} catch (err) {
 					console.warn(`[cleanupDistPrompts] Failed to clean ${entry.name}: ${err}`)
 				}
-			} else if (entry.isFile()) {
-				console.log(`[cleanupDistPrompts] Removing file in dist/prompts/: ${entry.name}`)
-				await fs.unlink(entryPath).catch(() => {})
 			}
 		}
 	} catch (error) {
@@ -703,7 +719,9 @@ export async function exportPromptsToExtensionDist(
 		const apiRoles = await getAllRolesFromApi(undefined, "ru")
 
 		if (apiRoles.length === 0) {
-			console.warn(`[exportPromptsToExtensionDist] API returned no roles - nothing to export`)
+			console.warn(`[exportPromptsToExtensionDist] API returned no roles - keeping bundled prompts unchanged`)
+			// Don't cleanup or modify dist/prompts if API returned nothing
+			// This preserves bundled prompts from .vsix installation
 			return { totalExported: 0, totalModes: 0, totalLanguages: 0 }
 		}
 
@@ -901,11 +919,9 @@ export async function exportPromptsToExtensionDist(
 							} catch (err) {
 								// If check fails, proceed with update
 							}
-						} else if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined) {
-							// updated_at unchanged and directory doesn't exist, skip
-							console.log(`[exportPromptsToExtensionDist] updated_at unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
-							shouldSkipDueToUnchanged = true
 						}
+						// NOTE: Don't skip if directory doesn't exist - we need to create it even if cache says unchanged
+						// This handles the case when bundled prompts were deleted or installation was incomplete
 						
 						if (shouldSkipDueToUnchanged) {
 							continue
@@ -1168,11 +1184,9 @@ export async function exportPromptsToExtensionDist(
 								}
 							}
 						}
-					} else if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined) {
-						// updated_at unchanged and directory doesn't exist, skip
-						console.log(`[exportPromptsToExtensionDist] updated_at unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
-						shouldSkipDueToUnchanged = true
 					}
+					// NOTE: Don't skip if directory doesn't exist - we need to create it even if cache says unchanged
+					// This handles the case when bundled prompts were deleted or installation was incomplete
 					
 					if (shouldSkipDueToUnchanged) {
 						continue
@@ -1459,11 +1473,9 @@ export async function exportPromptsToExtensionDist(
 									}
 								}
 							}
-						} else if (cachedUpdatedAt === responseUpdatedAt && cachedUpdatedAt !== undefined) {
-							// updated_at unchanged and directory doesn't exist, skip
-							console.log(`[exportPromptsToExtensionDist] updated_at unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
-							shouldSkipDueToUnchanged = true
 						}
+						// NOTE: Don't skip if directory doesn't exist - we need to create it even if cache says unchanged
+						// This handles the case when bundled prompts were deleted or installation was incomplete
 						
 						if (shouldSkipDueToUnchanged) {
 							continue
@@ -1596,10 +1608,14 @@ export async function exportPromptsToExtensionDist(
 			}
 		}
 
-		// Final cleanup - use only roles that are in apiRoles AND have published prompts
-		// This ensures archived roles (not in apiRoles) are removed from dist/prompts
-		console.log(`[exportPromptsToExtensionDist] Performing final cleanup with ${rolesWithPublishedPrompts.size} valid roles (out of ${allApiRoleSlugs.length} from API)...`)
-		await cleanupDistPrompts(distPromptsDir, rolesWithPublishedPrompts.size > 0 ? rolesWithPublishedPrompts : undefined)
+		// Final cleanup - only remove roles that are NOT in API response
+		// IMPORTANT: Only cleanup if we actually exported something - otherwise preserve bundled prompts
+		if (totalExported > 0 && rolesWithPublishedPrompts.size > 0) {
+			console.log(`[exportPromptsToExtensionDist] Performing cleanup with ${rolesWithPublishedPrompts.size} valid roles (exported ${totalExported} prompts)...`)
+			await cleanupDistPrompts(distPromptsDir, rolesWithPublishedPrompts)
+		} else {
+			console.log(`[exportPromptsToExtensionDist] No prompts actually exported (totalExported=${totalExported}, validRoles=${rolesWithPublishedPrompts.size}) - skipping cleanup to preserve bundled prompts`)
+		}
 
 		return { totalExported, totalModes, totalLanguages }
 	} catch (error: any) {

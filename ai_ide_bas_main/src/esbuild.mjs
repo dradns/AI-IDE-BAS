@@ -126,7 +126,25 @@ async function main() {
 					const promptsDest = path.join(distDir, "prompts")
 					
 					if (fs.existsSync(promptsSrc)) {
-						fs.cpSync(promptsSrc, promptsDest, { recursive: true })
+						// Copy all language folders, renaming zh-CN to zh for API compatibility
+						const langFolders = fs.readdirSync(promptsSrc, { withFileTypes: true })
+							.filter(d => d.isDirectory())
+							.map(d => d.name)
+						
+						// Create dest directory
+						if (!fs.existsSync(promptsDest)) {
+							fs.mkdirSync(promptsDest, { recursive: true })
+						}
+						
+						for (const lang of langFolders) {
+							const srcLangDir = path.join(promptsSrc, lang)
+							// Rename zh-CN to zh for API compatibility
+							const destLang = lang === "zh-CN" ? "zh" : lang
+							const destLangDir = path.join(promptsDest, destLang)
+							
+							fs.cpSync(srcLangDir, destLangDir, { recursive: true })
+							console.log(`[copyPrompts] Copied ${lang} -> ${destLang}`)
+						}
 						console.log(`[copyPrompts] Copied bundled prompts from ${promptsSrc} to ${promptsDest}`)
 					} else {
 						console.warn(`[copyPrompts] Prompts source not found: ${promptsSrc}`)
