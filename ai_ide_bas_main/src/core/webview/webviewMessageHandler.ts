@@ -23,7 +23,7 @@ import { Package } from "../../shared/package"
 import { RouterName, toRouterName, ModelRecord } from "../../shared/api"
 import { supportPrompt } from "../../shared/support-prompt"
 
-import { checkoutDiffPayloadSchema, checkoutRestorePayloadSchema, WebviewMessage } from "../../shared/WebviewMessage"
+import { checkoutDiffPayloadSchema, checkoutRestorePayloadSchema, WebviewMessage, updateUserProfilePayloadSchema } from "../../shared/WebviewMessage"
 import { checkExistKey } from "../../shared/checkExistApiConfig"
 import { experimentDefault } from "../../shared/experiments"
 import { Terminal } from "../../integrations/terminal/Terminal"
@@ -735,6 +735,35 @@ export const webviewMessageHandler = async (
 			} catch {
 				await provider.postMessageToWebview({ type: "files:me:result", me: null })
 			}
+			break
+		}
+		case "files:updateProfile": {
+			const result = updateUserProfilePayloadSchema.safeParse(message.payload)
+
+			if (!result.success) {
+				await provider.postMessageToWebview({
+				type: "files:updateProfile:result",
+				payload: { success: false, me: null },
+				})
+				break
+			}
+
+			try {
+				const client = new AiIdeBasFilesClient(provider.context)
+				await client.updateProfile(result.data)
+				const me = await client.getMe().catch(() => null)
+
+				await provider.postMessageToWebview({
+				type: "files:updateProfile:result",
+				payload: { success: true, me: me.user },
+				})
+			} catch {
+				await provider.postMessageToWebview({
+				type: "files:updateProfile:result",
+				payload: { success: false, me: null },
+				})
+			}
+
 			break
 		}
 		case "files:list": {
