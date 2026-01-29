@@ -32,6 +32,7 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
     if (search.trim()) values.search = search.trim()
     if (page) values.page = page
     if (pageSize) values.pageSize = pageSize
+    console.log('[WEBVIEW] files:list →', values)
     vscode.postMessage({ type: "files:list", values })
   }, [projectName, search, page, pageSize])
 
@@ -65,9 +66,19 @@ const FilesView: React.FC<{ onDone?: () => void }> = () => {
   }, [])
 
   const requestDelete = useCallback((file: FileItem) => {
-    const idOrName = file.id || file.filename
+    const idOrName = file?.id || file?.filename
     if (!idOrName) return
-    vscode.postMessage({ type: "files:delete", text: idOrName, values: { projectName: projectName.trim() || undefined } })
+      if (!window.confirm(`Удалить файл "${file.filename}"?`)) return
+
+        setLoading(true)
+        setError(undefined)
+        setNotice(undefined)
+
+        const values: any = {}
+        if (projectName.trim()) values.projectName = projectName.trim()
+
+          console.log('[WEBVIEW] files:delete →', { idOrName, values })
+          vscode.postMessage({ type: "files:delete", text: idOrName, values })
   }, [projectName])
 
   useEffect(() => {
