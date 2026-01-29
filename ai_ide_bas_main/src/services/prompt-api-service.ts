@@ -1,7 +1,18 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import * as fs from "fs"
+import * as fsp from "fs/promises"
 import { AIIDEBAS_PROMPTS_API_BASE_URL } from "../shared/constants"
+import {
+	initFileCache,
+	getFromFileCache,
+	saveToFileCache,
+	deleteFromFileCache,
+	isFileCacheAvailable,
+	migrateFromGlobalState,
+	cleanupOldCache,
+	type CachedPromptData,
+} from "./prompt-file-cache"
 
 interface CachedPrompt {
 	content: string
@@ -11,6 +22,12 @@ interface CachedPrompt {
 	updated_at?: string
 	cacheLogicVersion?: string
 }
+
+// Re-export for backwards compatibility
+export type { CachedPromptData }
+
+// Flag to track if file cache migration has been done
+let fileCacheMigrationDone = false
 
 // Cache timing constants (synced with auto-refresh interval)
 const AUTO_REFRESH_INTERVAL = 10 * 60 * 1000 + 24 * 1000
@@ -136,6 +153,7 @@ function validateNewFormatItem(item: any): boolean {
 }
 
 // Atomic cache update to prevent race conditions
+// Now uses file-based cache instead of globalState to avoid memory bloat
 async function atomicCacheUpdate(
 	context: vscode.ExtensionContext,
 	cacheKey: string,
@@ -154,16 +172,57 @@ async function atomicCacheUpdate(
 	cacheUpdateLocks.set(cacheKey, lock)
 	
 	try {
-		const currentCached = context.globalState.get<CachedPromptSeparated>(cacheKey)
-		if (currentCached && currentCached.updated_at !== oldUpdatedAt) {
-			console.log(`[PromptAPI] Cache was updated by another process, skipping update`)
-			return false
+		// Use file cache if available, otherwise fall back to globalState
+		if (isFileCacheAvailable()) {
+			const currentCached = await getFromFileCache(cacheKey)
+			if (currentCached && currentCached.updated_at !== oldUpdatedAt) {
+				console.log(`[PromptAPI] Cache was updated by another process, skipping update`)
+				return false
+			}
+			await saveToFileCache(cacheKey, newData)
+		} else {
+			const currentCached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+			if (currentCached && currentCached.updated_at !== oldUpdatedAt) {
+				console.log(`[PromptAPI] Cache was updated by another process, skipping update`)
+				return false
+			}
+			await context.globalState.update(cacheKey, newData)
 		}
-		await context.globalState.update(cacheKey, newData)
 		return true
 	} finally {
 		cacheUpdateLocks.delete(cacheKey)
 		resolveLock!()
+	}
+}
+
+/**
+ * Initialize the prompt cache system
+ * Should be called during extension activation
+ */
+export async function initPromptCache(context: vscode.ExtensionContext): Promise<void> {
+	// Initialize file-based cache
+	await initFileCache(context)
+	
+	// Migrate existing data from globalState to file cache (one-time)
+	if (!fileCacheMigrationDone && isFileCacheAvailable()) {
+		try {
+			const migratedSeparated = await migrateFromGlobalState(context, CACHE_KEY_PREFIX_SEPARATED)
+			const migratedLegacy = await migrateFromGlobalState(context, CACHE_KEY_PREFIX)
+			if (migratedSeparated > 0 || migratedLegacy > 0) {
+				console.log(`[PromptAPI] Migrated ${migratedSeparated + migratedLegacy} cache entries to file storage`)
+			}
+			fileCacheMigrationDone = true
+		} catch (error) {
+			console.warn(`[PromptAPI] Cache migration failed: ${error}`)
+		}
+	}
+	
+	// Clean up old cache entries (older than 7 days)
+	if (isFileCacheAvailable()) {
+		const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+		await cleanupOldCache(SEVEN_DAYS_MS).catch(err => {
+			console.warn(`[PromptAPI] Cache cleanup failed: ${err}`)
+		})
 	}
 }
 
@@ -620,7 +679,12 @@ export async function loadPromptFromApiSeparated(
 	// Try loading from cache (skip if forceRefresh=true)
 	let cached: CachedPromptSeparated | undefined
 	if (context && !forceRefresh) {
-		cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+		// Use file cache if available, otherwise fall back to globalState
+		if (isFileCacheAvailable()) {
+			cached = await getFromFileCache(cacheKey)
+		} else {
+			cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+		}
 		if (cached) {
 			// Invalidate cache if logic version mismatch
 			if (cached.cacheLogicVersion !== CACHE_LOGIC_VERSION) {
@@ -1310,7 +1374,13 @@ export async function loadPromptWithArtifactsFromApi(
 			console.warn(`[PromptAPI] Rate limit (429)`)
 			if (context) {
 				const cacheKey = `prompt_${mode}_${normalizedLang || "en"}`
-				const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+				// Use file cache if available
+				let cached: CachedPromptSeparated | undefined
+				if (isFileCacheAvailable()) {
+					cached = await getFromFileCache(cacheKey)
+				} else {
+					cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+				}
 				if (cached && cached.cacheLogicVersion === CACHE_LOGIC_VERSION) {
 					console.log(`[PromptAPI] Using cache on rate limit`)
 					return {
@@ -1329,12 +1399,32 @@ export async function loadPromptWithArtifactsFromApi(
 			return null
 		}
 
-		const data: PromptApiResponse = await response.json()
+		const rawData = await response.json()
+		
+		// API returns array directly, not { prompts: [...] }
+		const prompts = Array.isArray(rawData) ? rawData : (rawData.prompts || [])
 
-		let prompt = selectLatestPrompt(data.prompts || [], "published", role)
-		if (!prompt && !onlyPublished) prompt = selectLatestPrompt(data.prompts || [], "draft", role)
+		let prompt = selectLatestPrompt(prompts, "published", role)
+		if (!prompt && !onlyPublished) prompt = selectLatestPrompt(prompts, "draft", role)
 
 		if (!prompt) {
+			// Try to use the first item directly if it matches the role and status
+			const directMatch = prompts.find((p: any) => 
+				(p.slug === role || p.role === role || p.target_role === role) && 
+				(p.status === "published" || (!onlyPublished && p.status === "draft"))
+			)
+			if (directMatch) {
+				// New API format - extract data directly
+				console.log(`[PromptAPI] Using direct match for role=${role}, status=${directMatch.status}`)
+				const systemPrompt = directMatch.systemPrompt || directMatch.system_prompt || ""
+				const customInstructions = directMatch.customInstructions || directMatch.custom_instructions || directMatch.promptContent || ""
+				const artifactsInstructions = directMatch.artifactsInstructions || directMatch.artifacts_instructions || ""
+				const artifacts = directMatch.artifacts || []
+				
+				console.log(`[PromptAPI] Direct match: ${artifacts.length} artifacts`)
+				return { systemPrompt, customInstructions, artifactsInstructions, artifacts }
+			}
+			
 			console.warn(`[PromptAPI] No prompt for role=${role}`)
 			return null
 		}
@@ -1439,11 +1529,17 @@ async function checkForUpdatesSeparatedInBackground(
 				if (cachedUpdatedAt === promptUpdatedAt && cachedUpdatedAt !== undefined) {
 					console.log(`[PromptAPI] Background: prompt unchanged`)
 					const cacheKey = getCacheKeySeparated(mode, language)
-					await context.globalState.update(cacheKey, {
+					const updatedCache = {
 						...cached,
 						timestamp: Date.now(),
 						cacheLogicVersion: CACHE_LOGIC_VERSION,
-					})
+					}
+					// Use file cache if available
+					if (isFileCacheAvailable()) {
+						await saveToFileCache(cacheKey, updatedCache)
+					} else {
+						await context.globalState.update(cacheKey, updatedCache)
+					}
 					return
 				}
 
@@ -1497,6 +1593,10 @@ export async function clearPromptCache(
 
 	if (mode) {
 		const cacheKey = getCacheKeySeparated(mode, normalizedLang)
+		// Clear from both file cache and globalState (for migration period)
+		if (isFileCacheAvailable()) {
+			await deleteFromFileCache(cacheKey)
+		}
 		await context.globalState.update(cacheKey, undefined)
 		console.log(`[PromptAPI] Cleared cache for mode=${mode}`)
 	} else {
@@ -1507,10 +1607,16 @@ export async function clearPromptCache(
 		for (const m of knownModes) {
 			for (const lang of languages) {
 				const cacheKey = getCacheKeySeparated(m, lang)
-				const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
-				if (cached) {
-					await context.globalState.update(cacheKey, undefined)
+				// Clear from both file cache and globalState
+				if (isFileCacheAvailable()) {
+					await deleteFromFileCache(cacheKey)
 					clearedCount++
+				} else {
+					const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+					if (cached) {
+						await context.globalState.update(cacheKey, undefined)
+						clearedCount++
+					}
 				}
 			}
 		}
@@ -1614,14 +1720,25 @@ export async function refreshAllPromptsFromApi(
 		try {
 			// Check cache before request to track changes
 			const cacheKey = getCacheKeySeparated(mode, normalizedLang)
-			const cachedBefore = context.globalState.get<CachedPromptSeparated>(cacheKey)
+			// Use file cache if available
+			let cachedBefore: CachedPromptSeparated | undefined
+			if (isFileCacheAvailable()) {
+				cachedBefore = await getFromFileCache(cacheKey)
+			} else {
+				cachedBefore = context.globalState.get<CachedPromptSeparated>(cacheKey)
+			}
 			const updatedAtBefore = normalizeUpdatedAt(cachedBefore?.updated_at)
 
 			// Only load published prompts - if no published prompt exists, return null
 			const result = await loadPromptFromApiSeparated(mode, normalizedLang, apiBaseUrl, context, true)
 			if (result) {
 				// Check if updated_at changed (use atomic read to avoid race conditions)
-				const cachedAfter = context.globalState.get<CachedPromptSeparated>(cacheKey)
+				let cachedAfter: CachedPromptSeparated | undefined
+				if (isFileCacheAvailable()) {
+					cachedAfter = await getFromFileCache(cacheKey)
+				} else {
+					cachedAfter = context.globalState.get<CachedPromptSeparated>(cacheKey)
+				}
 				const updatedAtAfter = normalizeUpdatedAt(cachedAfter?.updated_at)
 				
 				// Consider updated if: different updated_at, or cache was empty before
@@ -1819,6 +1936,27 @@ export async function refreshAllPromptsFromApi(
 		await context.globalState.update("knownApiRoles", currentRoleSlugs)
 	}
 	
+	// Check if dist/prompts has all roles - if not, add missing ones to newRoles
+	// This handles the case when knownApiRoles is already populated but dist/prompts is incomplete
+	if (newRoles.length === 0 && currentRoleSlugs.length > 0) {
+		try {
+			const distPromptsPath = path.join(context.extensionPath, "dist", "prompts")
+			const ruPath = path.join(distPromptsPath, "ru")
+			const ruContents = await fsp.readdir(ruPath).catch(() => [] as string[])
+			const existingRoles = ruContents
+				.filter((item: string) => item.startsWith("rules-"))
+				.map((item: string) => item.replace("rules-", ""))
+			
+			const missingInDist = currentRoleSlugs.filter(slug => !existingRoles.includes(slug))
+			if (missingInDist.length > 0) {
+				console.log(`[PromptAPI] Found ${missingInDist.length} roles missing from dist/prompts: ${missingInDist.join(", ")}`)
+				newRoles = missingInDist
+			}
+		} catch (err) {
+			console.debug(`[PromptAPI] Failed to check dist/prompts: ${err}`)
+		}
+	}
+	
 	// Log detected changes
 	if (newRoles.length > 0 && !isFirstRun) {
 		console.log(`[PromptAPI] New role(s) detected in refresh: ${newRoles.join(", ")}`)
@@ -1830,6 +1968,10 @@ export async function refreshAllPromptsFromApi(
 		for (const removedRole of removedRoles) {
 			for (const lang of SUPPORTED_LANGUAGES) {
 				const cacheKey = getCacheKeySeparated(removedRole, lang)
+				// Clear from both file cache and globalState
+				if (isFileCacheAvailable()) {
+					await deleteFromFileCache(cacheKey)
+				}
 				await context.globalState.update(cacheKey, undefined)
 			}
 			console.log(`[PromptAPI] Cleared cache for archived role: ${removedRole}`)

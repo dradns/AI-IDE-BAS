@@ -54,7 +54,8 @@ import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
-import { refreshAllPromptsFromApi, getCacheKeySeparated } from "./services/prompt-api-service"
+import { refreshAllPromptsFromApi, getCacheKeySeparated, initPromptCache } from "./services/prompt-api-service"
+import { exportPromptsOnFirstInstall } from "./services/prompt-export-service"
 
 import {
 	handleUri,
@@ -148,6 +149,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
+
+	// Initialize file-based prompt cache (to avoid large extension state)
+	try {
+		await initPromptCache(context)
+		outputChannel.appendLine("[PromptCache] File-based cache initialized")
+	} catch (error) {
+		outputChannel.appendLine(`[PromptCache] Failed to initialize file cache: ${error}`)
+	}
 
 	// Get default commands from configuration.
 	const defaultCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>("allowedCommands") || []
@@ -268,6 +277,48 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	}
 
+	// ========================================
+	// PROMPT EXPORT ON FIRST INSTALL/UPDATE
+	// ========================================
+	// При первой установке или обновлении версии расширения - загружаем промпты из API
+	// С jitter для распределения нагрузки при массовом обновлении
+	// Вшитые промпты используются как fallback при недоступности API
+	const hasExportedBefore = context.globalState.get<boolean>("promptsExportedFromApi")
+	const lastExportedVersion = context.globalState.get<string>("lastExportedExtensionVersion")
+	const currentVersion = context.extension.packageJSON.version
+	const isFirstInstall = !hasExportedBefore
+	const isExtensionUpdate = !!(lastExportedVersion && lastExportedVersion !== currentVersion)
+	
+	if (isFirstInstall || isExtensionUpdate) {
+		// Jitter для распределения нагрузки при массовом обновлении (0-60 секунд)
+		// Детерминированный на основе machineId - каждый пользователь получает своё время
+		const EXPORT_JITTER_RANGE_MS = 60 * 1000 // 60 секунд максимум
+		const machineId = vscode.env.machineId
+		const machineHash = machineId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+		const exportJitter = machineHash % EXPORT_JITTER_RANGE_MS
+		
+		outputChannel.appendLine(`[PromptExport] ${isFirstInstall ? "First install" : `Update from ${lastExportedVersion} to ${currentVersion}`} detected`)
+		outputChannel.appendLine(`[PromptExport] Will load prompts from API in ${Math.round(exportJitter / 1000)}s (jitter to distribute API load)`)
+		outputChannel.appendLine(`[PromptExport] Using bundled prompts until API sync completes`)
+		
+		// Асинхронная загрузка с jitter - не блокирует запуск расширения
+		setTimeout(async () => {
+			try {
+				outputChannel.appendLine(`[PromptExport] Starting API sync...`)
+				await exportPromptsOnFirstInstall(context)
+				outputChannel.appendLine(`[PromptExport] ✅ Prompts loaded from API and cached to dist/prompts`)
+			} catch (error: any) {
+				outputChannel.appendLine(`[PromptExport] ⚠️ Failed to load prompts from API: ${error.message || error}`)
+				outputChannel.appendLine(`[PromptExport] Bundled prompts will continue to be used`)
+			}
+		}, exportJitter)
+	} else {
+		outputChannel.appendLine(`[PromptExport] Prompts already cached (version: ${currentVersion}), using cached prompts`)
+	}
+
+	// ========================================
+	// AUTO-REFRESH PROMPTS FROM API
+	// ========================================
 	// Автоматическое обновление промптов из API с рандомным интервалом 8-12 минут
 	const MIN_REFRESH_INTERVAL_MS = 8 * 60 * 1000 // 8 минут минимум
 	const MAX_REFRESH_INTERVAL_MS = 12 * 60 * 1000 // 12 минут максимум
@@ -352,72 +403,34 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 	
 	// Первая загрузка с детерминированной задержкой (распределяем пользователей по времени)
+	// ВАЖНО: При первой установке/обновлении версии initial refresh ПРОПУСКАЕТСЯ,
+	// так как exportPromptsOnFirstInstall уже загружает промпты из API
 	const initialRefreshHandle = setTimeout(async () => {
+		// Проверяем, была ли первая установка/обновление - если да, пропускаем initial refresh
+		// exportPromptsOnFirstInstall уже запущен параллельно и делает всю работу
+		if (isFirstInstall || isExtensionUpdate) {
+			outputChannel.appendLine(`[AutoRefresh] Skipping initial refresh - exportPromptsOnFirstInstall handles API sync`)
+			// Просто запускаем цикл обновлений
+			scheduleNextRefresh()
+			return
+		}
+		
 		outputChannel.appendLine(`[AutoRefresh] Starting initial refresh...`)
 		try {
-			// Проверяем, первая ли это установка
-			const hasExportedBefore = context.globalState.get<boolean>("promptsExportedFromApi")
 			const cachedApiRoles = context.globalState.get<Awaited<ReturnType<typeof refreshAllPromptsFromApi>>["roles"]>("cachedApiRoles")
-			const isFirstInstall = !hasExportedBefore
 			
-			// При первой установке проверяем, запросил ли webview роли
-			// Если webview уже запросил роли, не перезаписываем их другим языком
-			if (isFirstInstall && cachedApiRoles && cachedApiRoles.length > 0) {
-				outputChannel.appendLine(`[AutoRefresh] First install: webview already requested roles, skipping initial refresh to preserve language`)
-				// Загружаем промпты для всех языков в фоне, но не обновляем UI
-				const allLanguages = ["ru", "en", "es", "zh", "ar", "pt"]
-				for (const lang of allLanguages) {
-					try {
-						await refreshAllPromptsFromApi(context, lang)
-						outputChannel.appendLine(`[AutoRefresh] Loaded prompts for language: ${lang}`)
-					} catch (error: any) {
-						outputChannel.appendLine(`[AutoRefresh] Failed to load prompts for ${lang}: ${error.message || error}`)
-					}
-				}
-				// Запускаем цикл обновлений
-				scheduleNextRefresh()
-				return
+			// Если есть кэшированные роли, используем их для UI
+			if (cachedApiRoles && cachedApiRoles.length > 0) {
+				outputChannel.appendLine(`[AutoRefresh] Using cached roles for UI (${cachedApiRoles.length} roles)`)
+				await notifyWebviewAboutRolesUpdate(cachedApiRoles, getCurrentLanguage())
 			}
 			
-			// Загружаем промпты для текущего языка (получаем динамически)
+			// Загружаем свежие данные из API
 			const currentLanguage = getCurrentLanguage()
-			const result = await refreshAllPromptsFromApi(context, currentLanguage) // shouldExport=false (первая загрузка, экспорт через exportPromptsOnFirstInstall)
+			const result = await refreshAllPromptsFromApi(context, currentLanguage)
 			outputChannel.appendLine(`[AutoRefresh] Initial refresh: ${result.modesRefreshed} modes, ${result.roles.length} roles loaded (language: ${currentLanguage})`)
 			
-			// При первой установке загружаем промпты для всех поддерживаемых языков
-			// чтобы пользователь мог сразу переключаться между языками
-			if (isFirstInstall && result.roles.length > 0) {
-				outputChannel.appendLine(`[AutoRefresh] First install detected, loading prompts for all supported languages...`)
-				const allLanguages = ["ru", "en", "es", "zh", "ar", "pt"]
-				// Normalize current language to supported folder names without relying on a narrow string union type
-				const currentLanguageRaw = String(currentLanguage)
-				const currentLangNormalized =
-					currentLanguageRaw === "ru"
-						? "ru"
-						: currentLanguageRaw === "es"
-							? "es"
-							: currentLanguageRaw.startsWith("zh")
-								? "zh"
-								: currentLanguageRaw === "ar"
-									? "ar"
-									: currentLanguageRaw === "pt" || currentLanguageRaw === "pt-BR"
-										? "pt"
-										: "en"
-				
-				// Загружаем для языков, которые еще не загружены
-				for (const lang of allLanguages) {
-					if (lang !== currentLangNormalized) {
-						try {
-							await refreshAllPromptsFromApi(context, lang)
-							outputChannel.appendLine(`[AutoRefresh] Loaded prompts for language: ${lang}`)
-						} catch (error: any) {
-							outputChannel.appendLine(`[AutoRefresh] Failed to load prompts for ${lang}: ${error.message || error}`)
-						}
-					}
-				}
-			}
-			
-			// При первой загрузке обновляем UI (это установка/перезагрузка IDE)
+			// Обновляем UI с новыми ролями
 			await notifyWebviewAboutRolesUpdate(result.roles, currentLanguage)
 		} catch (error: any) {
 			outputChannel.appendLine(`[AutoRefresh] Failed to refresh prompts on activation: ${error.message || error}`)
@@ -442,15 +455,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel.appendLine(`[AutoRefresh] ✅ Automatic prompt refresh enabled`)
 	outputChannel.appendLine(`[AutoRefresh] Interval range: ${MIN_REFRESH_INTERVAL_MS / 60000}-${MAX_REFRESH_INTERVAL_MS / 60000}min (random)`)
 
-	// Export prompts on first install or update (non-blocking)
-	// This populates ONLY dist/prompts directory (NOT ~/.roo)
-	// Use same initialDelay as refresh to prevent API overload on mass updates
-	const { exportPromptsOnFirstInstall } = await import("./services/prompt-export-service")
-	setTimeout(() => {
-		exportPromptsOnFirstInstall(context).catch((error) => {
-			outputChannel.appendLine(`[Extension] ⚠️ Failed to export prompts on first install: ${error.message || error}`)
-		})
-	}, initialDelay + 1000) // Add 1s after initial refresh to not compete
+	// NOTE: Prompt loading strategy:
+	// 1. On first install or version update: prompts are loaded from API IMMEDIATELY (see exportPromptsOnFirstInstall above)
+	// 2. Subsequent updates: automatic refresh every 8-12 min keeps prompts up-to-date
+	// 3. Bundled prompts in .vsix are used ONLY as fallback when API is unavailable
 
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }

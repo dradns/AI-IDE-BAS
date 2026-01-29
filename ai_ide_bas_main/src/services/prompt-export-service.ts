@@ -10,8 +10,23 @@ import {
 	normalizeUpdatedAt,
 	type CachedPromptSeparated,
 } from "./prompt-api-service"
+import {
+	getFromFileCache,
+	isFileCacheAvailable,
+} from "./prompt-file-cache"
 import { getProjectRooDirectoryForCwd } from "./roo-config"
 import { modes } from "../shared/modes"
+
+// Helper to get cached prompt - uses file cache if available, otherwise globalState
+async function getCachedPrompt(
+	context: vscode.ExtensionContext,
+	cacheKey: string
+): Promise<CachedPromptSeparated | undefined> {
+	if (isFileCacheAvailable()) {
+		return await getFromFileCache(cacheKey)
+	}
+	return context.globalState.get<CachedPromptSeparated>(cacheKey)
+}
 
 // Supported languages for API export
 // NOTE: Bundled prompts use zh-CN folder, but esbuild.mjs renames it to zh for API compatibility
@@ -856,7 +871,7 @@ export async function exportPromptsToExtensionDist(
 
 						// Check updated_at from cache first (optimization - skip file read if unchanged)
 						const cacheKey = getCacheKeySeparated(mode.slug, lang)
-						const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+						const cached = await getCachedPrompt(context, cacheKey)
 						const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
 						const responseUpdatedAt = normalizeUpdatedAt(langData.updated_at)
 						
@@ -1085,7 +1100,7 @@ export async function exportPromptsToExtensionDist(
 
 					// Check updated_at from cache first (optimization - skip file read if unchanged)
 					const cacheKey = getCacheKeySeparated(mode.slug, lang)
-					const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+					const cached = await getCachedPrompt(context, cacheKey)
 					const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
 					const responseUpdatedAt = normalizeUpdatedAt(langData.updated_at)
 					
@@ -1359,7 +1374,7 @@ export async function exportPromptsToExtensionDist(
 
 						// Check updated_at from cache first (optimization - skip API call if unchanged)
 						const cacheKey = getCacheKeySeparated(mode.slug, lang)
-						const cached = context.globalState.get<CachedPromptSeparated>(cacheKey)
+						const cached = await getCachedPrompt(context, cacheKey)
 						const cachedUpdatedAt = normalizeUpdatedAt(cached?.updated_at)
 						
 						// Load prompt data (this will update cache with latest updated_at)
@@ -1375,7 +1390,7 @@ export async function exportPromptsToExtensionDist(
 						hasPublishedPromptForMode = true
 
 						// Check if updated_at changed after API call
-						const cachedAfter = context.globalState.get<CachedPromptSeparated>(cacheKey)
+						const cachedAfter = await getCachedPrompt(context, cacheKey)
 						const responseUpdatedAt = normalizeUpdatedAt(cachedAfter?.updated_at)
 						
 						const langDirPath = path.join(distPromptsDir, lang)
@@ -1647,6 +1662,8 @@ export async function exportPromptsOnFirstInstall(
 	}
 
 	let needsExport = !hasExportedBefore || isExtensionUpdate
+	let missingRoles: string[] = []
+	
 	if (hasExportedBefore && !isExtensionUpdate) {
 		try {
 			const stats = await fs.stat(distPromptsPath).catch(() => null)
@@ -1669,7 +1686,31 @@ export async function exportPromptsOnFirstInstall(
 					console.log(`[exportPromptsOnFirstInstall] Found rules-* folders at top level (incorrect structure), will re-export`)
 					needsExport = true
 				} else {
-					console.log(`[exportPromptsOnFirstInstall] dist/prompts directory exists with correct structure, skipping export`)
+					// Check if there are new roles in API that are not in dist/prompts
+					// This handles the case when new roles are published after initial install
+					try {
+						const { getAllRolesFromApi } = await import("./prompt-api-service")
+						const apiRoles = await getAllRolesFromApi()
+						const apiRoleSlugs = apiRoles.map(r => r.slug.toLowerCase())
+						
+						// Get existing role folders from first language folder (ru)
+						const ruPath = path.join(distPromptsPath, "ru")
+						const ruContents = await fs.readdir(ruPath).catch(() => [])
+						const existingRoles = ruContents
+							.filter(item => item.startsWith("rules-"))
+							.map(item => item.replace("rules-", ""))
+						
+						missingRoles = apiRoleSlugs.filter(slug => !existingRoles.includes(slug))
+						
+						if (missingRoles.length > 0) {
+							console.log(`[exportPromptsOnFirstInstall] Found ${missingRoles.length} new roles in API: ${missingRoles.join(", ")}`)
+							needsExport = true
+						} else {
+							console.log(`[exportPromptsOnFirstInstall] dist/prompts has all ${apiRoleSlugs.length} roles, skipping export`)
+						}
+					} catch (apiErr) {
+						console.log(`[exportPromptsOnFirstInstall] Could not check API roles: ${apiErr}, skipping export`)
+					}
 				}
 			}
 		} catch (err) {
@@ -1684,23 +1725,52 @@ export async function exportPromptsOnFirstInstall(
 	}
 
 	try {
-		console.log("[exportPromptsOnFirstInstall] Exporting prompts from API...")
+		// If we only have missing roles, export only those (faster)
+		const onlyRoles = missingRoles.length > 0 ? missingRoles : undefined
+		if (onlyRoles) {
+			console.log(`[exportPromptsOnFirstInstall] Exporting only missing roles: ${onlyRoles.join(", ")}`)
+		} else {
+			console.log("[exportPromptsOnFirstInstall] Exporting all prompts from API...")
+		}
 
 		// Export ONLY to extension's dist/prompts directory (NOT to ~/.roo)
 		console.log("[exportPromptsOnFirstInstall] Exporting to dist/prompts...")
-		const distResult = await exportPromptsToExtensionDist(context)
+		const distResult = await exportPromptsToExtensionDist(context, onlyRoles)
 
 		if (distResult.totalExported > 0) {
 			await context.globalState.update("promptsExportedFromApi", true)
 			await context.globalState.update("lastExportedExtensionVersion", currentVersion)
-			console.log(`[exportPromptsOnFirstInstall] Exported ${distResult.totalExported} modes, ${distResult.totalLanguages} languages to dist/prompts`)
+			console.log(`[exportPromptsOnFirstInstall] ✅ Exported ${distResult.totalExported} modes, ${distResult.totalLanguages} languages to dist/prompts`)
 			if (isExtensionUpdate) {
 				console.log(
 					`[exportPromptsOnFirstInstall] Prompts updated after extension update (${lastExportedVersion} -> ${currentVersion})`
 				)
 			}
+			if (missingRoles.length > 0) {
+				console.log(`[exportPromptsOnFirstInstall] Successfully added ${missingRoles.length} new roles from API`)
+			}
 		} else {
-			console.warn("[exportPromptsOnFirstInstall] No prompts exported, API may be unavailable")
+			// API недоступен или вернул пустой результат - используем вшитые промпты как fallback
+			console.warn("[exportPromptsOnFirstInstall] ⚠️ No prompts exported from API - using bundled prompts as fallback")
+			console.log("[exportPromptsOnFirstInstall] Bundled prompts in dist/prompts will be used until next successful API sync")
+			
+			// Проверяем, есть ли вшитые промпты
+			const bundledPromptsExist = await fs
+				.access(distPromptsPath)
+				.then(() => true)
+				.catch(() => false)
+			
+			if (bundledPromptsExist) {
+				const contents = await fs.readdir(distPromptsPath).catch(() => [])
+				const hasLanguageFolders = contents.some((item) => ["ru", "en", "es", "zh", "ar", "pt"].includes(item))
+				if (hasLanguageFolders) {
+					console.log(`[exportPromptsOnFirstInstall] ✅ Bundled prompts available in dist/prompts, extension will work normally`)
+				} else {
+					console.warn(`[exportPromptsOnFirstInstall] ⚠️ dist/prompts exists but has no language folders - prompts may not be available`)
+				}
+			} else {
+				console.warn(`[exportPromptsOnFirstInstall] ⚠️ No bundled prompts found in dist/prompts - prompts may not be available until API is reachable`)
+			}
 		}
 	} catch (error) {
 		console.error("[exportPromptsOnFirstInstall] Failed to export prompts on first install:", error)
