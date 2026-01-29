@@ -42,7 +42,8 @@ const CACHE_LOGIC_VERSION = "3.6.0"
 // Export debounce to prevent multiple exports on batch updates
 let exportDebounceTimer: NodeJS.Timeout | null = null
 let isExportInProgress = false
-let exportQueue: Array<{ context: vscode.ExtensionContext; reason: string; onlyRoles?: string[] }> = []
+export type ExportPromptsOptions = { forceWriteAll?: boolean }
+let exportQueue: Array<{ context: vscode.ExtensionContext; reason: string; onlyRoles?: string[]; options?: ExportPromptsOptions }> = []
 const EXPORT_TIMEOUT_MS = 60000 // 60 seconds timeout for export
 
 // API error tracking with exponential backoff
@@ -227,10 +228,15 @@ export async function initPromptCache(context: vscode.ExtensionContext): Promise
 }
 
 // Safe export with queue and timeout protection
-async function safeExportPrompts(context: vscode.ExtensionContext, reason: string, onlyRoles?: string[]): Promise<void> {
+async function safeExportPrompts(
+	context: vscode.ExtensionContext,
+	reason: string,
+	onlyRoles?: string[],
+	options?: ExportPromptsOptions
+): Promise<void> {
 	if (isExportInProgress) {
 		console.log(`[PromptAPI] Export in progress, queuing export: ${reason}`)
-		exportQueue.push({ context, reason, onlyRoles })
+		exportQueue.push({ context, reason, onlyRoles, options })
 		return
 	}
 
@@ -238,11 +244,11 @@ async function safeExportPrompts(context: vscode.ExtensionContext, reason: strin
 	const startTime = Date.now()
 
 	try {
-		console.log(`[PromptAPI] Starting export: ${reason}${onlyRoles ? ` (only roles: ${onlyRoles.join(", ")})` : ""}`)
+		console.log(`[PromptAPI] Starting export: ${reason}${onlyRoles ? ` (only roles: ${onlyRoles.join(", ")})` : ""}${options?.forceWriteAll ? " [forceWriteAll]" : ""}`)
 		const { exportPromptsToExtensionDist } = await import("./prompt-export-service")
 		await Promise.race([
-			exportPromptsToExtensionDist(context, onlyRoles),
-			new Promise((_, reject) => 
+			exportPromptsToExtensionDist(context, onlyRoles, options),
+			new Promise((_, reject) =>
 				setTimeout(() => reject(new Error("Export timeout")), EXPORT_TIMEOUT_MS)
 			)
 		])
@@ -251,10 +257,10 @@ async function safeExportPrompts(context: vscode.ExtensionContext, reason: strin
 		console.warn(`[PromptAPI] Export failed: ${reason}, error: ${error.message || error}`)
 	} finally {
 		isExportInProgress = false
-		
+
 		if (exportQueue.length > 0) {
 			const next = exportQueue.shift()!
-			setTimeout(() => safeExportPrompts(next.context, next.reason, next.onlyRoles), 1000)
+			setTimeout(() => safeExportPrompts(next.context, next.reason, next.onlyRoles, next.options), 1000)
 		}
 	}
 }
@@ -753,7 +759,7 @@ export async function loadPromptFromApiSeparated(
 		if (envApiUrl.includes("localhost") || envApiUrl.includes("127.0.0.1")) {
 			apiBaseUrl = "http://localhost:8000"
 		} else {
-			apiBaseUrl = envApiUrl.includes("api-test") ? envApiUrl : "https://api-test.aiidebas.com"
+			apiBaseUrl = envApiUrl
 		}
 	}
 
@@ -1469,11 +1475,7 @@ async function checkForUpdatesSeparatedInBackground(
 		const params = new URLSearchParams({ role })
 		if (normalizedLang) params.append("lang", normalizedLang)
 
-		if (!apiBaseUrl) {
-			apiBaseUrl = AIIDEBAS_PROMPTS_API_BASE_URL.includes("api-test")
-				? AIIDEBAS_PROMPTS_API_BASE_URL
-				: "https://api-test.aiidebas.com"
-		}
+		if (!apiBaseUrl) apiBaseUrl = AIIDEBAS_PROMPTS_API_BASE_URL
 
 		const url = `${apiBaseUrl}/api/v1/prompts/?${params.toString()}`
 		const headers: Record<string, string> = { "Content-Type": "application/json" }
@@ -1690,11 +1692,7 @@ export async function refreshAllPromptsFromApi(
 		await context.globalState.update(lastRefreshKey, Date.now())
 	}
 
-	if (!apiBaseUrl) {
-		apiBaseUrl = AIIDEBAS_PROMPTS_API_BASE_URL.includes("api-test")
-			? AIIDEBAS_PROMPTS_API_BASE_URL
-			: "https://api-test.aiidebas.com"
-	}
+	if (!apiBaseUrl) apiBaseUrl = AIIDEBAS_PROMPTS_API_BASE_URL
 
 	// Load roles list from API
 	let allModes: string[] = []
@@ -2037,9 +2035,9 @@ export async function refreshAllPromptsFromApi(
 					console.warn(`[PromptAPI] Export failed: ${error}`)
 				})
 			} else if (shouldExport) {
-				// No changes detected, but trigger cleanup to ensure archived roles are removed
-				// Only do cleanup during automatic refresh (shouldExport=true), not initial load
-				safeExportPrompts(context, "automatic refresh cleanup", undefined).catch((error) => {
+				// No changes detected, but trigger cleanup to ensure archived roles are removed.
+				// forceWriteAll: rewrite all artifacts so dist/prompts matches API (e.g. artifact-only edits in admin).
+				safeExportPrompts(context, "automatic refresh cleanup", undefined, { forceWriteAll: true }).catch((error) => {
 					console.warn(`[PromptAPI] Cleanup export failed: ${error}`)
 				})
 			}

@@ -714,11 +714,15 @@ async function cleanupDistPrompts(distPromptsDir: string, validModeSlugs?: Set<s
 	}
 }
 
+export type ExportPromptsToDistOptions = { forceWriteAll?: boolean }
+
 // Export prompts from API to extension's dist/prompts directory
 export async function exportPromptsToExtensionDist(
 	context: vscode.ExtensionContext,
-	onlyRoles?: string[] // Optional: export only these roles (for selective updates)
+	onlyRoles?: string[],
+	options?: ExportPromptsToDistOptions
 ): Promise<{ totalExported: number; totalModes: number; totalLanguages: number }> {
+	const forceWriteAll = options?.forceWriteAll === true
 	const extensionPath = context.extensionPath
 	const distPromptsDir = path.join(extensionPath, "dist", "prompts")
 
@@ -920,11 +924,11 @@ export async function exportPromptsToExtensionDist(
 										}
 									}
 									
-									if (allArtifactsMatch) {
-										// Both updated_at and artifacts unchanged, skip completely
+									if (allArtifactsMatch && !forceWriteAll) {
+										// Both updated_at and artifacts unchanged, skip completely (unless forceWriteAll e.g. automatic refresh)
 										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										shouldSkipDueToUnchanged = true
-									} else {
+									} else if (!allArtifactsMatch) {
 										console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
 									}
 								} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
@@ -938,7 +942,7 @@ export async function exportPromptsToExtensionDist(
 						// NOTE: Don't skip if directory doesn't exist - we need to create it even if cache says unchanged
 						// This handles the case when bundled prompts were deleted or installation was incomplete
 						
-						if (shouldSkipDueToUnchanged) {
+						if (shouldSkipDueToUnchanged && !forceWriteAll) {
 							continue
 						}
 					
@@ -1020,7 +1024,7 @@ export async function exportPromptsToExtensionDist(
 										}
 									}
 									
-									if (allArtifactsMatch) {
+									if (allArtifactsMatch && !forceWriteAll) {
 										// Both main file and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										continue
@@ -1149,11 +1153,11 @@ export async function exportPromptsToExtensionDist(
 									}
 								}
 								
-								if (allArtifactsMatch) {
+								if (allArtifactsMatch && !forceWriteAll) {
 									// Both updated_at and artifacts unchanged, skip completely
 									console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 									shouldSkipDueToUnchanged = true
-								} else {
+								} else if (!allArtifactsMatch) {
 									console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
 								}
 							} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
@@ -1189,7 +1193,7 @@ export async function exportPromptsToExtensionDist(
 									const newContent = combinedPromptParts.join("")
 									
 									const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
-									if (existingContent === newContent) {
+									if (existingContent === newContent && !forceWriteAll) {
 										// Both main file and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										shouldSkipDueToUnchanged = true
@@ -1203,7 +1207,7 @@ export async function exportPromptsToExtensionDist(
 					// NOTE: Don't skip if directory doesn't exist - we need to create it even if cache says unchanged
 					// This handles the case when bundled prompts were deleted or installation was incomplete
 					
-					if (shouldSkipDueToUnchanged) {
+					if (shouldSkipDueToUnchanged && !forceWriteAll) {
 						continue
 					}
 					
@@ -1282,7 +1286,7 @@ export async function exportPromptsToExtensionDist(
 										}
 									}
 									
-									if (allArtifactsMatch) {
+								if (allArtifactsMatch && !forceWriteAll) {
 										// Both main file and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										continue
@@ -1301,23 +1305,23 @@ export async function exportPromptsToExtensionDist(
 						await fs.mkdir(langDirPath, { recursive: true })
 						await fs.mkdir(modeRulesDir, { recursive: true })
 
-						totalLanguages++
+					totalLanguages++
 
-						const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
-						const artifacts = langData.artifacts || []
+					const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+					const artifacts = langData.artifacts || []
 
-						if (shouldUpdateMainFile) {
-							await saveCombinedPrompt(
-								modeRulesDir,
-								roleName,
-								langData.systemPrompt || "",
-								langData.customInstructions || "",
-								artifacts,
-								false
-							)
-						}
+					if (shouldUpdateMainFile) {
+						await saveCombinedPrompt(
+							modeRulesDir,
+							roleName,
+							langData.systemPrompt || "",
+							langData.customInstructions || "",
+							artifacts,
+							false
+						)
+					}
 
-						await saveArtifacts(modeRulesDir, artifacts, mode.slug, lang, false)
+					await saveArtifacts(modeRulesDir, artifacts, mode.slug, lang, false)
 						modeExported = true
 					}
 
@@ -1438,11 +1442,11 @@ export async function exportPromptsToExtensionDist(
 										}
 									}
 									
-									if (allArtifactsMatch) {
+									if (allArtifactsMatch && !forceWriteAll) {
 										// Both updated_at and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										shouldSkipDueToUnchanged = true
-									} else {
+									} else if (!allArtifactsMatch) {
 										console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
 									}
 								} else if (existingArtifactFiles.length > 0 && newArtifactCount === 0) {
@@ -1478,7 +1482,7 @@ export async function exportPromptsToExtensionDist(
 										const newContent = combinedPromptParts.join("")
 										
 										const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
-										if (existingContent === newContent) {
+										if (existingContent === newContent && !forceWriteAll) {
 											// Both main file and artifacts unchanged, skip completely
 											console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 											shouldSkipDueToUnchanged = true
@@ -1492,7 +1496,7 @@ export async function exportPromptsToExtensionDist(
 						// NOTE: Don't skip if directory doesn't exist - we need to create it even if cache says unchanged
 						// This handles the case when bundled prompts were deleted or installation was incomplete
 						
-						if (shouldSkipDueToUnchanged) {
+						if (shouldSkipDueToUnchanged && !forceWriteAll) {
 							continue
 						}
 						
@@ -1570,7 +1574,7 @@ export async function exportPromptsToExtensionDist(
 											}
 										}
 										
-										if (allArtifactsMatch) {
+										if (allArtifactsMatch && !forceWriteAll) {
 											// Both main file and artifacts unchanged, skip completely
 											console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 											continue

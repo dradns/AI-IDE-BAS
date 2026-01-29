@@ -17,8 +17,8 @@
 			"env": {
 				"NODE_ENV": "development",
 				"VSCODE_DEBUG_MODE": "true",
-				"AIIDEBAS_PROMPTS_API_URL": "https://api-test.aiidebas.com",
-				"AIIDEBAS_API_URL": "https://api-test.aiidebas.com/api/v1"
+				"AIIDEBAS_PROMPTS_API_URL": "https://api.aiidebas.com",
+				"AIIDEBAS_API_URL": "https://api.aiidebas.com/api/v1"
 			},
 			"resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
 			"presentation": {
