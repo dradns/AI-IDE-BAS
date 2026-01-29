@@ -348,287 +348,296 @@ endif
 
 ---
 
-#### 4.5.10. التكامل مع القطع الأثرية
+#### 4.5.10. Integración con artefactos
 
-##### 4.5.10.1. الارتباط مع User Story:
-- **الأدوار في swimlanes** = الأدوار من "As a [role]"
-- **التدفق الرئيسي** = تنفيذ "I want to [action]"
-- **نتيجة المخطط** = تحقيق "So that [benefit]"
+##### 4.5.10.1. Relación con User Story:
+- **Roles en swimlanes * * = roles de "As a [role]"
+- **Hilo principal * * = implementación de "I want to [action]"
+- **Resultado gráfico * * = logro "So that [benefit]"
 
-##### 4.5.10.2. الارتباط مع Use Case:
-- **التدفق الرئيسي لـ UC** = التسلسل الرئيسي للإجراءات
-- **التدفقات البديلة لـ UC** = فروع else/case
-- **استثناءات UC** = كتل معالجة الأخطاء
-- **شروط UC المسبقة** = الشروط في بداية المخطط
-- **شروط UC اللاحقة** = الحالات في نقاط النهاية
+##### 4.5.10.2. Relación con el caso de uso:
+- **Corriente principal de UC * * = secuencia principal de action's
+- **Hilos alternativos UC * * = else/case ramas
+- **Excepciones UC * * = error handling bloques
+- **Condiciones previas de UC * * = condiciones al principio del gráfico
+- **Postcondiciones UC * * = Estados en puntos finales
 
-##### 4.5.10.3. الارتباط مع Business Rules:
-- **قواعد اتخاذ القرار** = الشروط في if/switch
-- **قيود الأعمال** = كتل التحقق
-- **عمليات الموافقة** = تسلسلات في swimlanes المقابلة
+##### 4.5.10.3. Relación con Business Rules:
+- **Reglas de decisión * * = condiciones en if / switch
+- **Restricciones de negocio * * = bloques de validación
+- **Approval procesos * * = secuencias en swimlanes apropiados
 
-##### 4.5.10.4. الارتباط مع القطع الأثرية التقنية:
-- **مواصفات API** = الإجراءات الآلية
-- **مخطط قاعدة البيانات** = إجراءات استمرارية البيانات
-- **مخططات التسلسل** = تفصيل التفاعلات بين swimlanes
+##### 4.5.10.4. Relación con artefactos técnicos:
+- **Especificación API * * = acciones automatizadas
+- **Database Esquema * * = data persistence acción
+- **Diagrama de secuencia * * = detalle de las interacciones entre swimlanes
 
 ---
 
-#### 4.5.11. الأنماط القياسية
+#### 4.5.11. Patrones estándar
 
-##### 4.5.11.1. نمط "الطلب-المعالجة-الاستجابة"
-plantuml
-|المستخدم|
+##### 4.5.11.1. Patrón "Solicitud-Procesamiento-Respuesta"
+```plantuml
+|Usuario|
 start
-:إرسال طلب;
+: Enviar consulta;
 
-|النظام|
-:استلام الطلب;
-:التحقق من البيانات;
+|Sistema|
+: Obtener consulta;
+: Validar datos;
 
-if (البيانات صالحة؟) then (yes)
-  :معالجة الطلب;
-  :تكوين الاستجابة;
+if (¿los Datos son correctos?) then (yes)
+  : Procesar solicitud;
+  : Generar respuesta;
 else (no)
-  :تكوين خطأ;
+  : Generar error;
 endif
 
-|المستخدم|
-:استلام الاستجابة;
+|Usuario|
+: Obtener respuesta;
 end
+```
 
-
-##### 4.5.11.2. نمط "سير عمل الموافقة"
-plantuml
-|المبادر|
+##### 4.5.11.2. "Approval Workflow"
+```plantuml
+|Iniciador|
 start
-:إنشاء طلب;
+: Crear una solicitud;
 
-|المدير|
-:مراجعة الطلب;
+|Gerente|
+: Revisar la solicitud;
 
-if (الموافقة؟) then (yes)
-  if (المبلغ > الحد؟) then (yes)
-    |المدير التنفيذي|
-    :الموافقة النهائية;
+if (¿Aprobar?) then (yes)
+  if (Suma > límite?) then (yes)
+    |Director|
+    : Aprobación final;
     
-    if (الموافقة؟) then (yes)
-      |النظام|
-      :تنفيذ العملية;
+    if (¿Aprobar?) then (yes)
+      |Sistema|
+      : Realizar la operación;
     else (no)
-      :الرفض;
+      :Rechazar;
       stop
     endif
   else (no)
-    |النظام|
-    :تنفيذ العملية;
+    |Sistema|
+    : Realizar la operación;
   endif
 else (no)
-  :الرفض;
+  :Rechazar;
   stop
 endif
 
-|المبادر|
-:استلام الإشعار;
+|Iniciador|
+: Recibir notificación;
 end
+```
 
-
-##### 4.5.11.3. نمط "المعالجة الدفعية"
-plantuml
-|النظام|
+##### 4.5.11.3. El Patrón "Batch Processing"
+```plantuml
+|Sistema|
 start
-:الحصول على قائمة العناصر;
+: Obtener una lista de elementos;
 
 repeat
-  :أخذ العنصر التالي;
+  : Tomar el siguiente elemento;
   
   fork
-    :معالجة العنصر;
+    : Procesar elemento;
   fork again
-    :تسجيل التقدم;
+    : Registrar el progreso;
   end fork
   
-repeat while (هل توجد عناصر غير معالجة؟)
+repeat while (¿hay elementos en bruto?)
 
-:توليد التقرير;
-:إرسال إشعار الإكمال;
+: Generar informe;
+: Enviar notificación de finalización;
 end
+```
 
-
-##### 4.5.11.4. نمط "استعادة الخطأ"
-plantuml
-|النظام|
+##### 4.5.11.4. Patrón De "Recuperación De Errores"
+```plantuml
+|Sistema|
 start
 :retry_count = 0;
 
 repeat
-  :محاولة تنفيذ العملية;
+  : Tratar de realizar la operación;
   
-  if (العملية ناجحة؟) then (yes)
-    :تسجيل النتيجة;
+  if (Operación exitosa?) then (yes)
+    : Fijar el resultado;
     end
   else (no)
     :retry_count++;
     
-    if (retry_count < max_retries؟) then (yes)
-      :انتظار الفاصل;
+    if (retry_count < max_retries?) then (yes)
+      : Esperar intervalo;
     else (no)
-      :تسجيل خطأ حرج;
-      :إشعار المسؤول;
+      : Escribir en el registro de error crítico;
+      : Notificar al administrador;
       stop
     endif
   endif
-repeat while (retry_count < max_retries؟)
-
-
----
-
-#### 4.5.12. Swimlanes والأدوار
-
-##### 4.5.12.1. قواعد استخدام swimlanes:
-1. **swimlane واحدة = دور/نظام واحد**
-2. **الحد الأقصى 6 swimlanes** (للسهولة القراءة)
-3. **الأدوار مأخوذة من User Story و Use Case**
-4. **يتم فصل الأنظمة عن الأدوار البشرية**
-
-##### 4.5.12.2. swimlanes القياسية:
-plantuml
-|المستخدم|        // الدور الرئيسي من User Story
-|النظام|             // العمليات الآلية
-|المسؤول|       // إجراءات الإدارة
-|النظام الخارجي|     // التكاملات
-|قاعدة البيانات|         // فقط للعمليات المعقدة
-
-
-##### 4.5.12.3. الانتقالات بين swimlanes:
-- نقل التحكم = الانتقال إلى إجراء في swimlane أخرى
-- العمل المتوازي = fork مع إجراءات في swimlanes مختلفة
-- المزامنة = دمج الإجراءات من swimlanes مختلفة
+repeat while (retry_count < max_retries?)
+```
 
 ---
 
-#### 4.5.13. الأخطاء الشائعة وكيفية تجنبها
+#### 4.5.12. Swimlanes y roles
 
-##### 4.5.13.1. التفاصيل التقنية المفرطة
-❌ **غير صحيح:**
-plantuml
-:تنفيذ استعلام SQL SELECT على جدول users;
-:فك ترميز استجابة JSON;
-:تحديث Redux store;
+##### 4.5.12.1. Reglas de uso de swimlanes:
+1. ** Un swimlane = un rol / sistema**
+2. ** Máximo 6 swimlanes * * (para legibilidad)
+3. ** Los roles se toman de User Story y Use Case**
+4. ** Los sistemas se distinguen de los roles humanos**
 
+##### 4.5.12.2. Swimlanes estándar:
+```plantuml
+| Usuario / / / función Principal de User Story
+/ Sistema / / / procesos Automatizados
+/ Administrador / / acciones de Gestión
+/ Sistema externo / / Integración
+/ Base de datos / / / solo para procesos complejos
+```
 
-✅ **صحيح:**
-plantuml
-:الحصول على بيانات المستخدم;
-:معالجة المعلومات المستلمة;
-:تحديث العرض;
+##### 4.5.12.3. Transiciones entre swimlanes:
+- Transferencia de control = ir a la acción en otro swimlane
+- Trabajo paralelo = tenedor con acciones en diferentes swimlanes
+- Sync = merge acciones de diferentes swimlanes
 
+---
 
-##### 4.5.13.2. خلط مستويات التجريد
-❌ **غير صحيح:**
-plantuml
-:النقر على زر "إرسال";
-:التحقق من صحة عنوان البريد الإلكتروني;
-:إرسال طلب HTTP POST;
-:عرض رسالة النجاح;
+#### 4.5.13. Errores comunes y cómo evitarlos
 
+##### 4.5.13.1. Detalles demasiado técnicos
+❌ **Incorrectamente:**
+```plantuml
+: Ejecutar SQL SELECT consulta a la tabla users;
+: Deserializar la respuesta JSON;
+: Actualizar Redux store;
+```
 
-✅ **صحيح:**
-plantuml
-:بدء إرسال النموذج;
-:التحقق من صحة البيانات;
-:نقل البيانات إلى النظام;
-:الإخطار بالنتيجة;
+✅ **Correctamente:**
+```plantuml
+: Obtener datos de usuario;
+: Procesar la información recibida;
+: Actualizar pantalla;
+```
 
+##### 4.5.13.2. Mezcla de niveles de abstracción
+❌ **Incorrectamente:**
+```plantuml
+: Haga clic en el botón "enviar";
+: Validar dirección de correo electrónico;
+: Enviar solicitud HTTP POST;
+: Mostrar mensaje de éxito;
+```
 
-##### 4.5.13.3. عدم وجود معالجة الأخطاء
-❌ **غير صحيح:**
-plantuml
-:إرسال طلب;
-:استلام الرد;
-:عرض النتيجة;
+✅ **Correctamente:**
+```plantuml
+: Iniciar el envío del formulario;
+: Comprobar la exactitud de los datos;
+: Enviar datos al sistema;
+: Notificar el resultado;
+```
 
+##### 4.5.13.3. Sin manejo de errores
+❌ **Incorrectamente:**
+```plantuml
+: Enviar consulta;
+: Obtener respuesta;
+: Mostrar resultado;
+```
 
-✅ **صحيح:**
-plantuml
-:إرسال طلب;
+✅ **Correctamente:**
+```plantuml
+: Enviar consulta;
 
-if (الطلب ناجح؟) then (yes)
-  :عرض النتيجة;
+if (¿la Consulta se realizó correctamente?) then (yes)
+  : Mostrar resultado;
 else (no)
-  :عرض رسالة خطأ;
+  : Mostrar mensaje de error;
 endif
+```
 
-
-##### 4.5.13.4. الاستخدام غير الصحيح للتزامن
-❌ **غير صحيح:** (إجراءات متسلسلة كمتوازية)
-plantuml
+##### 4.5.13.4. Mal uso del paralelismo
+❌ * * Incorrecto: * * (acciones consecutivas como paralelas)
+```plantuml
 fork
-  :المصادقة;
+  :Autorizarte;
 fork again
-  :الحصول على بيانات الملف الشخصي;
+  : Obtener datos de perfil;
+end fork
+```
+
+✅ **Correctamente:**
+```plantuml
+:Autorizarte;
+
+fork
+  : Enviar welcome email;
+fork again
+  : Registrar el evento en la auditoría;
 end fork
 
-
-✅ **صحيح:**
-plantuml
-:المصادقة;
-
-fork
-  :إرسال بريد إلكتروني ترحيبي;
-fork again
-  :تسجيل حدث التدقيق;
-end fork
-
-:إعادة التوجيه إلى الصفحة الرئيسية;
-
+: Redirigir a la página principal;
+```
 
 ---
 
-#### 4.5.14. العناصر الخاصة
+#### 4.5.14. Elementos especiales
 
-##### 4.5.14.1. الملاحظات والتعليقات
-plantuml
-:تنفيذ عملية معقدة;
+##### 4.5.14.1. Notas y comentarios
+```plantuml
+: Realizar una operación compleja;
 note right
-  هذه العملية قد تستغرق
-  حتى 30 ثانية
+  Esta operación puede tomar
+  hasta 30 segundos
 end note
 
-:إجراء آخر;
-note left: عملية سريعة
+:Otra acción;
+note left: operación Rápida
+```
 
+##### 4.5.14.2. Subprocesos relacionados
+```plantuml
+: Iniciar el proceso de aprobación;
+note right: Vea el diagrama separado "Approval Process"
 
-##### 4.5.14.2. العمليات الفرعية المرتبطة
-plantuml
-:بدء عملية الموافقة;
-note right: انظر المخطط المنفصل "عملية الموافقة"
+: Esperar el resultado de la aprobación;
+```
 
-:انتظار نتيجة الموافقة;
-
-
-##### 4.5.14.3. نقاط الدخول/الخروج
-plantuml
-// نقاط دخول متعددة
+##### 4.5.14.3. Puntos de entrada / salida
+```plantuml
+// Múltiples puntos de entrada
 start
-:الدخول العادي;
+: Entrada normal;
 end
 
-(*) --> :الدخول الطارئ;
+( * )-->: Entrada de emergencia;
+```
 
+##### 4.5.14.4. Limitaciones de tiempo
+```plantuml
+: Enviar consulta;
+: Esperar respuesta dentro de 30 segundos;
 
-##### 4.5.14.4. القيود الزمنية
-plantuml
-:إرسال طلب;
-:انتظار الرد لمدة 30 ثانية;
-
-if (تم استلام الرد في الوقت المحدد؟) then (yes)
-  :معالجة الرد;
+if (respuesta recibida a tiempo?) then (yes)
+  : Procesar la respuesta;
 else (no)
-  :معالجة timeout;
+  : Procesar timeout;
   stop
 endif
+```
 
+---
+
+#### 4.5.15. Lista de verificación de calidad
+
+##### 4.5.15.1. Verificación estructural:
+- [] El gráfico comienza con '@startuml 'y termina con`@enduml'
+- [] Hay un único punto`start'
+- [] Todas las rutas conducen a 'end`,`stop',
 
 ---
 
@@ -762,4 +771,3 @@ endif
 
 
 Esta instrucción asegura la creación de diagramas de Actividad de alta calidad que reflejan con precisión los procesos de negocio y son fácilmente legibles por todos los interesados.
-
