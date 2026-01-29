@@ -459,6 +459,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 1. On first install or version update: prompts are loaded from API IMMEDIATELY (see exportPromptsOnFirstInstall above)
 	// 2. Subsequent updates: automatic refresh every 8-12 min keeps prompts up-to-date
 	// 3. Bundled prompts in .vsix are used ONLY as fallback when API is unavailable
+	// 4. User .roo directories (project .roo and ~/.roo/rules) are NEVER updated in the background; only dist/prompts is. They are written only when the user clicks "Export rules".
 
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }

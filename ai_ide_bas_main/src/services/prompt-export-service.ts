@@ -14,7 +14,7 @@ import {
 	getFromFileCache,
 	isFileCacheAvailable,
 } from "./prompt-file-cache"
-import { getProjectRooDirectoryForCwd } from "./roo-config"
+import { getProjectRooDirectoryForCwd, getGlobalRooDirectory } from "./roo-config"
 import { modes } from "../shared/modes"
 
 // Helper to get cached prompt - uses file cache if available, otherwise globalState
@@ -1799,9 +1799,78 @@ function normalizeLangForDirectory(lang?: string): string {
 	return langMap[baseLang] || "ru"
 }
 
-// Copy prompts from dist/prompts to project .roo directory
-// NOTE: Global ~/.roo export is DISABLED - prompts are stored ONLY in dist/prompts
-// workspaceRoot is REQUIRED - without it, function returns early
+// Copy prompts from dist/prompts to global ~/.roo (when no workspace open).
+// Structure: ~/.roo/{lang}/rules-{slug}/ — same as project .roo, so language folders (ru, en, …) are always first level.
+// IMPORTANT: Only called from "Export rules" button; never from background. User .roo dirs are not updated automatically.
+export async function copyPromptsToGlobalRooRules(
+	currentLanguage?: string,
+	context?: vscode.ExtensionContext
+): Promise<{ totalCopied: number; totalModes: number; totalLanguages: number; targetDir: string }> {
+	const targetRooDir = getGlobalRooDirectory()
+	let sourceDir: string
+	if (context) {
+		sourceDir = path.join(context.extensionPath, "dist", "prompts")
+	} else {
+		sourceDir = path.join(__dirname, "..", "prompts")
+	}
+	const normalizedLang = normalizeLangForDirectory(currentLanguage)
+	const sourceExists = await fs.access(sourceDir).then(() => true).catch(() => false)
+	if (!sourceExists) {
+		console.warn(`[copyPromptsToGlobalRooRules] dist/prompts not found: ${sourceDir}`)
+		return { totalCopied: 0, totalModes: 0, totalLanguages: 0, targetDir: targetRooDir }
+	}
+	await fs.mkdir(targetRooDir, { recursive: true })
+	let totalCopied = 0
+	let totalModes = 0
+	let totalLanguages = 0
+	try {
+		const sourceEntries = await fs.readdir(sourceDir, { withFileTypes: true })
+		for (const entry of sourceEntries) {
+			if (!entry.isDirectory()) continue
+			const lang = entry.name
+			if (lang !== normalizedLang) continue
+			if (!SUPPORTED_LANGUAGES.includes(lang)) continue
+			const sourceLangDir = path.join(sourceDir, lang)
+			const targetLangDir = path.join(targetRooDir, lang)
+			await fs.mkdir(targetLangDir, { recursive: true })
+			totalLanguages = 1
+			const langEntries = await fs.readdir(sourceLangDir, { withFileTypes: true })
+			for (const langEntry of langEntries) {
+				if (!langEntry.isDirectory()) continue
+				const modeDirName = langEntry.name
+				if (!modeDirName.startsWith("rules-")) continue
+				totalModes++
+				const sourceModeDir = path.join(sourceLangDir, modeDirName)
+				const targetModeDir = path.join(targetLangDir, modeDirName)
+				await fs.mkdir(targetModeDir, { recursive: true })
+				const modeFiles = await fs.readdir(sourceModeDir, { withFileTypes: true })
+				for (const file of modeFiles) {
+					if (file.isFile() && file.name.endsWith(".md")) {
+						const sourceFile = path.join(sourceModeDir, file.name)
+						const targetFile = path.join(targetModeDir, file.name)
+						try {
+							const content = await fs.readFile(sourceFile, "utf-8")
+							await fs.writeFile(targetFile, content, "utf-8")
+							totalCopied++
+						} catch (err) {
+							console.warn(`[copyPromptsToGlobalRooRules] Failed to copy ${file.name}: ${err}`)
+						}
+					}
+				}
+			}
+		}
+		console.log(`[copyPromptsToGlobalRooRules] Copied ${totalCopied} modes for ${normalizedLang} to ${targetRooDir}`)
+		return { totalCopied, totalModes, totalLanguages, targetDir: targetRooDir }
+	} catch (error) {
+		console.error(`[copyPromptsToGlobalRooRules] Failed: ${error}`)
+		return { totalCopied, totalModes, totalLanguages, targetDir: targetRooDir }
+	}
+}
+
+// Copy prompts from dist/prompts to project .roo directory.
+// NOTE: Global ~/.roo export is DISABLED - prompts are stored ONLY in dist/prompts.
+// workspaceRoot is REQUIRED - without it, function returns early.
+// IMPORTANT: Only called from "Export rules" button; never from background. User .roo dirs are not updated automatically.
 export async function copyPromptsFromGlobalToProject(
 	workspaceRoot?: string,
 	currentLanguage?: string,

@@ -35,6 +35,14 @@ export function getGlobalRooDirectory(): string {
 }
 
 /**
+ * Gets the global .roo/rules directory path (Linux/macOS: ~/.roo/rules, Windows: %USERPROFILE%\.roo\rules).
+ * Used when exporting rules with no workspace open.
+ */
+export function getGlobalRooRulesDirectory(): string {
+	return path.join(getGlobalRooDirectory(), "rules")
+}
+
+/**
  * Checks if global .roo directory exists with caching to avoid repeated macOS permission dialogs
  * @returns Promise<boolean> - true if directory exists, false otherwise
  */
@@ -255,20 +263,19 @@ export async function readFileIfExists(filePath: string): Promise<string | null>
 export function getRooDirectoriesForCwd(cwd: string): string[] {
 	const directories: string[] = []
 	const globalDir = getGlobalRooDirectory()
+	const globalRulesDir = getGlobalRooRulesDirectory()
 	const projectDir = getProjectRooDirectoryForCwd(cwd)
 
-	// ВАЖНО: Если cwd является глобальной директорией .roo, не добавляем её дважды
-	// Это предотвращает постоянные запросы доступа macOS при открытии ~/.roo как workspace
 	const normalizedCwd = path.normalize(cwd)
 	const normalizedGlobalDir = path.normalize(globalDir)
-	
-	// Добавляем глобальную директорию только если она не совпадает с cwd
+
+	// Global .roo (legacy / other config)
 	if (normalizedCwd !== normalizedGlobalDir) {
 		directories.push(globalDir)
 	}
-
-	// Добавляем project-local директорию только если она не совпадает с глобальной
-	// (чтобы избежать дублирования, если cwd = ~/.roo)
+	// Global .roo/rules (export when no workspace) — checked after project, before global .roo
+	directories.push(globalRulesDir)
+	// Project .roo (highest priority when present)
 	if (path.normalize(projectDir) !== normalizedGlobalDir) {
 		directories.push(projectDir)
 	}

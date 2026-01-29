@@ -151,9 +151,9 @@ async function loadPromptsFromRooDirectories(
 	language?: string
 ): Promise<{ systemPrompt: string; customInstructions: string; artifactsInstructions: string } | null> {
 	try {
-		const { getRooDirectoriesForCwd, getGlobalRooDirectory } = await import("../../services/roo-config")
-		// Если cwd пустой, проверяем только глобальный ~/.roo
-		const rooDirectories = cwd ? getRooDirectoriesForCwd(cwd) : [getGlobalRooDirectory()]
+		const { getRooDirectoriesForCwd, getGlobalRooDirectory, getGlobalRooRulesDirectory } = await import("../../services/roo-config")
+		// Если cwd пустой, проверяем глобальные директории: ~/.roo/rules и ~/.roo (правила, выгруженные без открытой папки)
+		const rooDirectories = cwd ? getRooDirectoriesForCwd(cwd) : [getGlobalRooDirectory(), getGlobalRooRulesDirectory()]
 		const lang = language ? formatLanguage(language) : formatLanguage(vscode.env.language)
 		const fs = await import("fs/promises")
 		

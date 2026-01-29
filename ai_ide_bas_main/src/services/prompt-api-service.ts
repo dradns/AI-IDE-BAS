@@ -227,7 +227,7 @@ export async function initPromptCache(context: vscode.ExtensionContext): Promise
 	}
 }
 
-// Safe export with queue and timeout protection
+// Safe export with queue and timeout protection. Writes ONLY to extension dist/prompts; never to user .roo dirs (project .roo or ~/.roo/rules).
 async function safeExportPrompts(
 	context: vscode.ExtensionContext,
 	reason: string,

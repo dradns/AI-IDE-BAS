@@ -236,32 +236,32 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		try {
 			if (!visibleProvider) return
 
-			// workspaceRoot is REQUIRED - prompts are NOT exported to global ~/.roo
 			const workspaceRoot = visibleProvider.cwd || (await import("../utils/path")).getWorkspacePath()
-
-			if (!workspaceRoot) {
-				// No workspace - show warning and return
-				vscode.window.showWarningMessage(t("prompts:exportAllRoleRules.noWorkspace") || "Open a workspace to export prompts to project .roo directory")
-				return
-			}
-
-			// Ensure language is up to date before showing notifications
 			const currentLanguage = visibleProvider.contextProxy.getValue("language") || formatLanguage(vscode.env.language)
 			const { changeLanguage, getCurrentLanguage } = await import("../i18n")
 			changeLanguage(currentLanguage)
-			
-			// Debug: log current language
 			const actualLang = getCurrentLanguage()
-			console.log(`[exportAllRoleRules] Language: requested=${currentLanguage}, actual=${actualLang}`)
-			console.log(`[exportAllRoleRules] Target: project .roo (${workspaceRoot}/.roo)`)
 
-			// Import copy function
+			if (!workspaceRoot) {
+				// No workspace — export to global ~/.roo (Linux/macOS) or %USERPROFILE%\.roo (Windows), structure: .roo/{lang}/rules-{slug}/
+				const { copyPromptsToGlobalRooRules } = await import("../services/prompt-export-service")
+				const { getGlobalRooDirectory } = await import("../services/roo-config")
+				const globalRooDir = getGlobalRooDirectory()
+				console.log(`[exportAllRoleRules] No workspace: exporting to global .roo (${globalRooDir}), ${actualLang}`)
+				const result = await copyPromptsToGlobalRooRules(actualLang, context)
+				if (result.totalCopied > 0) {
+					const successMessage = t("prompts:exportAllRoleRules.success")
+					vscode.window.showInformationMessage(`${successMessage} (${result.totalCopied} → ${globalRooDir}, ${actualLang})`)
+				} else {
+					const warningMessage = t("prompts:exportAllRoleRules.warning")
+					vscode.window.showWarningMessage(warningMessage)
+				}
+				return
+			}
+
+			console.log(`[exportAllRoleRules] Target: project .roo (${workspaceRoot}/.roo)`)
 			const { copyPromptsFromGlobalToProject } = await import("../services/prompt-export-service")
-			
-			// Copy prompts from dist/prompts to project .roo directory ONLY
-			// NOTE: Global ~/.roo export is disabled - prompts are stored in dist/prompts
 			const result = await copyPromptsFromGlobalToProject(workspaceRoot, actualLang, context)
-			
 			if (result.totalCopied > 0) {
 				const successMessage = t("prompts:exportAllRoleRules.success")
 				vscode.window.showInformationMessage(`${successMessage} (${result.totalCopied} режимов → ${workspaceRoot}/.roo, язык: ${actualLang})`)

@@ -23,6 +23,7 @@ vi.mock("os", () => ({
 
 import {
 	getGlobalRooDirectory,
+	getGlobalRooRulesDirectory,
 	getProjectRooDirectoryForCwd,
 	directoryExists,
 	fileExists,
@@ -205,13 +206,22 @@ describe("RooConfigService", () => {
 		})
 	})
 
+	describe("getGlobalRooRulesDirectory", () => {
+		it("should return ~/.roo/rules path", () => {
+			const result = getGlobalRooRulesDirectory()
+			expect(result).toBe(path.join("/mock/home", ".roo", "rules"))
+		})
+	})
+
 	describe("getRooDirectoriesForCwd", () => {
-		it("should return directories for given cwd", () => {
+		it("should return directories for given cwd (global, global rules, project)", () => {
 			const cwd = "/custom/project/path"
-
 			const result = getRooDirectoriesForCwd(cwd)
-
-			expect(result).toEqual([path.join("/mock/home", ".roo"), path.join(cwd, ".roo")])
+			expect(result).toEqual([
+				path.join("/mock/home", ".roo"),
+				path.join("/mock/home", ".roo", "rules"),
+				path.join(cwd, ".roo"),
+			])
 		})
 	})
 
