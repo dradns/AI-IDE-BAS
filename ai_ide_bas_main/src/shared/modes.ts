@@ -206,13 +206,13 @@ export function pickTextFromMultilang(value: string | Record<string, string> | u
 		const availableKeys = Object.keys(value).join(", ")
 		console.log(`[pickTextFromMultilang] lang="${lang || "none"}", normalizedLang="${normalizedLang || "none"}", availableKeys=[${availableKeys}]`)
 		
-		// Try normalized preferred language first
-		if (normalizedLang && value[normalizedLang]) {
+		// Try normalized preferred language first (use "key in value" so empty string is valid)
+		if (normalizedLang && normalizedLang in value) {
 			console.log(`[pickTextFromMultilang] ✅ Found normalized key "${normalizedLang}", returning value`)
 			return pickTextFromMultilang(value[normalizedLang], undefined)
 		}
 		// Try original language code as fallback (in case backend uses full codes)
-		if (lang && value[lang]) {
+		if (lang && lang in value) {
 			console.log(`[pickTextFromMultilang] ✅ Found original key "${lang}", returning value`)
 			return pickTextFromMultilang(value[lang], undefined)
 		}

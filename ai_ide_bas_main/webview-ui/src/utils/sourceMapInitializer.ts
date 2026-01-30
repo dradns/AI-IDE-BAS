@@ -59,13 +59,10 @@ export function initializeSourceMaps(): void {
 		for (let i = 0; i < scripts.length; i++) {
 			const script = scripts[i]
 			if (script.src) {
-				// Try multiple source map locations
+				// Try standard source map locations only (avoid .map.json/.sourcemap to prevent 404s)
 				const possibleMapUrls = [
 					`${script.src}.map`,
-					`${script.src}?source-map=true`,
 					script.src.replace(/\.js$/, ".js.map"),
-					script.src.replace(/\.js$/, ".map.json"),
-					script.src.replace(/\.js$/, ".sourcemap"),
 				]
 
 				// Preload all possible source map locations

@@ -46,6 +46,11 @@ export type ExportPromptsOptions = { forceWriteAll?: boolean }
 let exportQueue: Array<{ context: vscode.ExtensionContext; reason: string; onlyRoles?: string[]; options?: ExportPromptsOptions }> = []
 const EXPORT_TIMEOUT_MS = 60000 // 60 seconds timeout for export
 
+/** Normalize content for comparison so only real changes count (line endings, trim). */
+function normalizeContentForCompare(s: string): string {
+	return s.replace(/\r\n|\r/g, "\n").trim()
+}
+
 // API error tracking with exponential backoff
 interface ApiErrorState {
 	lastError: number
@@ -68,27 +73,25 @@ let buildConfig: IBuildConfig = {
 		isImmediateUpdate: false
 	}
 }
-try {
-	// Try root directory first (same as extension.ts)
-	const configPath = path.join(__dirname, "..", "..", "extension-build-config.json")
-	// Also try src directory as fallback
-	const configPathSrc = path.join(__dirname, "..", "extension-build-config.json")
-	
-	let configPathToUse: string | null = null
-	if (fs.existsSync(configPath)) {
-		configPathToUse = configPath
-	} else if (fs.existsSync(configPathSrc)) {
-		configPathToUse = configPathSrc
+// Only load build config in Node (extension host). In webview __dirname/fs are undefined.
+if (typeof __dirname !== "undefined" && typeof fs.existsSync === "function") {
+	try {
+		const configPath = path.join(__dirname, "..", "..", "extension-build-config.json")
+		const configPathSrc = path.join(__dirname, "..", "extension-build-config.json")
+		let configPathToUse: string | null = null
+		if (fs.existsSync(configPath)) {
+			configPathToUse = configPath
+		} else if (fs.existsSync(configPathSrc)) {
+			configPathToUse = configPathSrc
+		}
+		if (configPathToUse) {
+			const raw = fs.readFileSync(configPathToUse, "utf8")
+			buildConfig = JSON.parse(raw)
+			console.log(`[PromptAPI] Loaded build config from ${configPathToUse}, isImmediateUpdate=${buildConfig.featureFlags.isImmediateUpdate}`)
+		}
+	} catch (e) {
+		console.warn(`[PromptAPI] Failed to load build config, using defaults: ${e}`)
 	}
-	
-	if (configPathToUse) {
-		const raw = fs.readFileSync(configPathToUse, 'utf8')
-		buildConfig = JSON.parse(raw)
-		console.log(`[PromptAPI] Loaded build config from ${configPathToUse}, isImmediateUpdate=${buildConfig.featureFlags.isImmediateUpdate}`)
-	}
-} catch (e) {
-	// Use defaults if config loading fails
-	console.warn(`[PromptAPI] Failed to load build config, using defaults: ${e}`)
 }
 
 // Dynamic export debounce delay based on feature flag
@@ -1769,13 +1772,128 @@ export async function refreshAllPromptsFromApi(
 			}
 		}
 	})
-	const successfulRefreshes = successfulModes.size
 	let actualUpdates = updatedModes.size
-	
-	console.log(`[PromptAPI] Refresh results: ${successfulModes.size} successful, ${updatedModes.size} updated`)
+
+	// If API returned same updated_at for multiple roles (e.g. global timestamp), verify by content so we only export actually changed roles
+	if (updatedModes.size > 1 && normalizedLang) {
+		try {
+			const batchData = await loadPromptsBatchFromApi(
+				Array.from(updatedModes),
+				normalizedLang || "all",
+				apiBaseUrl,
+				"vscode"
+			)
+			if (batchData) {
+				const verifiedUpdated = new Set<string>()
+				const extensionPath = context.extensionPath
+				const distPromptsDir = path.join(extensionPath, "dist", "prompts")
+				const fsPromises = await import("fs/promises")
+				const { removeArtifactContentFromPrompt } = await import("./prompt-export-service")
+				for (const mode of updatedModes) {
+					const modeData = batchData[mode]
+					if (!modeData) {
+						verifiedUpdated.add(mode)
+						continue
+					}
+					const langData = modeData[normalizedLang]
+					if (!langData) {
+						verifiedUpdated.add(mode)
+						continue
+					}
+					let contentDiffers = false
+					try {
+						const langDirPath = path.join(distPromptsDir, normalizedLang)
+						const modeRulesDir = path.join(langDirPath, `rules-${mode}`)
+						const artifacts = langData.artifacts || []
+						const systemPrompt = langData.systemPrompt || ""
+						const customInstructions = langData.customInstructions || ""
+						const hasContent = !!systemPrompt || !!customInstructions
+						try {
+							const existingFiles = await fsPromises.readdir(modeRulesDir)
+							const mainPromptFile = existingFiles.find((f: string) => f.startsWith("00_") && f.endsWith(".md"))
+							if (mainPromptFile) {
+								const mainPromptPath = path.join(modeRulesDir, mainPromptFile)
+								const existingContent = await fsPromises.readFile(mainPromptPath, "utf-8")
+								const systemPromptClean = removeArtifactContentFromPrompt(systemPrompt, artifacts)
+								const customInstructionsClean = removeArtifactContentFromPrompt(customInstructions, artifacts)
+								const expectedParts: string[] = []
+								if (systemPromptClean) expectedParts.push(systemPromptClean)
+								if (customInstructionsClean) {
+									if (expectedParts.length > 0) expectedParts.push("\n\n---\n\n")
+									expectedParts.push(customInstructionsClean)
+								}
+								const expectedContent = expectedParts.join("")
+								if (normalizeContentForCompare(existingContent) !== normalizeContentForCompare(expectedContent)) contentDiffers = true
+							} else if (hasContent) contentDiffers = true
+						} catch {
+							if (hasContent) contentDiffers = true
+						}
+						if (!contentDiffers && artifacts.length > 0) {
+							try {
+								const existingFiles = await fsPromises.readdir(modeRulesDir)
+								const existingArtifactFiles = existingFiles.filter(
+									(f: string) => f.endsWith(".md") && /^\d{2}_/i.test(f) && !f.startsWith("00_")
+								)
+								// Build expected artifact file names from API (same logic as saveArtifacts)
+								const expectedArtifactFileNames = artifacts.map((a: { key?: string; name?: string }, i: number) => {
+									const key = (a.key || a.name || "").trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+									const hasNum = /^\d{2}_/i.test(key)
+									return hasNum ? `${key}.md` : `${String(i + 1).padStart(2, "0")}_${key}.md`
+								}).sort()
+								const existingSorted = [...existingArtifactFiles].sort()
+								if (existingSorted.length !== expectedArtifactFileNames.length ||
+									expectedArtifactFileNames.some((name: string, idx: number) => name !== existingSorted[idx])) {
+									// Artifact names changed (rename) or count changed
+									contentDiffers = true
+								} else {
+									for (let i = 0; i < artifacts.length; i++) {
+										const artifact = artifacts[i]
+										const artifactKey = (artifact.key || artifact.name || "").trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+										const hasNumberPrefix = /^\d{2}_/i.test(artifactKey)
+										const artifactFileName = hasNumberPrefix
+											? `${artifactKey}.md`
+											: `${String(i + 1).padStart(2, "0")}_${artifactKey}.md`
+										const artifactPath = path.join(modeRulesDir, artifactFileName)
+										try {
+											const existingContent = await fsPromises.readFile(artifactPath, "utf-8")
+											if (normalizeContentForCompare(existingContent) !== normalizeContentForCompare(artifact.content || "")) {
+												contentDiffers = true
+												break
+											}
+										} catch {
+											contentDiffers = true
+											break
+										}
+									}
+								}
+							} catch {
+								contentDiffers = true
+							}
+						}
+						if (contentDiffers) verifiedUpdated.add(mode)
+					} catch (err) {
+						console.debug(`[PromptAPI] Content verification failed for mode=${mode}: ${err}`)
+						verifiedUpdated.add(mode)
+					}
+				}
+				updatedModes.clear()
+				verifiedUpdated.forEach((m) => updatedModes.add(m))
+				actualUpdates = updatedModes.size
+				console.log(
+					`[PromptAPI] Content verification: ${actualUpdates} role(s) actually changed: ${Array.from(updatedModes).join(", ") || "none"}`
+				)
+			}
+		} catch (err) {
+			console.debug(`[PromptAPI] Content verification failed: ${err}`)
+		}
+	}
+
+	const successfulRefreshes = successfulModes.size
+
+	console.log(`[PromptAPI] Refresh results: ${successfulModes.size} successful, ${actualUpdates} updated`)
 	console.log(`[PromptAPI] Successful modes: ${Array.from(successfulModes).join(", ")}`)
 	console.log(`[PromptAPI] Total apiRoles: ${apiRoles.length}, slugs: ${apiRoles.map(r => r.slug.toLowerCase()).join(", ")}`)
-	
+
 	// Check artifacts for modes where updated_at didn't change but artifacts might have
 	if (actualUpdates === 0 && successfulModes.size > 0 && normalizedLang) {
 		try {
@@ -1830,7 +1948,7 @@ export async function refreshAllPromptsFromApi(
 								}
 								const expectedContent = expectedParts.join("")
 								
-								if (existingContent.trim() !== expectedContent.trim()) {
+								if (normalizeContentForCompare(existingContent) !== normalizeContentForCompare(expectedContent)) {
 									console.log(`[PromptAPI] Main prompt content changed for mode=${mode}, marking as updated`)
 									updatedModes.add(mode)
 									actualUpdates++
@@ -1867,34 +1985,44 @@ export async function refreshAllPromptsFromApi(
 								updatedModes.add(mode)
 								actualUpdates++
 							} else if (artifactCount > 0) {
-								// Same count, check content of each artifact
-								let contentChanged = false
-								
-								for (let i = 0; i < artifacts.length; i++) {
-									const artifact = artifacts[i]
-									const artifactKey = artifact.key || artifact.name || ""
-									const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
-									const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
-									const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
-									const artifactFile = path.join(modeRulesDir, artifactFileName)
-									
-									try {
-										const existingContent = await fsPromises.readFile(artifactFile, "utf-8")
-										if (existingContent.trim() !== (artifact.content || "").trim()) {
+								// Same count: compare artifact file names (detect renames) then content
+								const expectedArtifactFileNames = artifacts.map((a: { key?: string; name?: string }, i: number) => {
+									const key = (a.key || a.name || "").trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+									const hasNum = /^\d{2}_/i.test(key)
+									return hasNum ? `${key}.md` : `${String(i + 1).padStart(2, "0")}_${key}.md`
+								}).sort()
+								const existingSorted = [...existingArtifactFiles].sort()
+								const namesDiffer = expectedArtifactFileNames.length !== existingSorted.length ||
+									expectedArtifactFileNames.some((name: string, idx: number) => name !== existingSorted[idx])
+								if (namesDiffer) {
+									console.log(`[PromptAPI] Artifact names changed for mode=${mode} (rename), marking as updated`)
+									updatedModes.add(mode)
+									actualUpdates++
+								} else {
+									let contentChanged = false
+									for (let i = 0; i < artifacts.length; i++) {
+										const artifact = artifacts[i]
+										const artifactKey = artifact.key || artifact.name || ""
+										const cleanKey = artifactKey.trim().replace(/\s+/g, "_").replace(/^_+|_+$/g, "")
+										const hasNumberPrefix = /^\d{2}_/i.test(cleanKey)
+										const artifactFileName = hasNumberPrefix ? `${cleanKey}.md` : `${String(i + 1).padStart(2, "0")}_${cleanKey}.md`
+										const artifactFile = path.join(modeRulesDir, artifactFileName)
+										try {
+											const existingContent = await fsPromises.readFile(artifactFile, "utf-8")
+											if (normalizeContentForCompare(existingContent) !== normalizeContentForCompare(artifact.content || "")) {
+												contentChanged = true
+												break
+											}
+										} catch {
 											contentChanged = true
 											break
 										}
-									} catch {
-										// File doesn't exist - content changed
-										contentChanged = true
-										break
 									}
-								}
-								
-								if (contentChanged) {
-									console.log(`[PromptAPI] Artifact content changed for mode=${mode}, marking as updated`)
-									updatedModes.add(mode)
-									actualUpdates++
+									if (contentChanged) {
+										console.log(`[PromptAPI] Artifact content changed for mode=${mode}, marking as updated`)
+										updatedModes.add(mode)
+										actualUpdates++
+									}
 								}
 							}
 						} catch {
@@ -1981,17 +2109,16 @@ export async function refreshAllPromptsFromApi(
 		await context.globalState.update("knownApiRoles", currentRoleSlugs)
 	}
 
-	// Schedule export after refresh
-	// IMPORTANT: New roles are ALWAYS exported immediately (even if shouldExport=false)
-	// This ensures new roles from API appear in dist/prompts without waiting for automatic refresh
+	// Export only when something actually changed: new/removed roles or content changed (actualUpdates).
+	// Every 8–12 min we ask API "any updates?"; if yes — export only those roles/artifacts; if no — do nothing, don't rewrite.
 	const hasNewRoles = newRoles.length > 0
-	
-	if (shouldExport || hasNewRoles) {
+	const hasSomethingToExport = hasNewRoles || removedRoles.length > 0 || actualUpdates > 0
+
+	if (hasSomethingToExport) {
 		if (exportDebounceTimer) clearTimeout(exportDebounceTimer)
 		exportDebounceTimer = setTimeout(() => {
 			exportDebounceTimer = null
 			
-			// Determine what to export based on what changed
 			if (newRoles.length > 0 || removedRoles.length > 0) {
 				// New or removed roles detected
 				if (newRoles.length > 0) {
@@ -2029,16 +2156,10 @@ export async function refreshAllPromptsFromApi(
 					}
 				}
 			} else if (actualUpdates > 0) {
-				// Only updates, no new/removed roles
+				// Content changed — export only those roles (and their artifacts)
 				const updatedRoleSlugs = Array.from(updatedModes)
 				safeExportPrompts(context, `refresh (${actualUpdates} modes updated)`, updatedRoleSlugs).catch((error) => {
 					console.warn(`[PromptAPI] Export failed: ${error}`)
-				})
-			} else if (shouldExport) {
-				// No changes detected, but trigger cleanup to ensure archived roles are removed.
-				// forceWriteAll: rewrite all artifacts so dist/prompts matches API (e.g. artifact-only edits in admin).
-				safeExportPrompts(context, "automatic refresh cleanup", undefined, { forceWriteAll: true }).catch((error) => {
-					console.warn(`[PromptAPI] Cleanup export failed: ${error}`)
 				})
 			}
 		}, getExportDebounceDelay())

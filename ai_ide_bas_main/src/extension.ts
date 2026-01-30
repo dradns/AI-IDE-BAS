@@ -1,17 +1,15 @@
 import * as vscode from "vscode"
-import * as dotenvx from "@dotenvx/dotenvx"
 import * as path from "path"
 import fs from "fs"
 import * as os from "os"
+import { config as dotenvConfig } from "dotenv"
 import { TelemetryReporter } from "@vscode/extension-telemetry"
 
-// Load environment variables from .env file
+// Load environment variables from .env file (dotenv avoids Buffer() deprecation from dotenvx)
 try {
-	// Specify path to .env file in the project root directory
 	const envPath = path.join(__dirname, "..", ".env")
-	dotenvx.config({ path: envPath })
+	dotenvConfig({ path: envPath })
 } catch (e) {
-	// Silently handle environment loading errors
 	console.warn("Failed to load environment variables:", e)
 }
 
@@ -319,7 +317,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// ========================================
 	// AUTO-REFRESH PROMPTS FROM API
 	// ========================================
-	// Автоматическое обновление промптов из API с рандомным интервалом 8-12 минут
+	// Автоматическое обновление промптов из API с рандомным интервалом 8-12 минут (разносим запросы по бэку)
 	const MIN_REFRESH_INTERVAL_MS = 8 * 60 * 1000 // 8 минут минимум
 	const MAX_REFRESH_INTERVAL_MS = 12 * 60 * 1000 // 12 минут максимум
 	const INITIAL_JITTER_RANGE_MS = 5 * 60 * 1000 // 0-5 минут начальный разброс
@@ -376,10 +374,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	const scheduleNextRefresh = () => {
 		const isImmediate = buildConfig.featureFlags.isImmediateUpdate
 		outputChannel.appendLine(`[AutoRefresh] isImmediateUpdate=${isImmediate}`)
-		const nextInterval = isImmediate ?
-			IMMEDIATE_UPDATE_MS :
-			// Рандомный интервал от 8 до 12 минут
-			MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
+		const nextInterval = isImmediate
+			? IMMEDIATE_UPDATE_MS
+			: MIN_REFRESH_INTERVAL_MS + Math.random() * (MAX_REFRESH_INTERVAL_MS - MIN_REFRESH_INTERVAL_MS)
 		
 		outputChannel.appendLine(`[AutoRefresh] Next refresh scheduled in ${Math.round(nextInterval / 1000)}s (${Math.round(nextInterval / 60000)}min)`)
 		

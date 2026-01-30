@@ -723,6 +723,8 @@ export async function exportPromptsToExtensionDist(
 	options?: ExportPromptsToDistOptions
 ): Promise<{ totalExported: number; totalModes: number; totalLanguages: number }> {
 	const forceWriteAll = options?.forceWriteAll === true
+	// When onlyRoles is set, refresh detected changes for those roles — always write to dist/prompts, never skip
+	const skipUnchangedOptimization = Boolean(onlyRoles && onlyRoles.length > 0)
 	const extensionPath = context.extensionPath
 	const distPromptsDir = path.join(extensionPath, "dist", "prompts")
 
@@ -922,12 +924,35 @@ export async function exportPromptsToExtensionDist(
 											allArtifactsMatch = false
 											break
 										}
-									}
-									
+								}
+								
 									if (allArtifactsMatch && !forceWriteAll) {
-										// Both updated_at and artifacts unchanged, skip completely (unless forceWriteAll e.g. automatic refresh)
-										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
-										shouldSkipDueToUnchanged = true
+										// Also verify main file content: if only system prompt changed, updated_at changed but we'd skip by mistake
+										let mainContentUnchanged = false
+										try {
+											const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+											const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+											const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
+											const existingMain = await fs.readFile(combinedPromptFile, "utf-8")
+											const artifactsForPrompt = langData.artifacts || []
+											const systemPromptClean = removeArtifactContentFromPrompt(langData.systemPrompt || "", artifactsForPrompt)
+											const customInstructionsClean = removeArtifactContentFromPrompt(langData.customInstructions || "", artifactsForPrompt)
+											const parts: string[] = []
+											if (systemPromptClean) parts.push(systemPromptClean)
+											if (customInstructionsClean) {
+												if (parts.length > 0) parts.push("\n\n---\n\n")
+												parts.push(customInstructionsClean)
+											}
+											const expectedMain = parts.join("")
+											mainContentUnchanged = existingMain.trim() === expectedMain.trim()
+										} catch {
+											// If read/build fails, do not skip (proceed with export)
+										}
+										if (mainContentUnchanged && !skipUnchangedOptimization) {
+											// Both updated_at, artifacts and main file unchanged
+											console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+											shouldSkipDueToUnchanged = true
+										}
 									} else if (!allArtifactsMatch) {
 										console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
 									}
@@ -1024,7 +1049,7 @@ export async function exportPromptsToExtensionDist(
 										}
 									}
 									
-									if (allArtifactsMatch && !forceWriteAll) {
+									if (allArtifactsMatch && !forceWriteAll && !skipUnchangedOptimization) {
 										// Both main file and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										continue
@@ -1069,11 +1094,16 @@ export async function exportPromptsToExtensionDist(
 			}
 
 			// Process roles from batch response that are not in allModes
+			// When onlyRoles is set, do NOT write extra roles from the response — we asked for specific roles only.
+			// (Backend may return all roles; we must only write the ones we requested.)
 			const processedModeSlugs = new Set(allModes.map((m) => m.slug.toLowerCase()))
-			const missingRoles = batchKeys.filter((key) => {
-				const keyLower = key.toLowerCase()
-				return !processedModeSlugs.has(keyLower)
-			})
+			const missingRoles =
+				onlyRoles && onlyRoles.length > 0
+					? []
+					: batchKeys.filter((key) => {
+							const keyLower = key.toLowerCase()
+							return !processedModeSlugs.has(keyLower)
+						})
 
 			if (missingRoles.length > 0) {
 				console.log(
@@ -1154,9 +1184,31 @@ export async function exportPromptsToExtensionDist(
 								}
 								
 								if (allArtifactsMatch && !forceWriteAll) {
-									// Both updated_at and artifacts unchanged, skip completely
-									console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
-									shouldSkipDueToUnchanged = true
+									// Also verify main file content before skipping
+									let mainContentUnchanged = false
+									try {
+										const roleNameForMain = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+										const cleanRoleNameForMain = roleNameForMain.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+										const combinedPromptFileForMain = path.join(modeRulesDir, `00_${cleanRoleNameForMain}.md`)
+										const existingMain = await fs.readFile(combinedPromptFileForMain, "utf-8")
+										const artifactsForPrompt = langData.artifacts || []
+										const systemPromptClean = removeArtifactContentFromPrompt(langData.systemPrompt || "", artifactsForPrompt)
+										const customInstructionsClean = removeArtifactContentFromPrompt(langData.customInstructions || "", artifactsForPrompt)
+										const parts: string[] = []
+										if (systemPromptClean) parts.push(systemPromptClean)
+										if (customInstructionsClean) {
+											if (parts.length > 0) parts.push("\n\n---\n\n")
+											parts.push(customInstructionsClean)
+										}
+										const expectedMain = parts.join("")
+										mainContentUnchanged = existingMain.trim() === expectedMain.trim()
+									} catch {
+										/* do not skip */
+									}
+									if (mainContentUnchanged && !skipUnchangedOptimization) {
+										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+										shouldSkipDueToUnchanged = true
+									}
 								} else if (!allArtifactsMatch) {
 									console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
 								}
@@ -1193,7 +1245,7 @@ export async function exportPromptsToExtensionDist(
 									const newContent = combinedPromptParts.join("")
 									
 									const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
-									if (existingContent === newContent && !forceWriteAll) {
+									if (existingContent === newContent && !forceWriteAll && !skipUnchangedOptimization) {
 										// Both main file and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										shouldSkipDueToUnchanged = true
@@ -1286,7 +1338,7 @@ export async function exportPromptsToExtensionDist(
 										}
 									}
 									
-								if (allArtifactsMatch && !forceWriteAll) {
+								if (allArtifactsMatch && !forceWriteAll && !skipUnchangedOptimization) {
 										// Both main file and artifacts unchanged, skip completely
 										console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 										continue
@@ -1443,9 +1495,31 @@ export async function exportPromptsToExtensionDist(
 									}
 									
 									if (allArtifactsMatch && !forceWriteAll) {
-										// Both updated_at and artifacts unchanged, skip completely
-										console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
-										shouldSkipDueToUnchanged = true
+										// Also verify main file content before skipping
+										let mainContentUnchangedFallback = false
+										try {
+											const roleNameForMain = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+											const cleanRoleNameForMain = roleNameForMain.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
+											const combinedPromptFileForMain = path.join(modeRulesDir, `00_${cleanRoleNameForMain}.md`)
+											const existingMain = await fs.readFile(combinedPromptFileForMain, "utf-8")
+											const artifactsForPrompt = promptData.artifacts || []
+											const systemPromptClean = removeArtifactContentFromPrompt(promptData.systemPrompt || "", artifactsForPrompt)
+											const customInstructionsClean = removeArtifactContentFromPrompt(promptData.customInstructions || "", artifactsForPrompt)
+											const parts: string[] = []
+											if (systemPromptClean) parts.push(systemPromptClean)
+											if (customInstructionsClean) {
+												if (parts.length > 0) parts.push("\n\n---\n\n")
+												parts.push(customInstructionsClean)
+											}
+											const expectedMain = parts.join("")
+											mainContentUnchangedFallback = existingMain.trim() === expectedMain.trim()
+										} catch {
+											/* do not skip */
+										}
+										if (mainContentUnchangedFallback && !skipUnchangedOptimization) {
+											console.log(`[exportPromptsToExtensionDist] updated_at and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
+											shouldSkipDueToUnchanged = true
+										}
 									} else if (!allArtifactsMatch) {
 										console.log(`[exportPromptsToExtensionDist] Artifacts changed for mode=${mode.slug}, lang=${lang}, updating despite unchanged updated_at`)
 									}
@@ -1459,7 +1533,7 @@ export async function exportPromptsToExtensionDist(
 							
 							// Also check main file if artifacts are unchanged
 							if (!shouldSkipDueToUnchanged && modeRulesDirExists) {
-								const roleName = mode.name.replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
+								const roleName = (mode.name || "").replace(/^[\uD800-\uDFFF]+\s*/, "").trim() || mode.slug
 								const cleanRoleName = roleName.replace(/[^a-zA-Z0-9_()\s-]/g, "").replace(/\s+/g, "_")
 								const combinedPromptFile = path.join(modeRulesDir, `00_${cleanRoleName}.md`)
 								const fileExists = await fs.access(combinedPromptFile).then(() => true).catch(() => false)
@@ -1482,7 +1556,7 @@ export async function exportPromptsToExtensionDist(
 										const newContent = combinedPromptParts.join("")
 										
 										const existingContent = await fs.readFile(combinedPromptFile, "utf-8")
-										if (existingContent === newContent && !forceWriteAll) {
+										if (existingContent === newContent && !forceWriteAll && !skipUnchangedOptimization) {
 											// Both main file and artifacts unchanged, skip completely
 											console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 											shouldSkipDueToUnchanged = true
@@ -1574,7 +1648,7 @@ export async function exportPromptsToExtensionDist(
 											}
 										}
 										
-										if (allArtifactsMatch && !forceWriteAll) {
+										if (allArtifactsMatch && !forceWriteAll && !skipUnchangedOptimization) {
 											// Both main file and artifacts unchanged, skip completely
 											console.log(`[exportPromptsToExtensionDist] Content and artifacts unchanged for mode=${mode.slug}, lang=${lang}, skipping`)
 											continue
@@ -1744,6 +1818,14 @@ export async function exportPromptsOnFirstInstall(
 		if (distResult.totalExported > 0) {
 			await context.globalState.update("promptsExportedFromApi", true)
 			await context.globalState.update("lastExportedExtensionVersion", currentVersion)
+			// Set knownApiRoles so the first 8–12 min refresh doesn't treat all roles as "new" and re-export them
+			const { getAllRolesFromApi } = await import("./prompt-api-service")
+			const apiRoles = await getAllRolesFromApi().catch(() => [])
+			const currentRoleSlugs = apiRoles.map((r: { slug: string }) => r.slug.toLowerCase())
+			if (currentRoleSlugs.length > 0) {
+				await context.globalState.update("knownApiRoles", currentRoleSlugs)
+				console.log(`[exportPromptsOnFirstInstall] Set knownApiRoles (${currentRoleSlugs.length}) so auto-refresh won't re-export unchanged roles`)
+			}
 			console.log(`[exportPromptsOnFirstInstall] ✅ Exported ${distResult.totalExported} modes, ${distResult.totalLanguages} languages to dist/prompts`)
 			if (isExtensionUpdate) {
 				console.log(
