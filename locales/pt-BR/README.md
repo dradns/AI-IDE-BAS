@@ -27,7 +27,7 @@
 
 ## Guia de uso do <b>AI IDE BAS</b>
 
-O guia tem 1 bloco geral e 5 blocos “por função”, cada um com seus artefatos.
+O guia tem 1 bloco geral e 5 blocos "por função", cada um com seus artefatos.
 
 No [guia](https://t.me/+XktkZ77JlYA2N2Yy) você encontra tudo que precisa:
 - como instalar e configurar o AI IDE BAS;

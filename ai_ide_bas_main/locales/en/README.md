@@ -47,45 +47,48 @@ AI IDE BAS helps <b>generate and validate various artifacts</b>. Work is organiz
 
 ## Main roles:
 ### <b>Business Analyst</b>
-- create User Stories;
-- create Use Cases;
-- create Activity diagram of the business process in PlantUML format;
-- create Acceptance Criteria;
-- build project glossary;
-- gather project stakeholder information;
-- validate selected business analyst artifacts.
+- creating User Stories;
+- creating Use Cases;
+- creating Activity diagram of the business process in PlantUML format;
+- creating Acceptance Criteria;
+- building project glossary;
+- gathering project stakeholder information;
+- validating selected business analyst artifacts.
 ### <b>System Analyst</b>
-- create ERD (entity-relationship diagram);
-- create data model;
-- create Sequence diagram;
-- create OpenAPI specification;
-- create AsyncAPI specification for Kafka Message Broker;
-- create non-functional requirements;
-- validate selected system analyst artifacts.
+- creating ERD (entity-relationship diagram);
+- creating data model;
+- creating Sequence diagram;
+- creating OpenAPI specification;
+- creating AsyncAPI specification for Kafka Message Broker;
+- creating non-functional requirements;
+- validating selected system analyst artifacts.
 ### <b>Solution Architect</b>
-- create context diagram;
-- create container diagram;
-- create component diagram;
-- validate selected solution architect artifacts.
+- creating context diagram;
+- creating container diagram;
+- creating component diagram;
+- validating selected solution architect artifacts.
 ### <b>Reviewer</b>:
-- validate project for quality of requirements and business/system analyst artifacts;
-- validate project against cybersecurity requirements;
-- validate architectural decisions;
-- estimate solution cost;
-- validate project from support engineering perspective.
+- validating project for quality of requirements and business/system analyst artifacts;
+- validating project against cybersecurity requirements;
+- validating architectural decisions;
+- estimating solution cost;
+- validating project from support engineering perspective.
 
----
+
 
 ## Additional roles:
 ### <b>Helper</b>
 - role for advice and tips on AI IDE BAS and using the extension.
 ### <b>Designer</b>
-- create clickable prototypes.
+- creating clickable prototypes.
 ### <b>Project Manager</b>
-- create textual sprint backlog description;
-- create development task description;
+- creating textual sprint backlog description;
+- creating development task description;
 - Gantt diagram in PlantUML format;
 - dependency diagram in PlantUML format.
+
+###
+
 
 ---
 

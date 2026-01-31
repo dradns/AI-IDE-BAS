@@ -1,108 +1,120 @@
 <div align="center">
-<sub>
 
-<b>English</b> • [Русский](../../README.md) • [العربية](../ar/README.md) • [Español](../es/README.md) • [中文](../zh/README.md)
+[Русский](../../README.md) • **English** • [Español](../es/README.md) • [Português](../pt-BR/README.md) • [中文](../zh/README.md)
 
-</sub>
 </div>
 
 <br>
 
 <div align="center">
   <h1>AI IDE BAS</h1>
-  <p align="center">
-    <img src="https://media.githubusercontent.com/media/AIIDEBASInc/AI-IDE-BAS/main/src/assets/docs/demo.gif" width="100%" />
-  </p>
   <p>
-     AI IDE BAS is an intelligent agent right in your code editor.  
-     It is designed as an assistant for <b>architects</b> and <b>analysts</b>,
-     specializing in generating and updating documentation and other project artifacts,
-     and also performs routine development automation tasks.
+     <b>AI IDE BAS</b> — an AI tool for generating and validating artifacts for <b>system</b> and <b>business analysts</b>, <b>solution architects</b>. It turns your IDE into a universal workspace based on expert templates and helps automate routine work, creating artifacts faster and with higher quality than a generic LLM.
+     <br>
+     You get <b>500 free bonuses</b> to start. After that, you can connect any LLM via API key.
+ <br><br>
+     Find more details in our <a href="https://t.me/+XktkZ77JlYA2N2Yy">guide</a>. Sign up and try the features.
+     
+   
   </p>
 
-<a href="https://m.vk.com/ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Join%20VK-4C75A3?style=for-the-badge&logo=vk&logoColor=white" alt="Join VK"></a>
-<a href="https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" target="_blank"><img src="https://img.shields.io/badge/Join%20Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Join Instagram"></a>
-<a href="https://t.me/+IGUP0XsxRSBmY2Ri" target="_blank"><img src="https://img.shields.io/badge/Join%20Telegram-1C75A4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram"></a>
+<a href="https://vkvideo.ru/@ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Join%20VK-4C75A3?style=for-the-badge&logo=vk&logoColor=white" alt="Join VK"></a> <a href="https://t.me/+IGUP0XsxRSBmY2Ri" target="_blank"><img src="https://img.shields.io/badge/Join%20Telegram-1C75A4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram"></a> <a href="https://www.youtube.com/@ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Subscribe%20YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Subscribe YouTube">
+  </a>
 
 </div>
 
 ---
 
-## What can AI IDE BAS do?
+## Guide to working with <b>AI IDE BAS</b>
 
-### Generation:
+The guide has 1 general block and 5 "role" blocks, each with its own artifacts.
 
-- Backend logic
-- ERD diagrams
-- Sequence diagrams
-- OpenAPI specifications
-- AsyncAPI specifications for Kafka Message Broker
-- Non-functional requirements
-- User Stories
-- Use Cases
-- Activity Diagram process in PlantUML
-- Project stakeholders
-- Acceptance Criteria
-- Project glossary
-- Component Diagram
-- Wireframe (mockup, prototype)
+In the [guide](https://t.me/+XktkZ77JlYA2N2Yy) you'll find everything you need:
+- how to install and configure AI IDE BAS;
+- how to test our extension;
+- how to connect your LLM API key to AI IDE BAS;
+- how to create core artifacts for business analyst, system analyst, and solution architect using a simple project example;
+- how to create a clickable mockup of a future feature during a meeting.
 
-### Verification:
-
-- Cybersecurity
-- Quality of requirements and artifacts for business and system analysts (by a senior system analyst)
-- Review of architectural decisions (Solution Architect)
-- Review from the support engineer perspective (Support Engineer)
+[View the guide here](https://t.me/+XktkZ77JlYA2N2Yy)
 
 ---
 
-## Quick start
-
-1. Install the extension from the VS Code Marketplace.
-2. Connect an AI provider (OpenAI-compatible or a local model).
-3. Start your first task via the command palette `AI IDE BAS: New Task`.
+## What can <b>AI IDE BAS</b> do?
+AI IDE BAS helps <b>generate and validate various artifacts</b>. Work is organized by roles — each role has its own artifacts.
 
 ---
 
-## Key capabilities
+## Main roles:
+### <b>Business Analyst</b>
+- creating User Stories;
+- creating Use Cases;
+- creating Activity diagram of the business process in PlantUML format;
+- creating Acceptance Criteria;
+- building project glossary;
+- gathering project stakeholder information;
+- validating selected business analyst artifacts.
+### <b>System Analyst</b>
+- creating ERD (entity-relationship diagram);
+- creating data model;
+- creating Sequence diagram;
+- creating OpenAPI specification;
+- creating AsyncAPI specification for Kafka Message Broker;
+- creating non-functional requirements;
+- validating selected system analyst artifacts.
+### <b>Solution Architect</b>
+- creating context diagram;
+- creating container diagram;
+- creating component diagram;
+- validating selected solution architect artifacts.
+### <b>Reviewer</b>:
+- validating project for quality of requirements and business/system analyst artifacts;
+- validating project against cybersecurity requirements;
+- validating architectural decisions;
+- estimating solution cost;
+- validating project from support engineering perspective.
 
-### Multiple modes
 
-- Code Mode
-- Architect Mode
-- Ask Mode
-- Debug Mode
-- Custom Modes — create an unlimited number of your own personas.
 
-### Tools
+## Additional roles:
+### <b>Helper</b>
+- role for advice and tips on AI IDE BAS and using the extension.
+### <b>Designer</b>
+- creating clickable prototypes.
+### <b>Project Manager</b>
+- creating textual sprint backlog description;
+- creating development task description;
+- Gantt diagram in PlantUML format;
+- dependency diagram in PlantUML format.
 
-- Read/write files in the workspace
-- Execute commands in the VS Code terminal
-- Control the browser
-- Connect third-party services via MCP (Model Context Protocol)
+###
 
-### Customization
-
-- Custom instructions and templates
-- Local models
-- Automatic action confirmation settings
 
 ---
 
-## Community
+### <b>Quick Start</b>
+  1. Install the extension from VS Code Marketplace.
+  2. Start with 500 free bonuses — they're available to new users for testing when signing in with a Google account.
+  3. When bonuses run out — connect an AI provider: you can use any LLM via API key (we recommend DeepSeek for best price/quality).
+  4. Choose a role and start working: generate and validate artifacts, create diagrams and mockups.
+  5. [Text instructions](https://telegra.ph/Instrukciya-po-ustanovke-i-nastrojke-AI-IDE-BAS-07-30) and [video guide](https://t.me/+XktkZ77JlYA2N2Yy) will help you install the extension, connect the API, and create your first artifacts.
+---
 
-- VK: https://m.vk.com/ai_ide_bas
-- Instagram: https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==
-- Telegram: https://t.me/+IGUP0XsxRSBmY2Ri
-- GitHub Issues / Feature Requests
+### <b>Useful links</b>
+
+- [AI IDE BAS guide](https://t.me/+XktkZ77JlYA2N2Yy): how to install, configure, and start using the extension.
+- [Questions and suggestions](https://t.me/aiidebas/1): ask a question, leave feedback, or suggest an improvement.
+- [Official website](https://aiidebas.com/?utm_source=mp): AI IDE BAS description and main features.
+- [Telegram channel](https://t.me/+U7KZi1DJbCViYmUy): news, updates, and announcements.
+- [YouTube channel](https://www.youtube.com/@ai_ide_bas) and [VK video](https://vkvideo.ru/@ai_ide_bas): stream recordings and helpful videos on using the extension.
 
 ---
 
-## License
+### <b>License</b>
 
-[Apache-2.0 © 2025 AI IDE BAS, Inc.](../../LICENSE)
+The license agreement is available on the [Visual Studio Marketplace page](https://marketplace.visualstudio.com/items/8eton.ai-ide-bas/license).
 
 ---
+ <br>
 
-**Enjoy working with AI IDE BAS!**
-
+### **Enjoy working with AI IDE BAS!**

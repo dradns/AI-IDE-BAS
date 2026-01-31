@@ -47,45 +47,48 @@ AI IDE BAS ayuda a <b>generar y validar distintos artefactos</b>. El trabajo se 
 
 ## Roles principales:
 ### <b>Analista de negocio</b>
-- crear User Stories;
-- crear Use Cases;
-- crear diagrama de Actividad del proceso de negocio en formato PlantUML;
-- crear Acceptance Criteria;
-- elaborar glosario del proyecto;
-- recopilar información de stakeholders del proyecto;
-- validar artefactos seleccionados del analista de negocio.
+- creación de User Stories;
+- creación de Use Cases;
+- creación de diagrama de Actividad del proceso de negocio en formato PlantUML;
+- creación de Acceptance Criteria;
+- elaboración del glosario del proyecto;
+- recopilación de información de stakeholders del proyecto;
+- validación de artefactos seleccionados del analista de negocio.
 ### <b>Analista de sistemas</b>
-- crear ERD (diagrama entidad-relación);
-- crear modelo de datos;
-- crear diagrama de Secuencia;
-- crear especificación OpenAPI;
-- crear especificación AsyncAPI para Kafka Message Broker;
-- crear requisitos no funcionales;
-- validar artefactos seleccionados del analista de sistemas.
+- creación de ERD (diagrama entidad-relación);
+- creación de modelo de datos;
+- creación de diagrama de Secuencia;
+- creación de especificación OpenAPI;
+- creación de especificación AsyncAPI para Kafka Message Broker;
+- creación de requisitos no funcionales;
+- validación de artefactos seleccionados del analista de sistemas.
 ### <b>Arquitecto de soluciones</b>
-- crear diagrama de contexto;
-- crear diagrama de contenedores;
-- crear diagrama de componentes;
-- validar artefactos seleccionados del arquitecto de soluciones.
+- creación de diagrama de contexto;
+- creación de diagrama de contenedores;
+- creación de diagrama de componentes;
+- validación de artefactos seleccionados del arquitecto de soluciones.
 ### <b>Reviewer</b>:
-- validar el proyecto en calidad de requisitos y artefactos de analista de negocio/sistemas;
-- validar el proyecto según requisitos de ciberseguridad;
-- validar decisiones arquitectónicas;
-- estimar coste de la solución;
-- validar el proyecto desde la perspectiva de ingeniería de soporte.
+- validación del proyecto en calidad de requisitos y artefactos de analista de negocio/sistemas;
+- validación del proyecto según requisitos de ciberseguridad;
+- validación de decisiones arquitectónicas;
+- estimación del coste de la solución;
+- validación del proyecto desde la perspectiva de ingeniería de soporte.
 
----
+
 
 ## Roles adicionales:
 ### <b>Helper</b>
 - rol de consulta y consejos sobre AI IDE BAS y el uso de la extensión.
 ### <b>Diseñador</b>
-- crear prototipos clicables.
+- creación de prototipos clicables.
 ### <b>Project Manager</b>
-- crear descripción textual del backlog del sprint;
-- crear descripción de tarea de desarrollo;
+- creación de descripción textual del backlog del sprint;
+- creación de descripción de tarea de desarrollo;
 - diagrama de Gantt en formato PlantUML;
 - diagrama de dependencias en formato PlantUML.
+
+###
+
 
 ---
 
