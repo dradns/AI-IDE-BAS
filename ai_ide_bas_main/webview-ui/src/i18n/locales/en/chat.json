@@ -272,15 +272,13 @@
 	},
 	"announcement": {
 		"title": "🎉 AI IDE BAS {{version}} Released",
-		"description": "AI IDE BAS {{version}} Support for 4 languages: think and create in your language",
+		"description": "🧠✨ New Features and Capabilities of AI IDE BAS",
 		"whatsNew": "What's New",
-		"feature1": "AI IDE BAS now speaks Russian, English, Spanish, and Chinese, not just translating, but thinking in the selected language!",
-		"feature2": "The interface is fully localized for comfortable work regardless of language.",
-		"feature3": "Prompts are adapted to each linguistic culture, LLM considers context, style, and phrasing nuances.",
-		"feature4": "Artifacts are generated in the selected language from the start, without post-translation. This means that logic, structure, and tone match the linguistic environment.",
-		"feature5": "🎯 Why is this needed? So every developer, analyst, or designer can interact with AI naturally — without language barriers and loss of meaning.",
-		"hideButton": "Hide announcement",
-		"detailsDiscussLinks": "Get more details and discuss in <vkLink>VK</vkLink> and <telegramLink>Telegram</telegramLink> 🚀"
+		"feature1": "Created a Guide for Working with AI IDE BAS. We have prepared a <guideLink>detailed guide</guideLink> that shows how to use the extension and create artifacts in different modes (roles). The guide will help you get up to speed faster and start working on your project.",
+		"feature2": "Helper Role Updated. With this role, you can learn how to use the extension, what modes (roles) and artifacts are available, how to create projects, and how to customize AI IDE BAS to fit your needs.",
+		"feature3": "Portuguese Language Support. Portuguese language support has been added. You can now work in AI IDE BAS in the following languages: Russian, English, Spanish, Chinese, and Portuguese.",
+		"feature4": "Ability to Leave Feedback About Our Extension. You can submit feedback from the \"Account\" tab directly in the extension. Feedback can be sent either when registered via a Google account or anonymously after logging out.",
+		"hideButton": "Hide announcement"
 	},
 	"reasoning": {
 		"thinking": "Thinking",

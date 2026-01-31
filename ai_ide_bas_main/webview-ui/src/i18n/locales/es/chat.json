@@ -263,15 +263,13 @@
 	},
 	"announcement": {
 		"title": "🎉 AI IDE BAS {{version}} publicado",
-		"description": "AI IDE BAS {{version}} Soporte para 4 idiomas: piensa y crea en tu idioma",
+		"description": "🧠✨ Nuevas funciones y capacidades de AI IDE BAS",
 		"whatsNew": "Novedades",
-		"feature1": "¡AI IDE BAS ahora habla ruso, inglés, español y chino, no solo traduce, sino que piensa en el idioma seleccionado!",
-		"feature2": "La interfaz está completamente localizada para un trabajo cómodo independientemente del idioma.",
-		"feature3": "Los prompts están adaptados a cada cultura lingüística, LLM considera el contexto, el estilo y los matices de formulación.",
-		"feature4": "Los artefactos se generan en el idioma seleccionado desde el principio, sin traducción posterior. Esto significa que la lógica, estructura y tono coinciden con el entorno lingüístico.",
-		"feature5": "🎯 ¿Por qué es necesario? Para que cada desarrollador, analista o diseñador pueda interactuar con la IA de forma natural, sin barreras lingüísticas ni pérdida de significado.",
-		"hideButton": "Ocultar anuncio",
-		"detailsDiscussLinks": "Obtén más detalles y participa en <vkLink>VK</vkLink> y <telegramLink>Telegram</telegramLink> 🚀"
+		"feature1": "Hemos creado una guía para trabajar con AI IDE BAS. Hemos preparado una <guideLink>guía detallada</guideLink> que muestra cómo usar la extensión y crear artefactos en diferentes modos (roles). La guía te ayudará a familiarizarte más rápido y empezar a trabajar en tu proyecto.",
+		"feature2": "Rol Helper actualizado. Con este rol puedes aprender a usar la extensión, qué modos (roles) y artefactos están disponibles, cómo crear proyectos y cómo personalizar AI IDE BAS según tus necesidades.",
+		"feature3": "Soporte para portugués. Se ha añadido soporte para el idioma portugués. Ahora puedes trabajar en AI IDE BAS en los siguientes idiomas: ruso, inglés, español, chino y portugués.",
+		"feature4": "Posibilidad de dejar reseñas sobre nuestra extensión. Puedes enviar reseñas desde la pestaña \"Account\" directamente en la extensión. Las reseñas se pueden enviar con una cuenta de Google o de forma anónima tras cerrar sesión.",
+		"hideButton": "Ocultar anuncio"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS quiere usar el navegador:",

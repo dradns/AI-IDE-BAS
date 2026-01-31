@@ -51,6 +51,7 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 								components={{
 									bold: <b />,
 									code: <code />,
+									guideLink: <GuideLink />,
 									settingsLink: (
 										<VSCodeLink
 											href="#"
@@ -102,56 +103,26 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 								}}
 							/>
 						</li>
-						<li>
-							•{" "}
-							<Trans
-								i18nKey="chat:announcement.feature5"
-								components={{
-									bold: <b />,
-									code: <code />,
-								}}
-							/>
-						</li>
 					</ul>
-					<Trans
-						i18nKey="chat:announcement.detailsDiscussLinks"
-						components={{ vkLink: <VkLink />, telegramLink: <TelegramLink /> }}
-					/>
 				</div>
 			</DialogContent>
 		</Dialog>
 	)
 }
 
-const VkLink = () => (
-	<VSCodeLink
-		href="https://m.vk.com/ai_ide_bas"
-		onClick={(e) => {
-			e.preventDefault()
-			window.postMessage(
-				{ type: "action", action: "openExternal", data: { url: "https://m.vk.com/ai_ide_bas" } },
-				"*",
-			)
-		}}>
-		VK
-	</VSCodeLink>
-)
+const GUIDE_URL = "https://t.me/+O9j8UaeSCChjNjli"
 
-const TelegramLink = () => (
+const GuideLink = ({ children }: { children?: React.ReactNode }) => (
 	<VSCodeLink
-		href="https://t.me/+E2c8DPMkAyFjMjcy"
+		href={GUIDE_URL}
 		onClick={(e) => {
 			e.preventDefault()
 			window.postMessage(
-				{
-					type: "action",
-					action: "openExternal",
-					data: { url: "https://t.me/+E2c8DPMkAyFjMjcy" },
-				},
+				{ type: "action", action: "openExternal", data: { url: GUIDE_URL } },
 				"*",
 			)
 		}}>
-		Telegram
+		{children}
 	</VSCodeLink>
 )
 

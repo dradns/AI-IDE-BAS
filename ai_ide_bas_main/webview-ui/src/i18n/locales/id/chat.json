@@ -280,8 +280,7 @@
 		"feature1": "<bold>Antrian Pesan</bold>: Antrikan beberapa pesan saat AI IDE BAS sedang bekerja, memungkinkan Anda melanjutkan perencanaan alur kerja tanpa gangguan.",
 		"feature2": "<bold>Perintah Slash Kustom</bold>: Buat perintah slash yang dipersonalisasi untuk akses cepat ke prompt dan alur kerja yang sering digunakan, dengan manajemen UI lengkap.",
 		"feature3": "<bold>Alat Gemini yang Ditingkatkan</bold>: Kemampuan konteks URL baru dan dasar pencarian Google memberikan model Gemini informasi web real-time dan kemampuan penelitian yang ditingkatkan.",
-		"hideButton": "Sembunyikan pengumuman",
-		"detailsDiscussLinks": "Dapatkan detail lebih lanjut dan bergabung dalam diskusi di <vkLink>VK</vkLink> dan <telegramLink>Telegram</telegramLink> 🚀"
+		"hideButton": "Sembunyikan pengumuman"
 	},
 	"reasoning": {
 		"thinking": "Berpikir",

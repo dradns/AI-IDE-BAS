@@ -263,15 +263,13 @@
 	},
 	"announcement": {
 		"title": "🎉 AI IDE BAS {{version}} 已发布",
-		"description": "AI IDE BAS {{version}} 支持 4 种语言：用您的语言思考和创作",
+		"description": "🧠✨ AI IDE BAS 新功能与能力",
 		"whatsNew": "新特性",
-		"feature1": "AI IDE BAS 现在支持俄语、英语、西班牙语和中文，不仅仅是翻译，而是用所选语言思考！",
-		"feature2": "界面已完全本地化，无论使用哪种语言，都能舒适地工作。",
-		"feature3": "提示词适配每种语言文化，LLM 会考虑上下文、风格和措辞特点。",
-		"feature4": "产物从一开始就用所选语言生成，无需事后翻译。这意味着逻辑、结构和语调都符合语言环境。",
-		"feature5": "🎯 为什么需要这个？让每位开发者、分析师或设计师能够自然地与 AI 交互——没有语言障碍，也不会丢失语义。",
-		"hideButton": "隐藏公告",
-		"detailsDiscussLinks": "在 <vkLink>VK</vkLink> 和 <telegramLink>Telegram</telegramLink> 获取更多详情并参与讨论 🚀"
+		"feature1": "我们创建了 AI IDE BAS 使用指南。我们准备了<guideLink>详细指南</guideLink>，介绍如何使用扩展并在不同模式（角色）下创建产物。该指南将帮助您更快上手并开始处理您的项目。",
+		"feature2": "Helper 角色已更新。通过此角色，您可以了解如何使用扩展、有哪些模式（角色）和产物、如何创建项目以及如何根据您的需求自定义 AI IDE BAS。",
+		"feature3": "葡萄牙语支持。已添加葡萄牙语支持。您现在可以使用以下语言在 AI IDE BAS 中工作：俄语、英语、西班牙语、中文和葡萄牙语。",
+		"feature4": "可为我们的扩展留下反馈。您可以直接在扩展的「Account」选项卡中提交反馈。登录 Google 账户后可发送反馈，也可在退出登录后匿名发送。",
+		"hideButton": "隐藏公告"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS想使用浏览器:",

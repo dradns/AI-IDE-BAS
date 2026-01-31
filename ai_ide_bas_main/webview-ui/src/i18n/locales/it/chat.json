@@ -268,8 +268,7 @@
 		"feature1": "<bold>Coda Messaggi</bold>: Metti in coda più messaggi mentre AI IDE BAS sta lavorando, permettendoti di continuare a pianificare il tuo flusso di lavoro senza interruzioni.",
 		"feature2": "<bold>Comandi Slash Personalizzati</bold>: Crea comandi slash personalizzati per accesso rapido a prompt e flussi di lavoro utilizzati frequentemente, con gestione completa dell'interfaccia utente.",
 		"feature3": "<bold>Strumenti Gemini Migliorati</bold>: Nuove capacità di contesto URL e fondamenta di ricerca Google forniscono ai modelli Gemini informazioni web in tempo reale e capacità di ricerca migliorate.",
-		"hideButton": "Nascondi annuncio",
-		"detailsDiscussLinks": "Ottieni maggiori dettagli e partecipa alle discussioni su <vkLink>VK</vkLink> e <telegramLink>Telegram</telegramLink> 🚀"
+		"hideButton": "Nascondi annuncio"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS vuole utilizzare il browser:",

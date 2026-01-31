@@ -37,14 +37,14 @@
 			"instagram": "Instagram"
 		},
 		"title": "AI IDE BAS: Your AI assistant for analytics",
-		"desc": "Generate documents and artifacts with AI IDE BAS using expert-built templates from our team — faster and higher quality than a typical LLM. 💡Start by choosing a role, then enter the project and required artifact in the prompt field; the AI will begin working on your document. See the full guide to working with AI IDE BAS.",
+		"desc": "Generate documents and artifacts with AI IDE BAS using expert-built templates from our team — faster and higher quality than a typical LLM.\n\n💡Start by choosing a role, then enter the project and required artifact in the prompt field; the AI will begin working on your document. See the <guideLink>full guide</guideLink> to working with AI IDE BAS.",
 		"features": {
 			"bonus": "Welcome bonus: get free DeepSeek tokens after registration.",
 			"productionArtifacts": "Generate artifacts tailored to your development processes.",
 			"googleSignIn": "Sign in with Google: fast start without passwords.",
 			"workAnywhere": "Work in the cloud: share results with teammates."
 		},
-		"support": "Having trouble? Contact our team.",
+		"support": "Having trouble? <supportLink>Contact our team</supportLink>.",
 		"signInWithGoogle": "Sign in with Google",
 		"openingBrowser": "Opening browser...",
 		"checkBrowserWindow": "💡 Check if the authorization window opened in your browser"

@@ -1,107 +1,120 @@
 <div align="center">
-<sub>
 
-<b>Русский</b> • [English](locales/en/README.md) • [العربية](locales/ar/README.md) • [Español](locales/es/README.md) • [中文](locales/zh/README.md) • [Português](locales/pt/README.md)
+**Русский** • [English](locales/en/README.md) • [Español](locales/es/README.md) • [Português](locales/pt-BR/README.md) • [中文](locales/zh/README.md)
 
-</sub>
 </div>
 
 <br>
 
 <div align="center">
   <h1>AI IDE BAS</h1>
-  <p align="center">
-    <img src="https://media.githubusercontent.com/media/AIIDEBASInc/AI-IDE-BAS/main/src/assets/docs/demo.gif" width="100%" />
-  </p>
   <p>
-     AI IDE BAS — интеллектуальный агент прямо в редакторе кода.  
-     Он создан как помощник для <b>архитекторов</b> и <b>аналитиков</b>, 
-     специализируется на генерировании и обновлении документации и других проектных артефактов, 
-     а также выполняет привычные задачи автоматизации разработки.
+     <b>AI IDE BAS</b> — ИИ инструмент для генерации и проверки артефактов <b>системных</b> и <b>бизнес аналитиков</b>, <b>архитекторов решений</b>. Он позволяет превратить IDE в универсальное рабочее пространство на основе экспертных шаблонов и помогает автоматизировать рутину, создавая артефакты быстрее и качественнее, чем обычная LLM. 
+     <br>
+     На старте вы получаете <b>500 бесплатных бонусов</b>. Далее можно подключить любую LLM по API-ключу.
+ <br><br>
+     Подробности вы можете найти в нашем <a href="https://t.me/+XktkZ77JlYA2N2Yy">гайде</a>. Регистрируйтесь и тестируйте возможности.
+     
+   
   </p>
 
-<a href="https://m.vk.com/ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Join%20VK-4C75A3?style=for-the-badge&logo=vk&logoColor=white" alt="Join VK"></a>
-<a href="https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" target="_blank"><img src="https://img.shields.io/badge/Join%20Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Join Instagram"></a>
-<a href="https://t.me/+IGUP0XsxRSBmY2Ri" target="_blank"><img src="https://img.shields.io/badge/Join%20Telegram-1C75A4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram"></a>
+<a href="https://vkvideo.ru/@ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Join%20VK-4C75A3?style=for-the-badge&logo=vk&logoColor=white" alt="Join VK"></a> <a href="https://t.me/+IGUP0XsxRSBmY2Ri" target="_blank"><img src="https://img.shields.io/badge/Join%20Telegram-1C75A4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram"></a> <a href="https://www.youtube.com/@ai_ide_bas" target="_blank"><img src="https://img.shields.io/badge/Subscribe%20YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Subscribe YouTube">
+  </a>
 
 </div>
 
 ---
 
-## Что умеет AI IDE BAS?
+## Гайд по работе с <b>AI IDE BAS</b>
 
-### Генерация:
+Гайд состоит из 1 общего и 5 "ролевых" блоков, в рамках которых создаются свои артефакты.
 
-- Backend логики
-- Диаграммы ERD
-- Sequence диаграммы
-- Спецификации в формате OpenAPI
-- Спецификации для Kafka Message Broker в формате AsyncAPI
-- Нефункциональных требований
-- Создания User Stories (сторей)
-- Use Cases (вариантов использования)
-- Activity Diagram процесса в формате PlantUML
-- Стейкхолдерах проекта
-- Acceptance Criteria (Критериев приемки)
-- Глоссария проекта
-- Component Diagram
-- Wireframe (мокап, прототип)
+В [гайде](https://t.me/+XktkZ77JlYA2N2Yy) для вас есть вся необходимая информация:  
+- как установить и настроить AI IDE BAS;
+- как протестировать наше расширение;
+- как подключить свой API ключ для LLM к AI IDE BAS;
+- как сделать основные артефакты бизнес-аналитика, системного аналитика и архитектора решений на примере простого проекта;
+- как сделать кликабельный макет будущей фичи прямо во время рабочей встречи.
 
-### Проверка:
-
-- Кибербезопасности (Cybersecurity)
-- Качества требований и артефактов бизнес и системного аналитика (сеньором системным аналитиком)
-- Проверка архитектурных решений (Solution Architect)
-- Проверка с позиции инженера поддержки (Support Engineer)
+[Посмотреть гайд можно здесь](https://t.me/+XktkZ77JlYA2N2Yy)
 
 ---
 
-## Быстрый старт
-
-1. Установите расширение из VS Code Marketplace.
-2. Подключите провайдера ИИ (OpenAI-совместимый или локальную модель).
-3. Запустите первое задание через командную палитру `AI IDE BAS: New Task`.
+## Что умеет <b>AI IDE BAS</b>?
+AI IDE BAS помогает <b>генерировать и проверять различные артефакты</b>. Работа строится через роли — для каждой роли предусмотрены свои артефакты.
 
 ---
 
-## Ключевые возможности
+## Основные роли:
+### <b>Бизнес аналитик</b>
+- создание User Stories;
+- создание Use Cases; 
+- создание Activity диаграммы бизнес-процесса в формате PlantUML;
+- создание Acceptance Criteria; 
+- формирование глоссария проекта;
+- сбор сведений о стейкхолдерах проекта;
+- проверка выбранного артефакта бизнес-аналитика.
+### <b>Системный аналитик</b> 
+- создание ERD (диаграммы сущность-связь); 
+- создание модели данных;
+- создание Sequence диаграммы;
+- создание спецификации в формате OpenAPI;
+- создание спецификации для Kafka Message Broker в формате AsyncAPI;
+- создание нефункциональных требований;
+- проверка выбранного артефакта системного аналитика.
+### <b>Архитектор решений</b> 
+- создание диаграммы контекста;
+- создание диаграммы контейнеров;
+- создание диаграммы компонентов;
+- проверка выбранного артефакта архитектора решений.
+### <b>Reviewer</b>: 
+- проверка проекта на предмет качества требований и артефактов бизнес и системного аналитика; 
+- проверка проекта по требованиям кибербезопасности; 
+- проверка архитектурных решений проекта;
+- оценка стоимости решения;
+- проверка проекта инженером поддержки.
 
-### Множественные режимы
 
-- Code Mode
-- Architect Mode
-- Ask Mode
-- Debug Mode
-- Custom Modes — создавайте неограниченное количество своих «персон».
 
-### Инструменты
+## Дополнительные роли:
+### <b>Helper</b>
+- роль для консультаций и подсказок по возможностям AI IDE BAS и работе с расширением.
+### <b>Дизайнер</b>
+- создание кликабельных прототипов.
+### <b>Проектный менеджер</b>
+- создание текстового описания бэклога спринта;
+- создание постановки задачи в разработку;
+- диаграмма Ганта в формате PlantUML;
+- диаграмма зависимостей в формате PlantUML.
 
-- Чтение/запись файлов в рабочем пространстве
-- Выполнение команд в терминале VS Code
-- Управление браузером
-- Подключение сторонних сервисов через MCP (Model Context Protocol)
+###
 
-### Настройка
-
-- Пользовательские инструкции и шаблоны
-- Локальные модели
-- Настройка автоматического подтверждения действий
 
 ---
 
-## Cообщество
+### <b>Быстрый старт</b>
+  1. Установите расширение из VS Code Marketplace.
+  2. Начните с 500 бесплатных бонусов — они доступны новым пользователям для тестирования возможностей расширения при авторизации через google-аккаунт.
+  3. Когда бонусы закончатся — подключите ИИ-провайдера: можно использовать любую LLM через API-ключ (мы рекомендуем DeepSeek, как лучшее соотношение цена/качество).
+  4. Выберите роль и сразу начинайте работать: генерируйте и проверяйте артефакты, создавайте диаграммы и макеты.
+  5. [Текстовая инструкция](https://telegra.ph/Instrukciya-po-ustanovke-i-nastrojke-AI-IDE-BAS-07-30) и [видео-гайд](https://t.me/+XktkZ77JlYA2N2Yy) помогут легко установить расширение, подключить API и создать первые артефакты.
+---
 
-- VK: https://m.vk.com/ai_ide_bas
-- Instagram: https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==
-- Telegram: https://t.me/+IGUP0XsxRSBmY2Ri
-- GitHub Issues / Feature Requests
+### <b>Полезные ссылки</b>
+
+- [Гайд AI IDE BAS](https://t.me/+XktkZ77JlYA2N2Yy): как установить, настроить и начать использовать расширение.
+- [Вопросы и предложения](https://t.me/aiidebas/1): задать вопрос, оставить фидбек или предложить улучшение.
+- [Официальный сайт](https://aiidebas.com/?utm_source=mp): описание AI IDE BAS и основные возможности.
+- [TG-канал](https://t.me/+U7KZi1DJbCViYmUy): новости, обновления и анонсы.
+- [YouTube-канал](https://www.youtube.com/@ai_ide_bas) и [VK-видео](https://vkvideo.ru/@ai_ide_bas): записи стримов и полезные видео по работе с расширением.
 
 ---
 
-## Лицензия
+### </b>Лицензия</b>
 
-[Apache-2.0 © 2025 AI IDE BAS, Inc.](./LICENSE)
+Лицензионное соглашение доступно на [странице Visual Studio Marketplace](https://marketplace.visualstudio.com/items/8eton.ai-ide-bas/license).
 
 ---
+ <br>
 
-**Приятной работы с AI IDE BAS!**
+### **Приятной работы с AI IDE BAS!**

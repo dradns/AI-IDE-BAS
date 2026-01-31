@@ -1,8 +1,24 @@
 import { useEffect, useState } from "react"
-import { useTranslation } from "react-i18next"
+import { useTranslation, Trans } from "react-i18next"
 import { vscode } from "@src/utils/vscode"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { Avatar } from "@src/components/common/Avatar"
+
+const GUIDE_URL = "https://t.me/+O9j8UaeSCChjNjli"
+const SUPPORT_URL = "https://t.me/aiidebas/1"
+
+const openExternal = (url: string) => () => vscode.postMessage({ type: "openExternal", url })
+
+const GuideLink = ({ children }: { children?: React.ReactNode }) => (
+	<button type="button" className="link border-0 bg-transparent p-0 cursor-pointer underline text-inherit font-inherit" onClick={openExternal(GUIDE_URL)}>
+		{children}
+	</button>
+)
+const SupportLink = ({ children }: { children?: React.ReactNode }) => (
+	<button type="button" className="link border-0 bg-transparent p-0 cursor-pointer underline text-inherit font-inherit" onClick={openExternal(SUPPORT_URL)}>
+		{children}
+	</button>
+)
 
 export function RooCloudCTA() {
 	// i18n for Welcome page
@@ -100,14 +116,18 @@ export function RooCloudCTA() {
 			{/* Welcome text */}
 			<div className="text-left bg-vscode-editorWidget-background border border-vscode-editorWidget-border rounded p-3 leading-relaxed">
 				<div className="font-semibold mb-1">{t("cloudCta.title")}</div>
-				<p className="m-0 mb-2">{t("cloudCta.desc")}</p>
+				<p className="m-0 mb-2 whitespace-pre-line">
+					<Trans i18nKey="welcome:cloudCta.desc" components={{ guideLink: <GuideLink /> }} />
+				</p>
 				<ul className="m-0 pl-4 list-disc space-y-1">
 					<li>{t("cloudCta.features.bonus")}</li>
 					<li>{t("cloudCta.features.googleSignIn")}</li>
 					<li>{t("cloudCta.features.productionArtifacts")}</li>
 					<li>{t("cloudCta.features.workAnywhere")}</li>
 				</ul>
-				<p className="m-0 mt-2 text-sm text-vscode-descriptionForeground">{t("cloudCta.support")}</p>
+				<p className="m-0 mt-2 text-sm text-vscode-descriptionForeground">
+					<Trans i18nKey="welcome:cloudCta.support" components={{ supportLink: <SupportLink /> }} />
+				</p>
 			</div>
 
 			{/* Show avatar when authorized */}

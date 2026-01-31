@@ -34,7 +34,7 @@
       "instagram": "Instagram"
     },
     "title": "AI IDE BAS：你的分析型 AI 助手",
-    "desc": "使用 AI IDE BAS 透過我們團隊專家模板產出文件與成果，比一般 LLM 更快、更高品質。💡先選擇角色，在提示詞欄位填入專案與所需產物，AI 便會開始生成文件。查看 AI IDE BAS 的完整使用指南。",
+    "desc": "使用 AI IDE BAS 透過我們團隊專家模板產出文件與成果，比一般 LLM 更快、更高品質。\n\n💡先選擇角色，在提示詞欄位填入專案與所需產物，AI 便會開始生成文件。查看 AI IDE BAS 的完整使用指南。",
     "features": {
       "bonus": "歡迎獎勵：註冊後即可獲得免費 DeepSeek 代幣。",
       "productionArtifacts": "生成貼合你開發流程的產物。",

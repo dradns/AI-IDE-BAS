@@ -268,8 +268,7 @@
 		"feature1": "<bold>Cua de Missatges</bold>: Posa en cua múltiples missatges mentre AI IDE BAS està treballant, permetent-te continuar planificant el teu flux de treball sense interrupcions.",
 		"feature2": "<bold>Comandaments de Barra Personalitzats</bold>: Crea comandaments de barra personalitzats per a accés ràpid a prompts i fluxos de treball utilitzats freqüentment, amb gestió completa de la interfície d'usuari.",
 		"feature3": "<bold>Eines Gemini Millorades</bold>: Noves capacitats de context d'URL i fonamentació de cerca de Google proporcionen als models Gemini informació web en temps real i capacitats de recerca millorades.",
-		"hideButton": "Amaga l'anunci",
-		"detailsDiscussLinks": "Obtén més detalls i uneix-te a les discussions a <vkLink>VK</vkLink> i <telegramLink>Telegram</telegramLink> 🚀"
+		"hideButton": "Amaga l'anunci"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS vol utilitzar el navegador:",

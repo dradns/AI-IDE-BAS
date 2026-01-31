@@ -268,8 +268,7 @@
 		"feature1": "<bold>メッセージキュー</bold>: AI IDE BASが作業中に複数のメッセージをキューに入れ、ワークフローの計画を中断することなく続行できます。",
 		"feature2": "<bold>カスタムスラッシュコマンド</bold>: よく使用するプロンプトやワークフローへの迅速なアクセスのために、パーソナライズされたスラッシュコマンドを作成し、完全なUI管理を提供します。",
 		"feature3": "<bold>強化されたGeminiツール</bold>: 新しいURLコンテキストとGoogle検索グラウンディング機能により、Geminiモデルにリアルタイムのウェブ情報と強化された研究能力を提供します。",
-		"hideButton": "通知を非表示",
-		"detailsDiscussLinks": "詳細は<vkLink>VK</vkLink>と<telegramLink>Telegram</telegramLink>でご確認・ディスカッションください 🚀"
+		"hideButton": "通知を非表示"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BASはブラウザを使用したい:",

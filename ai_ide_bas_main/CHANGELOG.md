@@ -1,4 +1,25 @@
 # CHANGELOG
+## [0.1.6] - 2026-01-31
+🧠✨ <b>New Features and Capabilities of AI IDE BAS:</b>
+<br><br>
+1️⃣ <b>We created a Guide for Working with AI IDE BAS</b>
+<br>We have prepared a detailed guide that shows how to use the extension and create artifacts in different modes (roles). The guide will help you get up to speed faster and start working on your project.
+<br>
+2️⃣ <b>Helper Role Updated</b>
+<br>
+With this role, you can learn how to use the extension, what modes (roles) and artifacts are available, how to create projects, and how to customize AI IDE BAS to fit your needs.
+<br>
+3️⃣ <b>Portuguese Language Support</b>
+<br>
+Portuguese language support has been added.
+You can now work in AI IDE BAS in the following languages: Russian, English, Spanish, Chinese, and Portuguese.
+<br>
+4️⃣ <b>Ability to Leave Feedback About Our Extension</b>
+<br>
+You can submit feedback from the “Account” tab directly in the extension. Feedback can be sent either when registered via a Google account or anonymously after logging out.
+
+
+
 
 ## [0.1.5] - 2025-10-29
 🌍 4-Language Support: Think and Create in Your Native Language

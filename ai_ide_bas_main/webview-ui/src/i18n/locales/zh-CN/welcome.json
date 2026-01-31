@@ -34,14 +34,14 @@
       "instagram": "Instagram"
     },
     "title": "AI IDE BAS：你的分析型 AI 助手",
-    "desc": "使用 AI IDE BAS 基于我们团队专家模板生成文档和产物，比常规 LLM 更快、更高质量。💡先选择角色，在提示词字段填写项目和所需产物，AI 就会开始生成文档。查看 AI IDE BAS 的完整使用指南。",
+    "desc": "使用 AI IDE BAS 基于我们团队专家模板生成文档和产物，比常规 LLM 更快、更高质量。\n\n💡先选择角色，在提示词字段填写项目和所需产物，AI 就会开始生成文档。查看 AI IDE BAS 的<guideLink>完整使用指南</guideLink>。",
     "features": {
       "bonus": "欢迎奖励：注册后可获得免费 DeepSeek 代币。",
       "productionArtifacts": "生成贴合你开发流程的产物。",
       "googleSignIn": "通过 Google 授权：无需密码快速开始。",
       "workAnywhere": "云端工作：与同事分享成果。"
     },
-    "support": "遇到问题？请联系我们的团队。",
+    "support": "遇到问题？<supportLink>请联系我们的团队</supportLink>。",
     "signInWithGoogle": "使用 Google 登录",
     "openingBrowser": "正在打开浏览器...",
     "checkBrowserWindow": "💡 请检查浏览器中是否已打开授权窗口"

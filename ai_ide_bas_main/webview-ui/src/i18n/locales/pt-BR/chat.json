@@ -263,13 +263,13 @@
 	},
 	"announcement": {
 		"title": "🎉 AI IDE BAS {{version}} Lançado",
-		"description": "AI IDE BAS {{version}} traz novos recursos poderosos e melhorias significativas para aprimorar seu fluxo de trabalho de desenvolvimento.",
+		"description": "🧠✨ Novos recursos e capacidades do AI IDE BAS",
 		"whatsNew": "O que há de novo",
-		"feature1": "<bold>Fila de Mensagens</bold>: Coloque várias mensagens na fila enquanto o AI IDE BAS está trabalhando, permitindo que você continue planejando seu fluxo de trabalho sem interrupção.",
-		"feature2": "<bold>Comandos de Barra Personalizados</bold>: Crie comandos de barra personalizados para acesso rápido a prompts e fluxos de trabalho usados frequentemente, com gerenciamento completo da interface do usuário.",
-		"feature3": "<bold>Ferramentas Gemini Aprimoradas</bold>: Novas capacidades de contexto de URL e fundamentação de pesquisa do Google fornecem aos modelos Gemini informações web em tempo real e capacidades de pesquisa aprimoradas.",
-		"hideButton": "Ocultar anúncio",
-		"detailsDiscussLinks": "Obtenha mais detalhes e participe da discussão no <vkLink>VK</vkLink> e <telegramLink>Telegram</telegramLink> 🚀"
+		"feature1": "Criamos um guia para trabalhar com o AI IDE BAS. Preparamos um <guideLink>guia detalhado</guideLink> que mostra como usar a extensão e criar artefatos em diferentes modos (funções). O guia ajudará você a se familiarizar mais rápido e começar a trabalhar no seu projeto.",
+		"feature2": "Função Helper atualizada. Com essa função, você pode aprender a usar a extensão, quais modos (funções) e artefatos estão disponíveis, como criar projetos e como personalizar o AI IDE BAS às suas necessidades.",
+		"feature3": "Suporte ao idioma português. Foi adicionado suporte ao idioma português. Agora você pode trabalhar no AI IDE BAS nos seguintes idiomas: russo, inglês, espanhol, chinês e português.",
+		"feature4": "Possibilidade de deixar feedback sobre nossa extensão. Você pode enviar feedback na aba \"Account\" diretamente na extensão. O feedback pode ser enviado com uma conta Google ou de forma anônima após sair da conta.",
+		"hideButton": "Ocultar anúncio"
 	},
 	"browser": {
 		"rooWantsToUse": "AI IDE BAS quer usar o navegador:",

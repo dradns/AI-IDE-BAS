@@ -34,7 +34,7 @@
       "instagram": "Instagram"
     },
     "title": "AI IDE BAS: seu assistente de IA para análise",
-    "desc": "Gere documentação, requisitos e artefatos de projeto muito mais rápido com IA.",
+    "desc": "Gere documentação, requisitos e artefatos de projeto muito mais rápido com IA.\n\n💡 Consulte o <guideLink>guia completo</guideLink> para trabalhar com AI IDE BAS.",
     "features": {
       "bonus": "Bônus de boas‑vindas. Receba tokens DeepSeek gratuitos após o cadastro.",
       "productionArtifacts": "Gere artefatos reais adaptados aos seus processos de desenvolvimento.",
@@ -42,7 +42,7 @@
       "googleSignIn": "Entrar com Google. Início rápido sem senhas.",
       "workAnywhere": "Trabalhe de qualquer lugar. Crie projetos na nuvem e compartilhe resultados."
     },
-    "support": "Teve dificuldades? Entre em contato com nossa equipe.",
+    "support": "Teve dificuldades? <supportLink>Entre em contato com nossa equipe</supportLink>.",
     "signInWithGoogle": "Entrar com Google",
     "openingBrowser": "Abrindo o navegador...",
     "checkBrowserWindow": "💡 Verifique se a janela de autorização foi aberta no navegador"
