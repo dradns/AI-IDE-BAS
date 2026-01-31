@@ -110,7 +110,7 @@ AI IDE BAS помогает <b>генерировать и проверять р
 
 ---
 
-### </b>Лицензия</b>
+### <b>Лицензия</b>
 
 Лицензионное соглашение доступно на [странице Visual Studio Marketplace](https://marketplace.visualstudio.com/items/8eton.ai-ide-bas/license).
 
