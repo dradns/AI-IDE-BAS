@@ -62,7 +62,6 @@ export const About = ({ telemetrySetting, setTelemetrySetting, className, ...pro
 						i18nKey="settings:footer.feedback"
 						components={{
 							telegramLink: <VSCodeLink href="https://t.me/AI_IDE_BAS" />,
-							instagramLink: <VSCodeLink href="https://instagram.com/ai_ide_bas" />,
 							vkLink: <VSCodeLink href="https://m.vk.com/ai_ide_bas" />,
 							youtubeLink: <VSCodeLink href="https://youtube.com/@AI_IDE_BAS" />,
 							githubLink: <VSCodeLink href="https://github.com/dradns/AI-IDE-BAS" />,

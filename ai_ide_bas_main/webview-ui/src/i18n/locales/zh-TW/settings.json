@@ -719,7 +719,7 @@
 		"useCustomModel": "使用自訂模型：{{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 加入我們: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 加入我們: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "允許匿名錯誤與使用情況回報",
 			"description": "透過傳送匿名的使用資料與錯誤回報，協助改善 AI IDE BAS。我們絕不會傳送您的程式碼、提示或個人資訊。詳細資訊請參閱我們的隱私權政策。"

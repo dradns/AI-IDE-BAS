@@ -73,7 +73,7 @@ export function RooCloudCTA() {
 						https://aiidebas.com/
 					</a>
 				</div>
-				<nav aria-label={t("cloudCta.social.telegram") + ", " + t("cloudCta.social.youtube") + ", " + t("cloudCta.social.vk") + ", " + t("cloudCta.social.github") + ", " + t("cloudCta.social.instagram")} className="flex flex-wrap items-center justify-center sm:justify-end gap-2 min-w-0">
+				<nav aria-label={t("cloudCta.social.telegram") + ", " + t("cloudCta.social.youtube") + ", " + t("cloudCta.social.vk") + ", " + t("cloudCta.social.github")} className="flex flex-wrap items-center justify-center sm:justify-end gap-2 min-w-0">
 					{/* Social links with branded SVG icons */}
 					<button
 						aria-label={t("cloudCta.social.telegram")}
@@ -102,13 +102,6 @@ export function RooCloudCTA() {
 						title={t("cloudCta.social.github")}
 						onClick={()=>vscode.postMessage({ type: "openExternal", url: "https://github.com/dradns/AI-IDE-BAS" })}>
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.77.6-3.36-1.19-3.36-1.19-.45-1.15-1.11-1.45-1.11-1.45-.9-.61.07-.6.07-.6 1 .07 1.52 1.03 1.52 1.03.89 1.52 2.34 1.08 2.91.83.09-.64.35-1.08.63-1.33-2.21-.25-4.54-1.11-4.54-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.53 9.53 0 0 1 12 6.84c.85 0 1.7.11 2.5.33 1.9-1.29 2.74-1.02 2.74-1.02.56 1.37.21 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86 0 1.34-.01 2.41-.01 2.73 0 .27.18.58.69.48A10 10 0 0 0 12 2Z" clipRule="evenodd"/></svg>
-					</button>
-					<button
-						aria-label={t("cloudCta.social.instagram")}
-						className="h-8 w-8 rounded-full border border-vscode-editorWidget-border bg-vscode-editorWidget-background hover:bg-vscode-list-hoverBackground flex items-center justify-center flex-shrink-0"
-						title={t("cloudCta.social.instagram")}
-						onClick={()=>vscode.postMessage({ type: "openExternal", url: "https://www.instagram.com/ai_ide_bas?igsh=MWc5Z3JxZm81YjYyMA==" })}>
-						<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Zm-5 3.5A5.5 5.5 0 1 1 6.5 13 5.5 5.5 0 0 1 12 7.5Zm0 2A3.5 3.5 0 1 0 15.5 13 3.5 3.5 0 0 0 12 9.5Zm5.25-3a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.25 6.5Z"/></svg>
 					</button>
 				</nav>
 			</div>

@@ -719,7 +719,7 @@
 		"useCustomModel": "사용자 정의 사용: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 함께하세요: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 함께하세요: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "익명 오류 및 사용 보고 허용",
 			"description": "익명 사용 데이터 및 오류 보고서를 보내 AI IDE BAS 개선에 도움을 주세요. 코드, 프롬프트 또는 개인 정보는 절대 전송되지 않습니다. 자세한 내용은 개인정보 보호정책을 참조하세요."

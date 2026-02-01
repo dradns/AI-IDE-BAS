@@ -719,7 +719,7 @@
 		"useCustomModel": "Aangepast gebruiken: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 Doe mee met ons: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 Doe mee met ons: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Anonieme fout- en gebruiksrapportage toestaan",
 			"description": "Help AI IDE BAS te verbeteren door anonieme gebruiksgegevens en foutmeldingen te verzenden. Er worden nooit code, prompts of persoonlijke gegevens verzonden. Zie ons privacybeleid voor meer informatie."

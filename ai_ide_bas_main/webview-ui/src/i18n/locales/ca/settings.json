@@ -717,7 +717,7 @@
 		"useCustomModel": "Utilitzar personalitzat: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 Uneix-te a nosaltres: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 Uneix-te a nosaltres: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Permetre informes anònims d'errors i ús",
 			"description": "Ajudeu a millorar AI IDE BAS enviant dades d'ús anònimes i informes d'errors. Mai s'envia codi, prompts o informació personal. Vegeu la nostra política de privacitat per a més detalls."

@@ -719,7 +719,7 @@
 		"useCustomModel": "Usa personalizzato: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 Unisciti a noi: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 Unisciti a noi: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Consenti segnalazioni anonime di errori e utilizzo",
 			"description": "Aiuta a migliorare AI IDE BAS Code inviando dati di utilizzo anonimi e segnalazioni di errori. Non vengono mai inviati codice, prompt o informazioni personali. Consulta la nostra politica sulla privacy per maggiori dettagli."

@@ -11,7 +11,7 @@
   <p>
      <b>AI IDE BAS</b> — ferramenta de IA para gerar e validar artefatos de <b>analistas de sistemas</b>, <b>analistas de negócios</b> e <b>arquitetos de soluções</b>. Transforma sua IDE em um espaço de trabalho universal com base em modelos especializados e ajuda a automatizar a rotina, criando artefatos mais rápido e com melhor qualidade do que uma LLM genérica.
      <br>
-     Você recebe <b>500 bônus gratuitos</b> para começar. Depois, pode conectar qualquer LLM por API key.
+     Você recebe <b>500 tokens bônus</b> para começar. Depois, pode conectar qualquer LLM por API key.
  <br><br>
      Mais detalhes no nosso <a href="https://t.me/+XktkZ77JlYA2N2Yy">guia</a>. Cadastre-se e teste as funcionalidades.
      
@@ -94,8 +94,8 @@ O AI IDE BAS ajuda a <b>gerar e validar diversos artefatos</b>. O trabalho é or
 
 ### <b>Início rápido</b>
   1. Instale a extensão no VS Code Marketplace.
-  2. Comece com 500 bônus gratuitos — disponíveis para novos usuários ao entrar com conta Google.
-  3. Quando os bônus acabarem — conecte um provedor de IA: você pode usar qualquer LLM por API key (recomendamos DeepSeek pela relação custo/benefício).
+  2. Comece com 500 tokens bônus — disponíveis para novos usuários ao entrar com conta Google.
+  3. Quando os tokens acabarem — conecte um provedor de IA: você pode usar qualquer LLM por API key (recomendamos DeepSeek pela relação custo/benefício).
   4. Escolha uma função e comece a trabalhar: gere e valide artefatos, crie diagramas e mockups.
   5. [Instruções em texto](https://telegra.ph/Instrukciya-po-ustanovke-i-nastrojke-AI-IDE-BAS-07-30) e [guia em vídeo](https://t.me/+XktkZ77JlYA2N2Yy) ajudam a instalar a extensão, conectar a API e criar os primeiros artefatos.
 ---

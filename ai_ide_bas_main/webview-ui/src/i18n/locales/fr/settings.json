@@ -718,7 +718,7 @@
 		"useCustomModel": "Utiliser personnalisé : {{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 Rejoignez-nous: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 Rejoignez-nous: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Autoriser les rapports anonymes d'erreurs et d'utilisation",
 			"description": "Aidez à améliorer Roo Code en envoyant des données d'utilisation anonymes et des rapports d'erreurs. Aucun code, prompt ou information personnelle n'est jamais envoyé. Consultez notre politique de confidentialité pour plus de détails."

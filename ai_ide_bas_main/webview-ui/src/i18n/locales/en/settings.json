@@ -717,7 +717,7 @@
 		"useCustomModel": "Use custom: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "💬 Join us: <telegramLink>Telegram</telegramLink> | <instagramLink>Instagram</instagramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
+		"feedback": "💬 Join us: <telegramLink>Telegram</telegramLink> | <vkLink>VK</vkLink> | <youtubeLink>YouTube</youtubeLink> | <githubLink>GitHub</githubLink>",
 		"telemetry": {
 			"label": "Allow anonymous error and usage reporting",
 			"description": "Help improve AI IDE BAS by sending anonymous usage data and error reports. No code, prompts, or personal information is ever sent (unless you connect to AI IDE BAS Cloud). See our <privacyLink>privacy policy</privacyLink> for more details."
