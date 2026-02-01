@@ -11,7 +11,7 @@
   <p>
      <b>AI IDE BAS</b> — 面向 <b>系统分析师</b>、<b>业务分析师</b> 和 <b>解决方案架构师</b> 的 AI 产物生成与校验工具。它基于专家模板将 IDE 变为通用工作空间，帮助自动化日常任务，以比通用 LLM 更快、更高质量地创建产物。
      <br>
-     新用户可获得 <b>500 免费奖励</b>。之后可通过 API 密钥连接任意 LLM。
+     新用户可获得 <b>500 奖励代币</b>。之后可通过 API 密钥连接任意 LLM。
  <br><br>
      更多详情请见我们的 <a href="https://t.me/+XktkZ77JlYA2N2Yy">指南</a>。注册即可体验。
      
@@ -94,8 +94,8 @@ AI IDE BAS 帮助 <b>生成和校验各类产物</b>。工作按角色组织 —
 
 ### <b>快速开始</b>
   1. 从 VS Code Marketplace 安装扩展。
-  2. 新用户使用 Google 账号登录可获得 500 免费奖励，用于体验扩展。
-  3. 奖励用完后 — 连接 AI 提供商：可通过 API 密钥使用任意 LLM（推荐 DeepSeek，性价比高）。
+  2. 新用户使用 Google 账号登录可获得 500 奖励代币，用于体验扩展。
+  3. 代币用完后 — 连接 AI 提供商：可通过 API 密钥使用任意 LLM（推荐 DeepSeek，性价比高）。
   4. 选择角色即可开始：生成与校验产物、创建图表与原型。
   5. [文字说明](https://telegra.ph/Instrukciya-po-ustanovke-i-nastrojke-AI-IDE-BAS-07-30) 与 [视频指南](https://t.me/+XktkZ77JlYA2N2Yy) 可帮助安装扩展、连接 API 并创建首批产物。
 ---
