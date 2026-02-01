@@ -112,7 +112,7 @@
 
 ## Лицензия
 
-[Apache-2.0 © 2025 AI IDE BAS, Inc.](./LICENSE)
+[Apache-2.0 © 2025 AI IDE BAS, Inc.](https://www.apache.org/licenses/LICENSE-2.0)
 
 ---
  <br>
