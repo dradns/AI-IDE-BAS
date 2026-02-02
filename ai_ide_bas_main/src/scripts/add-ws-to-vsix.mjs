@@ -115,10 +115,16 @@ try {
     copyRecursive(wsSourceDir, wsDestDir);
     console.log("✅ ws module copied successfully");
 
-    // Repackage VSIX
+    // Repackage VSIX: zip entire contents (keep [Content_Types].xml, extension.vsixmanifest at root).
+    // -X = no extra zip fields (Open VSX rejects "extra fields"); -x = exclude macOS junk.
     console.log("📦 Repackaging VSIX...");
+    const cwd = process.cwd();
     process.chdir(tempDir);
-    execSync(`zip -r -q "${vsixPath}" extension/`, { stdio: "inherit" });
+    try {
+        execSync(`zip -r -X -q "${vsixPath}" . -x "*.DS_Store" -x "__MACOSX*" -x "*__MACOSX*"`, { stdio: "inherit" });
+    } finally {
+        process.chdir(cwd);
+    }
 
     console.log(`✅ Successfully added ws module to ${vsixFileName}`);
 } catch (error) {

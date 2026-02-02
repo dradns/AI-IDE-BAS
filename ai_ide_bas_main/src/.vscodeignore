@@ -1,6 +1,11 @@
 # Exclude everything
 **
 
+# Exclude macOS junk (marketplaces can reject "extra" content)
+**/.DS_Store
+**/__MACOSX
+**/__MACOSX/**
+
 # Include README.md, CHANGELOG.md and LICENSE
 !README.md
 !CHANGELOG.md

@@ -3,7 +3,7 @@
 	"displayName": "AI IDE BAS",
 	"description": "IDE for analysts and architects",
 	"publisher": "8eton",
-	"version": "0.1.6",
+	"version": "0.1.6-3",
 	"icon": "assets/icons/bas-logo.png",
 	"license": "SEE LICENSE IN LICENSE",
 	"galleryBanner": {
@@ -489,6 +489,7 @@
 		"test": "vitest run",
 		"format": "prettier --write .",
 		"bundle": "node esbuild.mjs",
+		"prevsix": "node -e \"const fs=require('fs');const p='../.env';if(fs.existsSync(p))fs.copyFileSync(p,'.env');\"",
         "vsix": "mkdirp ../bin && npm run bundle --",
 		"postvsix": "vsce package --no-dependencies --out ../bin && node scripts/add-ws-to-vsix.mjs",
 		"publish:marketplace": "vsce publish && ovsx publish",
