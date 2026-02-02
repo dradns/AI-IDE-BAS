@@ -475,7 +475,7 @@
 						"www.youtube.com",
 						"telegra.ph",
 						"telegraph.com",
-						"api.aiidebas.com"
+						"api-test.aiidebas.com"
 					],
 					"description": "Список доменов, которые будут открываться без диалога подтверждения"
 				}

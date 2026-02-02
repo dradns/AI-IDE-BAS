@@ -58,9 +58,9 @@ export const MyDeepSeek = ({ apiConfiguration, setApiConfigurationField }: MyDee
 				{t("settings:providers.apiKeyStorageNotice")}
 			</div>
 			<VSCodeTextField
-				value={apiConfiguration?.myDeepSeekBaseUrl || "https://api.aiidebas.com/api/v1"}
+				value={apiConfiguration?.myDeepSeekBaseUrl || "https://api-test.aiidebas.com/api/v1"}
 				onInput={handleInputChange("myDeepSeekBaseUrl")}
-				placeholder="https://api.aiidebas.com/api/v1"
+				placeholder="https://api-test.aiidebas.com/api/v1"
 				className="w-full">
 				<label className="block font-medium mb-1">{t("settings:providers.myDeepSeekBaseUrl")}</label>
 			</VSCodeTextField>
