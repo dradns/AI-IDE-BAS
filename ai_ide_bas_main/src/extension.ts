@@ -85,7 +85,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
 	// Initialize Azure telemetry if aiKey is available
 	try {
-		const { id, packageJSON } = context.extension
+		const { packageJSON } = context.extension
 		if (packageJSON.aiKey) {
 			azureTelemetryReporter = new TelemetryReporter(packageJSON.aiKey)
 			context.subscriptions.push(azureTelemetryReporter)

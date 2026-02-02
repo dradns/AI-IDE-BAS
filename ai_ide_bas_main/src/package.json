@@ -5,7 +5,7 @@
 	"publisher": "8eton",
 	"version": "0.1.6",
 	"icon": "assets/icons/bas-logo.png",
-	"aiKey": "InstrumentationKey=e8a16c83-dab4-48d4-bf92-408c9e579a85",
+	"license": "SEE LICENSE IN LICENSE",
 	"galleryBanner": {
 		"color": "#617A91",
 		"theme": "dark"
