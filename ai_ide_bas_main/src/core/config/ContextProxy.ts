@@ -193,15 +193,26 @@ export class ContextProxy {
 	public getProviderSettings(): ProviderSettings {
 		const values = this.getValues()
 
+		let settings: ProviderSettings
 		try {
-			return providerSettingsSchema.parse(values)
+			settings = providerSettingsSchema.parse(values)
 		} catch (error) {
 			if (error instanceof ZodError) {
 				TelemetryService.instance.captureSchemaValidationError({ schemaName: "ProviderSettings", error })
 			}
 
-			return PROVIDER_SETTINGS_KEYS.reduce((acc, key) => ({ ...acc, [key]: values[key] }), {} as ProviderSettings)
+			settings = PROVIDER_SETTINGS_KEYS.reduce((acc, key) => ({ ...acc, [key]: values[key] }), {} as ProviderSettings)
 		}
+
+		// This branch always uses test API: treat prod URL as test so UI and requests use api-test
+		if (
+			settings.myDeepSeekBaseUrl &&
+			settings.myDeepSeekBaseUrl.includes("api.aiidebas.com") &&
+			!settings.myDeepSeekBaseUrl.includes("api-test")
+		) {
+			settings = { ...settings, myDeepSeekBaseUrl: "https://api-test.aiidebas.com/api/v1" }
+		}
+		return settings
 	}
 
 	public async setProviderSettings(values: ProviderSettings) {
