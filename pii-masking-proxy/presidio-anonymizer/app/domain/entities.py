@@ -1,0 +1,18 @@
+# Entities placeholder
+PERSON = "PERSON"
+ORG = "ORGANIZATION"
+LOC = "LOCATION"
+GPE = "GPE"
+EMAIL = "EMAIL_ADDRESS"
+PHONE = "PHONE_NUMBER"
+PHONE_RU = "PHONE_NUMBER_RU"
+CARD = "CREDIT_CARD"
+
+RU_PASSPORT = "RU_PASSPORT"
+RU_SNILS = "RU_SNILS"
+RU_INN = "RU_INN"
+RU_OGRN = "RU_OGRN"
+RU_OGRNIP = "RU_OGRNIP"
+RU_BIK = "RU_BIK"
+RU_RS = "RU_RS"      # settlement account
+RU_KS = "RU_KS"      # correspondent account
