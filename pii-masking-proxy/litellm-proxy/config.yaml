@@ -1,0 +1,32 @@
+model_list:
+- model_name: deepseek-r1
+  litellm_params:
+    model: openrouter/deepseek/deepseek-r1-0528:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/DEEPSEEK_R1_API_KEY
+- model_name: deepseek-r1-0528
+  litellm_params:
+    model: openrouter/deepseek/deepseek-r1-0528:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/DEEPSEEK_R1_API_KEY
+- model_name: deepseek-chat
+  litellm_params:
+    model: deepseek/deepseek-chat
+    api_base: https://api.deepseek.com
+    api_key: os.environ/DEEPSEEK_API_KEY
+    
+guardrails:
+  - guardrail_name: "presidio"
+    litellm_params:
+      default_on: true
+      guardrail: custom_presidio_guardrail.CustomPresidioGuardrail
+      mode: "pre_call"
+      presidio_filter_scope: "input"
+      presidio_anonymizer_api_base: os.environ/PRESIDIO_ANONYMIZER_API_BASE
+
+general_settings:
+  master_key: sk-1234 
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
+  database_url: os.environ/DATABASE_URL # [OPTIONAL] use for token-based auth to proxy
+  

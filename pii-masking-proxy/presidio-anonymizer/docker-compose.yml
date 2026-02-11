@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  pii:
+    build: .
+    image: pii-server:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - FASTTEXT_MODEL=/models/lid.176.bin
+    volumes:
+      - ./models:/models:ro   # put lid.176.bin here and set FASTTEXT_MODEL=/models/lid.176.bin
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
