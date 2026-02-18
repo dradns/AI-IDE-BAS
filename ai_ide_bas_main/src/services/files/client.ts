@@ -65,7 +65,7 @@ export class AiIdeBasFilesClient {
 		const s = state ? `&state=${encodeURIComponent(state)}` : ""
 		const platform = this.getPlatform()
 		const platformQuery = platform ? `&platform=${encodeURIComponent(platform)}` : ""
-		return `https://api-test.aiidebas.com/api/v1/login?redirect_uri=${cb}${s}${platformQuery}`
+		return `${BASE_URL}/login?redirect_uri=${cb}${s}${platformQuery}`
 	}
 
 	public async logout(): Promise<void> {
@@ -116,7 +116,7 @@ export class AiIdeBasFilesClient {
 	}
 
 	// Referral system methods
-	public async getReferralLink(): Promise<{ referral_link: string; referral_code: string }> {
+	public async getReferralLink(): Promise<{ referral_link: string; }> {
 		const { data } = await this.http.get(`/referral/link`)
 		return data
 	}

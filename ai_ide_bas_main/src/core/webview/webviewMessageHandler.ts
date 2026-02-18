@@ -740,11 +740,10 @@ export const webviewMessageHandler = async (
 		case "referral:getLink": {
 			const client = new AiIdeBasFilesClient(provider.context)
 			try {
-				const { referral_link, referral_code } = await client.getReferralLink()
+				const { referral_link } = await client.getReferralLink()
 				await provider.postMessageToWebview({
 					type: "referral:link:result",
 					referral_link,
-					referral_code,
 				})
 			} catch (error) {
 				const anyErr = error as any

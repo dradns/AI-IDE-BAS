@@ -69,7 +69,6 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 
 	// Invite friend state
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard(2000)
-	const [_personalCode, setPersonalCode] = useState<string>("")
 	const [referralLink, setReferralLink] = useState<string>("")
 	const [inviteEmail, setInviteEmail] = useState("")
 	const [isSubmitting, setIsSubmitting] = useState(false)
@@ -176,7 +175,6 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 					vscode.postMessage({ type: "referral:stats" })
 				} else {
 					setMe(null)
-					setPersonalCode("")
 					setReferralLink("")
 					setStats({ invitedFriends: 0, tokensReceived: 0 })
 				}
@@ -185,7 +183,6 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 				setLoading(false)
 			} else if (message?.type === "referral:link:result") {
 				setReferralLink(message.referral_link || "")
-				setPersonalCode(message.referral_code || message.referral_link || "")
 			} else if (message?.type === "referral:send:result") {
 				setIsSubmitting(false)
 				if (message.ok) {
