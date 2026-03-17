@@ -332,7 +332,7 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 									{referralLink || (isAuthorized ? t("account:referralLinkLoading") : t("account:referralLinkLogin"))}
 								</div>
 								<Button
-									variant={showCopyFeedback ? "secondary" : "default"}
+									variant={"default"}
 									size="default"
 									onClick={handleCopyCode}
 									className="shrink-0"
