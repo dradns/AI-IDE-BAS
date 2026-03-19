@@ -191,7 +191,25 @@ export const AccountView = ({ userInfo, isAuthenticated, cloudApiUrl: _cloudApiU
 					// Обновляем статистику
 					vscode.postMessage({ type: "referral:stats" })
 				} else {
-					addToast(t("account:emailSendError"), "error")
+                    let userMessage = "";
+                    switch(message.result) {
+                        case "CANT_REFER_YOURSELF": 
+                            userMessage = t("account:emailSendErrorCantReferYourself")
+                            break
+                        case "EMAIL_ALREADY_REGISTERED":
+                            userMessage = t("account:emailSendErrorEmailAlreadyRegistered")
+                            break
+                        case "ONLY_GMAIL_ALLOWED":
+                            userMessage = t("account:emailSendErrorOnlyGmailAllowed")
+                            break
+                        case "TRY_AGAIN_LATER":
+                            userMessage = t("account:emailSendErrorTryAgainLater")
+                            break
+                        default:
+                            userMessage = t("account:emailSendError")
+
+                    }
+					addToast(userMessage, "error")
 				}
 			} else if (message?.type === "referral:stats:result") {
 				setIsLoadingStats(false)
