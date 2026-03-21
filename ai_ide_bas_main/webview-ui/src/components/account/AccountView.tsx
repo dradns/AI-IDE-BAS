@@ -43,7 +43,7 @@ function Toast({ message, type, onClose }: { message: string; type: "success" | 
 				"fixed top-4 right-4 z-50 px-4 py-3 rounded-xs border shadow-lg flex items-center gap-2 min-w-[280px] animate-fade-in",
 				type === "success"
 					? "bg-vscode-notifications-background border-vscode-notifications-border text-vscode-notifications-foreground"
-					: "bg-vscode-errorForeground/10 border-vscode-errorForeground/30 text-vscode-errorForeground",
+					: "bg-vscode-inputValidation-errorBackground border-vscode-inputValidation-errorBorder text-vscode-inputValidation-errorForeground",
 			)}>
 			{type === "success" ? (
 				<CheckCircle2 className="w-4 h-4 shrink-0" />
